@@ -1,6 +1,9 @@
 # 🐉 NGỌC RỒNG ONLINE (NRO) - PHIÊN BẢN WEB (REACTJS + SUPABASE)
 
-> **Dự án chuyển đổi mã nguồn NRO Offline (`KhanhNguyen9872/Nro-Offline_src`) thành Web Game chất lượng cao, viết bằng ReactJS, lưu trữ cơ sở dữ liệu trên Supabase Cloud Database và sẵn sàng deploy lên Vercel.**
+> **Dự án chuyển đổi mã nguồn NRO Offline (`KhanhNguyen9872/Nro-Offline_src`) thành Web Game chất lượng cao, viết bằng ReactJS, lưu trữ cơ sở dữ liệu trên Supabase Cloud Database và đã deploy trực tiếp lên Vercel.**
+
+🌐 **Chơi Trực Tiếp Trên Web (Live Game):** [https://ngocrong-banweb.vercel.app](https://ngocrong-banweb.vercel.app)  
+📦 **Kho Mã Nguồn GitHub:** [https://github.com/soncris3012/Ngocrong_banweb](https://github.com/soncris3012/Ngocrong_banweb)
 
 ![Dragon Ball Web Banner](public/200.webp)
 
