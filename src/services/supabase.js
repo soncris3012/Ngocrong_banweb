@@ -3,11 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 const STORAGE_KEY_URL = 'nro_supabase_url';
 const STORAGE_KEY_KEY = 'nro_supabase_key';
 
+const DEFAULT_SUPABASE_URL = 'https://bnvnjuqsekqwqmoiqvcl.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudm5qdXFzZWtxd3Ftb2lxdmNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1NzgyNzMsImV4cCI6MjExMDE1NDI3M30.2oPn0x5HMVkj8_5TYpHEDAL11RCBEoCeKth2Z--kJ4s';
+
 let supabaseInstance = null;
 
 export const getSupabaseConfig = () => {
-  const url = localStorage.getItem(STORAGE_KEY_URL) || import.meta.env.VITE_SUPABASE_URL || '';
-  const key = localStorage.getItem(STORAGE_KEY_KEY) || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  const url = localStorage.getItem(STORAGE_KEY_URL) || import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const key = localStorage.getItem(STORAGE_KEY_KEY) || import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   return { url, key };
 };
 
