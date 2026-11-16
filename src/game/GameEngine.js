@@ -1290,24 +1290,31 @@ export class GameEngine {
     const tileH = 50;
     const numCols = Math.ceil(mapW / tileW) + 1;
 
+    // Tìm tile dự phòng nếu có
+    const fallbackMatdat = assets.get('matdat_1') || assets.get('matdat_2') || assets.get('matdat_3');
+
     // Row 0: Mặt đất có cỏ xanh (matdat_traidat1..5)
     for (let c = 0; c < numCols; c++) {
       const idx = (c % 5) + 1;
-      const tile = assets.get(`matdat_${idx}`);
+      const tile = assets.get(`matdat_${idx}`) || fallbackMatdat;
       if (tile && tile.complete && tile.naturalWidth > 0) {
         ctx.drawImage(tile, c * tileW, groundY, tileW, tileH);
       } else {
-        ctx.fillStyle = '#16a34a';
-        ctx.fillRect(c * tileW, groundY, tileW, 6);
-        ctx.fillStyle = '#5c3a21';
-        ctx.fillRect(c * tileW, groundY + 6, tileW, tileH - 6);
+        // Fallback vân đất tự nhiên NRO cao cấp
+        const grad = ctx.createLinearGradient(0, groundY, 0, groundY + tileH);
+        grad.addColorStop(0, '#3f6212');
+        grad.addColorStop(0.15, '#713f12');
+        grad.addColorStop(1, '#451a03');
+        ctx.fillStyle = grad;
+        ctx.fillRect(c * tileW, groundY, tileW, tileH);
       }
     }
 
     // Row 1: Tầng đất thịt (dat_traidat1..3)
+    const fallbackDat = assets.get('dat_1') || assets.get('dat_2');
     for (let c = 0; c < numCols; c++) {
       const idx = (c % 3) + 1;
-      const tile = assets.get(`dat_${idx}`);
+      const tile = assets.get(`dat_${idx}`) || fallbackDat;
       if (tile && tile.complete && tile.naturalWidth > 0) {
         ctx.drawImage(tile, c * tileW, groundY + tileH, tileW, tileH);
       } else {
@@ -1317,11 +1324,12 @@ export class GameEngine {
     }
 
     // Row 2+: Tầng lòng đất đá sâu (longdat_traidat1..3) phủ kín xuống đáy màn hình
+    const fallbackLongdat = assets.get('longdat_1') || assets.get('longdat_2');
     const maxBottom = Math.max(this.currentMap.height || 600, 800);
     for (let y = groundY + tileH * 2; y < maxBottom + 120; y += tileH) {
       for (let c = 0; c < numCols; c++) {
         const idx = ((c + Math.floor(y / tileH)) % 3) + 1;
-        const tile = assets.get(`longdat_${idx}`);
+        const tile = assets.get(`longdat_${idx}`) || fallbackLongdat;
         if (tile && tile.complete && tile.naturalWidth > 0) {
           ctx.drawImage(tile, c * tileW, y, tileW, tileH);
         } else {
@@ -1884,16 +1892,16 @@ export class GameEngine {
     if (!legImg) legImg = assets.get('leg_idle');
 
     // 3. Tỷ lệ ghép Sprite chính xác NRO
-    const scale = 0.55;
+    const scale = 0.52;
 
-    const cw = legImg && legImg.naturalWidth ? legImg.naturalWidth * scale : 38;
-    const ch = legImg && legImg.naturalHeight ? legImg.naturalHeight * scale : 26;
+    const cw = legImg && legImg.naturalWidth ? legImg.naturalWidth * scale : 34;
+    const ch = legImg && legImg.naturalHeight ? legImg.naturalHeight * scale : 24;
 
-    const bw = bodyImg && bodyImg.naturalWidth ? bodyImg.naturalWidth * scale : 40;
-    const bh = bodyImg && bodyImg.naturalHeight ? bodyImg.naturalHeight * scale : 26;
+    const bw = bodyImg && bodyImg.naturalWidth ? bodyImg.naturalWidth * scale : 36;
+    const bh = bodyImg && bodyImg.naturalHeight ? bodyImg.naturalHeight * scale : 24;
 
-    const hw = headImg && headImg.naturalWidth ? headImg.naturalWidth * scale : 52;
-    const hh = headImg && headImg.naturalHeight ? headImg.naturalHeight * scale : 44;
+    const hw = headImg && headImg.naturalWidth ? headImg.naturalWidth * scale : 48;
+    const hh = headImg && headImg.naturalHeight ? headImg.naturalHeight * scale : 40;
 
     // Tọa độ tương đối từ gót chân (y = 0)
     const legX = -cw / 2;
@@ -1902,7 +1910,8 @@ export class GameEngine {
     const bodyX = -bw / 2;
     const bodyY = legY + 10 - bh;
 
-    const headOverlap = p.planet === 2 ? 18 : 16;
+    // Khớp cổ áo chính xác tuyệt đối (4px che nhẹ ngấn cổ, giữ trọn vẹn cằm & khuôn mặt)
+    const headOverlap = p.planet === 2 ? 6 : 4;
     const headX = -hw / 2;
     const headY = bodyY + headOverlap - hh;
 

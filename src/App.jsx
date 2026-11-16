@@ -206,10 +206,7 @@ export function App() {
         className="absolute inset-0 block w-full h-full cursor-crosshair z-0"
       />
 
-      {/* 3. HIỆU ỨNG ARCADE SCANLINE RETRO */}
-      <div className="absolute inset-0 scanline z-10 pointer-events-none opacity-30" />
-
-      {/* 4. HEADS-UP DISPLAY (HUD) */}
+      {/* 3. HEADS-UP DISPLAY (HUD) */}
       {characterSelected && (
         <div className="z-20 relative w-full h-full pointer-events-none">
           <HUD 
