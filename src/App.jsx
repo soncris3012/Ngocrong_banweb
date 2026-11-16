@@ -74,7 +74,10 @@ export function App() {
     if (lastCharName) {
       loadCharacterData(lastCharName).then(data => {
         if (data) {
-          setPlayerState(prev => ({ ...prev, ...data }));
+          // Đảm bảo không bị lưu đè vị trí cũ vào rương hoặc NPC
+          const spawnX = (!data.x || data.x < 560) ? 640 : data.x;
+          const spawnY = (!data.y || data.y > 440) ? 420 : data.y;
+          setPlayerState(prev => ({ ...prev, ...data, x: spawnX, y: spawnY }));
           setCharacterSelected(true);
         }
       });

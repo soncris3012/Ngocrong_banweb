@@ -91,6 +91,10 @@ export class GameEngine {
 
     if (initialPlayer) {
       Object.assign(this.player, initialPlayer);
+      if (this.player.mapId === 0 && (!this.player.x || this.player.x < 560)) {
+        this.player.x = 640;
+        this.player.y = 420;
+      }
     }
 
     // Quái vật & Vật phẩm rơi
@@ -109,9 +113,9 @@ export class GameEngine {
       growTimer: 0
     };
 
-    // Rương Đồ Làng Aru
+    // Rương Đồ Làng Aru (đặt cạnh cửa nhà Gôhan)
     this.storageChest = {
-      x: 380,
+      x: 260,
       y: 480
     };
 
