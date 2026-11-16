@@ -41,6 +41,21 @@ class AssetLoader {
     this.loadImage('map_1', '/assets/map/ban_do/map1.png');
     this.loadImage('map_2', '/assets/map/ban_do/map2.png');
 
+    // Nền Parallax Ngọc Rồng gốc
+    this.loadImage('bg_sky', '/assets/hud/giaodienngoai/traidat/sky_traidat.png');
+    this.loadImage('bg_nuixa', '/assets/hud/giaodienngoai/traidat/nuixa_traidat.png');
+    this.loadImage('bg_nui', '/assets/hud/giaodienngoai/traidat/nui_traidat.png');
+    this.loadImage('bg_nuicay', '/assets/hud/giaodienngoai/traidat/nuicay_traidat.png');
+    this.loadImage('bg_nuithap', '/assets/hud/giaodienngoai/traidat/nuithap_traidat.png');
+
+    // Hiệu ứng ánh sáng & lửa trại Làng Aru
+    this.loadImage('deco_cui', '/assets/map/traidat/chung/trangtri/cuinuongduiga.png');
+    this.loadImage('eff_light', '/assets/hieuung/hieuungmap/light.png');
+    this.loadImage('eff_lua_1', '/assets/hieuung/hieuungmap/lua1.png');
+    this.loadImage('eff_lua_2', '/assets/hieuung/hieuungmap/lua2.png');
+    this.loadImage('eff_lua_3', '/assets/hieuung/hieuungmap/lua3.png');
+    this.loadImage('eff_lua_4', '/assets/hieuung/hieuungmap/lua4.png');
+
     // 2. Nhân vật Trái Đất (Goku base)
     this.loadImage('goku_avt', '/assets/nhanvat/traidat/avatar/Goku_base/avt.png');
     this.loadImage('goku_head_idle', '/assets/nhanvat/traidat/avatar/Goku_base/daudung.png');

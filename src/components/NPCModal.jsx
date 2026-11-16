@@ -59,6 +59,11 @@ export const NPCModal = ({ npc, player, onClose, onUpdatePlayer }) => {
         <div className="p-5 flex flex-col gap-4">
           {/* Lời thoại NPC */}
           <div className="bg-gray-800/90 border border-yellow-500/30 rounded-xl p-3.5 text-sm text-yellow-100 italic leading-relaxed">
+            {npc.type === 'gohan' && (
+              <>
+                "Chào cháu yêu quý! Ta là Ông Gôhan. Ở Làng Aru này cháu hãy chăm chỉ đấm vào các Mộc Nhân và hái Đậu Thần Karin để tích lũy sức mạnh và tiềm năng võ thuật!"
+              </>
+            )}
             {npc.type === 'kame' && (
               <>
                 "Chào con! Ta là Quy Lão Kame - Thầy võ của Son Goku. Hãy dùng điểm <b>Tiềm Năng</b> kiếm được từ việc đánh quái để nâng cao thể lực và sức đánh!"

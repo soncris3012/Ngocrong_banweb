@@ -62,28 +62,28 @@ export const MAPS = [
     id: 0,
     name: 'Làng Aru',
     planetId: 0,
-    width: 2000,
-    height: 600,
-    groundY: 480,
-    bgGradient: ['#1e3a8a', '#3b82f6', '#93c5fd'],
+    width: 2540,
+    height: 700,
+    groundY: 520,
+    bgGradient: ['#19b0f8', '#38bdf8', '#bae6fd'],
     platforms: [
-      { x: 300, y: 380, width: 140, height: 16 },
-      { x: 600, y: 320, width: 160, height: 16 },
-      { x: 1100, y: 340, width: 150, height: 16 },
-      { x: 1450, y: 390, width: 180, height: 16 }
+      { x: 450, y: 410, width: 140, height: 14 },
+      { x: 1050, y: 360, width: 160, height: 14 },
+      { x: 1850, y: 400, width: 180, height: 14 }
     ],
     portals: [
-      { x: 1900, y: 410, targetMap: 1, targetX: 100, label: 'Sang Đảo Kame ➜' }
+      { x: 2360, y: 450, targetMap: 1, targetX: 120, label: 'Sang Đảo Kame ➜' }
     ],
     npcs: [
-      { id: 1, name: 'Quy Lão Kame', x: 260, y: 480, type: 'kame' },
-      { id: 2, name: 'Bà Hạt Mít', x: 750, y: 480, type: 'hatmit' },
-      { id: 3, name: 'Thần Mèo Karin', x: 1350, y: 480, type: 'karin' }
+      { id: 1, name: 'Ông Gôhan', x: 360, y: 520, type: 'gohan' },
+      { id: 2, name: 'Bà Hạt Mít', x: 800, y: 520, type: 'hatmit' },
+      { id: 3, name: 'Quy Lão Kame', x: 1120, y: 520, type: 'kame' },
+      { id: 4, name: 'Thần Mèo Karin', x: 1420, y: 520, type: 'karin' }
     ],
     monsters: [
-      { id: 101, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 500, y: 480, atk: 0, exp: 80, gold: 20 },
-      { id: 102, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 950, y: 480, atk: 0, exp: 80, gold: 20 },
-      { id: 103, name: 'Mộc Nhân Khổng Lồ', type: 'dummy', maxHp: 800, hp: 800, x: 1650, y: 480, atk: 0, exp: 250, gold: 60 }
+      { id: 101, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 560, y: 520, atk: 0, exp: 80, gold: 20 },
+      { id: 102, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 960, y: 520, atk: 0, exp: 80, gold: 20 },
+      { id: 103, name: 'Mộc Nhân Khổng Lồ', type: 'dummy', maxHp: 800, hp: 800, x: 1780, y: 520, atk: 0, exp: 250, gold: 60 }
     ]
   },
   {

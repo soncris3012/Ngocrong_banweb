@@ -4,7 +4,7 @@ import { assets } from './assetLoader';
 import confetti from 'canvas-confetti';
 
 export class GameEngine {
-  constructor(canvas, onStateUpdate, onOpenDialog, onSummonDragon) {
+  constructor(canvas, onStateUpdate, onOpenDialog, onSummonDragon, initialPlayer = null) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.onStateUpdate = onStateUpdate;
@@ -31,11 +31,11 @@ export class GameEngine {
       name: 'SonGoku',
       planet: 0,
       x: 320,
-      y: 420,
+      y: 460,
       vx: 0,
       vy: 0,
-      width: 52,
-      height: 70,
+      width: 40,
+      height: 60,
       facing: 1, // 1: phải, -1: trái
       onGround: false,
       isFlying: false,
@@ -86,6 +86,10 @@ export class GameEngine {
       inventory: []
     };
 
+    if (initialPlayer) {
+      Object.assign(this.player, initialPlayer);
+    }
+
     // Quái vật & Vật phẩm rơi
     this.currentMap = MAPS[0];
     this.monsters = [];
@@ -95,8 +99,8 @@ export class GameEngine {
 
     // Cây Đậu Thần Karin (1 -> 10 hạt)
     this.senzuTree = {
-      x: 1350,
-      y: 480,
+      x: 1620,
+      y: 520,
       beansReady: 6,
       maxBeans: 10,
       growTimer: 0
@@ -104,8 +108,8 @@ export class GameEngine {
 
     // Rương Đồ Làng Aru
     this.storageChest = {
-      x: 680,
-      y: 480
+      x: 580,
+      y: 520
     };
 
     // Đám mây trôi
@@ -125,6 +129,8 @@ export class GameEngine {
     const map = MAPS.find(m => m.id === mapId) || MAPS[0];
     this.currentMap = map;
     this.player.mapId = mapId;
+    this.senzuTree.y = map.groundY;
+    this.storageChest.y = map.groundY;
 
     this.monsters = map.monsters.map(m => ({
       ...m,
@@ -880,30 +886,106 @@ export class GameEngine {
     const shakeOffsetX = this.shakeTimer > 0 ? (Math.random() - 0.5) * 8 : 0;
     const shakeOffsetY = this.shakeTimer > 0 ? (Math.random() - 0.5) * 8 : 0;
 
-    // Bầu trời nền
-    const grad = ctx.createLinearGradient(0, 0, 0, this.height);
-    grad.addColorStop(0, this.currentMap.bgGradient[0]);
-    grad.addColorStop(0.5, this.currentMap.bgGradient[1]);
-    grad.addColorStop(1, this.currentMap.bgGradient[2]);
-    ctx.fillStyle = grad;
+    // Bầu trời nền cơ bản (màu xanh thiên thanh Trái Đất NRO)
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, this.height);
+    skyGrad.addColorStop(0, '#19b0f8');
+    skyGrad.addColorStop(0.5, '#38bdf8');
+    skyGrad.addColorStop(1, '#bae6fd');
+    ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, this.width, this.height);
 
     ctx.save();
     ctx.translate(-camX + shakeOffsetX, shakeOffsetY);
 
-    // 1. VẼ NỀN ẢNH THẬT NRO (LÀNG ARU GỐC)
+    // ============================================
+    // 1. PARALLAX NỀN CHUẨN NGỌC RỒNG ONLINE GỐC
+    // ============================================
     if (this.currentMap.id === 0) {
+      // Layer 1: Sky + Nuixa (Parallax factor 0.15)
+      const skyImg = assets.get('bg_sky');
+      const nuixaImg = assets.get('bg_nuixa');
+      if (skyImg && skyImg.complete && skyImg.naturalWidth > 0) {
+        const tw = 258;
+        const th = 120;
+        const startX = Math.floor((camX * 0.15) / tw) * tw;
+        for (let x = startX - tw; x < startX + this.width + tw * 2; x += tw) {
+          ctx.drawImage(skyImg, x - camX * 0.15, 60, tw, th);
+          if (nuixaImg && nuixaImg.complete) {
+            ctx.drawImage(nuixaImg, x - camX * 0.15, 60, tw, th);
+          }
+        }
+      }
+
+      // Layer 2: Núi trung cảnh (Parallax factor 0.3)
+      const nuiImg = assets.get('bg_nui');
+      if (nuiImg && nuiImg.complete && nuiImg.naturalWidth > 0) {
+        const nw = 510;
+        const nh = 154;
+        const startX = Math.floor((camX * 0.3) / nw) * nw;
+        for (let x = startX - nw; x < startX + this.width + nw * 2; x += nw) {
+          ctx.drawImage(nuiImg, x - camX * 0.3, 140, nw, nh);
+        }
+      }
+
+      // Layer 3: Đồi cây & Núi tháp (Parallax factor 0.5)
+      const nuicayImg = assets.get('bg_nuicay');
+      const nuithapImg = assets.get('bg_nuithap');
+      if (nuicayImg && nuicayImg.complete && nuicayImg.naturalWidth > 0) {
+        const cw = 336;
+        const ch = 146;
+        const startX = Math.floor((camX * 0.5) / cw) * cw;
+        for (let x = startX - cw; x < startX + this.width + cw * 2; x += cw) {
+          ctx.drawImage(nuicayImg, x - camX * 0.5, 230, cw, ch);
+          if (nuithapImg && nuithapImg.complete) {
+            ctx.drawImage(nuithapImg, x - camX * 0.5 + 160, 240, cw, ch);
+          }
+        }
+      }
+
+      // Layer 4: BẢN ĐỒ CHÍNH LÀNG ARU (maparu.png)
       const mapImg = assets.get('map_aru');
       if (mapImg && mapImg.complete && mapImg.naturalWidth > 0) {
-        // Tỷ lệ ảnh làng Aru trải dài trên map
-        const imgW = mapImg.width * 1.6;
-        const imgH = mapImg.height * 1.6;
-        ctx.drawImage(mapImg, 0, this.currentMap.groundY - imgH + 20, imgW, imgH);
+        // Tỷ lệ chuẩn 0.5: 2544 x 1008 px
+        const mw = 2544;
+        const mh = 1008;
+        // Điểm đặt chân (ground) trong maparu là ở y=795px tính từ đỉnh ảnh
+        const mapY = this.currentMap.groundY - 795;
+        ctx.drawImage(mapImg, 0, mapY, mw, mh);
+
+        // Lấp khoảng dưới đáy ảnh nếu màn hình quá cao
+        const bottomY = mapY + mh;
+        if (this.height > bottomY) {
+          ctx.fillStyle = '#ddaa6b';
+          ctx.fillRect(0, bottomY, this.currentMap.width, this.height - bottomY + 200);
+        }
+
+        // Tia sáng thiên thần rọi xuống làng
+        const lightImg = assets.get('eff_light');
+        if (lightImg && lightImg.complete) {
+          ctx.save();
+          ctx.globalAlpha = 0.28;
+          ctx.drawImage(lightImg, 150, mapY + 280, 500, 420);
+          ctx.drawImage(lightImg, 950, mapY + 280, 500, 420);
+          ctx.drawImage(lightImg, 1750, mapY + 280, 500, 420);
+          ctx.restore();
+        }
+
+        // Lửa trại nướng đùi gà ở làng
+        const cuiImg = assets.get('deco_cui');
+        if (cuiImg && cuiImg.complete) {
+          ctx.drawImage(cuiImg, 260, this.currentMap.groundY - 24, 48, 34);
+          const luaIdx = (Math.floor(Date.now() / 120) % 4) + 1;
+          const luaImg = assets.get(`eff_lua_${luaIdx}`);
+          if (luaImg && luaImg.complete) {
+            ctx.drawImage(luaImg, 280, this.currentMap.groundY - 38, 24, 28);
+          }
+        }
       } else {
         this.renderMountains();
       }
     } else {
       this.renderMountains();
+      this.renderEnvironment();
     }
 
     // 2. Mây trôi
@@ -911,13 +993,13 @@ export class GameEngine {
       this.drawCloud(c.x, c.y, c.scale);
     });
 
-    // 3. Mặt đất & Platforms
-    this.renderEnvironment();
+    // 3. Platforms tự nhiên
+    this.renderPlatforms();
 
     // 4. Cổng Dịch Chuyển
     this.renderPortals();
 
-    // 5. Cây Đậu Thần Karin THẬT (caydau1.png - caydau10.png)
+    // 5. Cây Đậu Thần Karin & Rương Đồ
     if (this.currentMap.id === 0) {
       this.renderRealSenzuTree();
       this.renderStorageChest();
@@ -926,10 +1008,10 @@ export class GameEngine {
     // 6. NPC
     this.renderNPCs();
 
-    // 7. Quái vật
+    // 7. Quái vật & Mộc Nhân
     this.renderMonsters();
 
-    // 8. Vật phẩm rơi (Ngọc rồng 7 sao, Vàng, Đậu)
+    // 8. Vật phẩm rơi
     this.renderDroppedItems();
 
     // 9. Quả Cầu Kênh Khi (Spirit Bomb)
@@ -942,14 +1024,25 @@ export class GameEngine {
       this.renderBeam();
     }
 
-    // 11. NHÂN VẬT THẬT (GOKU / VEGETA / PICCOLO SPRITES)
+    // 11. NHÂN VẬT THẬT (GOKU / VEGETA / PICCOLO)
     this.renderRealPlayer();
 
-    // 12. Particles & Text nổi
+    // 12. FOREGROUND TỰ NHIÊN: Cành cây, tán lá trước mặt (maparusau.png)
+    if (this.currentMap.id === 0) {
+      const mapSau = assets.get('map_aru_sau');
+      if (mapSau && mapSau.complete && mapSau.naturalWidth > 0) {
+        const mw = 2544;
+        const mh = 1008;
+        const mapY = this.currentMap.groundY - 795;
+        ctx.drawImage(mapSau, 0, mapY, mw, mh);
+      }
+    }
+
+    // 13. Particles & Text nổi
     this.renderParticles();
     this.renderFloatingTexts();
 
-    // 13. Hiệu ứng lóa sáng Thái Dương Hạ San
+    // 14. Hiệu ứng lóa sáng Thái Dương Hạ San
     if (this.player.solarFlareTimer > 0) {
       ctx.fillStyle = `rgba(255, 255, 255, ${this.player.solarFlareTimer / 20})`;
       ctx.fillRect(camX, 0, this.width, this.height);
@@ -981,22 +1074,38 @@ export class GameEngine {
     ctx.fill();
   }
 
+  renderPlatforms() {
+    const ctx = this.ctx;
+    this.currentMap.platforms.forEach(plat => {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.fillRect(plat.x + 3, plat.y + 3, plat.width, plat.height);
+
+      const grad = ctx.createLinearGradient(plat.x, plat.y, plat.x, plat.y + plat.height);
+      grad.addColorStop(0, '#854d0e');
+      grad.addColorStop(1, '#502a06');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(plat.x, plat.y, plat.width, plat.height, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#4d7c0f';
+      ctx.beginPath();
+      ctx.roundRect(plat.x, plat.y, plat.width, 3, [3, 3, 0, 0]);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
   renderEnvironment() {
     const ctx = this.ctx;
     const gY = this.currentMap.groundY;
 
     ctx.fillStyle = '#16a34a';
-    ctx.fillRect(0, gY, this.currentMap.width, 14);
+    ctx.fillRect(0, gY, this.currentMap.width, 10);
 
     ctx.fillStyle = '#78350f';
-    ctx.fillRect(0, gY + 14, this.currentMap.width, this.height - gY);
-
-    this.currentMap.platforms.forEach(plat => {
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(plat.x, plat.y, plat.width, 5);
-      ctx.fillStyle = '#854d0e';
-      ctx.fillRect(plat.x, plat.y + 5, plat.width, plat.height - 5);
-    });
+    ctx.fillRect(0, gY + 10, this.currentMap.width, this.height - gY);
   }
 
   renderPortals() {
@@ -1032,23 +1141,18 @@ export class GameEngine {
     const treeImg = assets.get(`caydau_${stage}`);
 
     if (treeImg && treeImg.complete && treeImg.naturalWidth > 0) {
-      const w = 110;
+      const w = 120;
       const h = (treeImg.height / treeImg.width) * w;
       ctx.drawImage(treeImg, tree.x - w / 2, tree.y - h, w, h);
-    } else {
-      ctx.fillStyle = '#15803d';
-      ctx.beginPath();
-      ctx.arc(tree.x, tree.y - 80, 50, 0, Math.PI * 2);
-      ctx.fill();
     }
 
     ctx.fillStyle = '#bbf7d0';
     ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`Cây Đậu Thần Karin (${tree.beansReady}/${tree.maxBeans})`, tree.x, tree.y - 145);
-    ctx.font = '10px monospace';
+    ctx.fillText(`Cây Đậu Thần Karin (${tree.beansReady}/${tree.maxBeans})`, tree.x, tree.y - 142);
+    ctx.font = 'bold 10px monospace';
     ctx.fillStyle = '#facc15';
-    ctx.fillText('[Nhấn E để hái đậu]', tree.x, tree.y - 130);
+    ctx.fillText('🌱 [E: Hái Đậu]', tree.x, tree.y - 124);
   }
 
   // RƯƠNG ĐỒ LÀNG ARU
@@ -1058,16 +1162,16 @@ export class GameEngine {
     const chestImg = assets.get('ruong_do');
 
     if (chestImg && chestImg.complete && chestImg.naturalWidth > 0) {
-      ctx.drawImage(chestImg, chest.x - 25, chest.y - 45, 50, 45);
+      ctx.drawImage(chestImg, chest.x - 28, chest.y - 48, 56, 48);
     } else {
       ctx.fillStyle = '#854d0e';
-      ctx.fillRect(chest.x - 20, chest.y - 30, 40, 30);
+      ctx.fillRect(chest.x - 22, chest.y - 36, 44, 36);
     }
 
     ctx.fillStyle = '#fef08a';
     ctx.font = 'bold 11px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('Rương Đồ [E]', chest.x, chest.y - 50);
+    ctx.fillText('Rương Đồ [E]', chest.x, chest.y - 54);
   }
 
   renderNPCs() {
@@ -1075,50 +1179,185 @@ export class GameEngine {
 
     this.currentMap.npcs.forEach(npc => {
       ctx.save();
-      ctx.translate(npc.x, npc.y - 55);
+      ctx.translate(npc.x, npc.y);
 
-      if (npc.type === 'kame') {
-        // Quy Lão Kame
-        ctx.fillStyle = '#dc2626';
-        ctx.beginPath();
-        ctx.arc(-10, 20, 16, 0, Math.PI * 2);
-        ctx.fill();
+      if (npc.type === 'gohan') {
+        // Ông Gôhan với Sprite thật
+        const ghDau = assets.get('gohan_head');
+        const ghThan = assets.get('gohan_body');
+        const ghChan = assets.get('gohan_leg');
 
-        ctx.fillStyle = '#fde047';
-        ctx.fillRect(-12, 10, 24, 28);
+        if (ghDau && ghThan && ghChan && ghDau.complete && ghThan.complete && ghChan.complete) {
+          const s = 0.52;
+          const cw = ghChan.naturalWidth * s;
+          const ch = ghChan.naturalHeight * s;
+          const bw = ghThan.naturalWidth * s;
+          const bh = ghThan.naturalHeight * s;
+          const hw = ghDau.naturalWidth * s;
+          const hh = ghDau.naturalHeight * s;
 
-        ctx.fillStyle = '#fbcfe8';
-        ctx.beginPath();
-        ctx.arc(0, 0, 14, 0, Math.PI * 2);
-        ctx.fill();
+          const legY = -ch;
+          const bodyY = legY + 8 * s - bh;
+          const headY = bodyY + 12 * s - hh;
 
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(-8, -4, 16, 6);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(0, 8, 8, 0, Math.PI);
-        ctx.fill();
-      } else {
-        const gohanHead = assets.get('gohan_head');
-        if (gohanHead && gohanHead.complete && gohanHead.naturalWidth > 0) {
-          ctx.drawImage(gohanHead, -15, -10, 30, 30);
-        } else {
-          ctx.fillStyle = '#a855f7';
-          ctx.fillRect(-12, 10, 24, 28);
+          ctx.drawImage(ghChan, -cw / 2, legY, cw, ch);
+          ctx.drawImage(ghDau, -hw / 2, headY, hw, hh);
+          ctx.drawImage(ghThan, -bw / 2, bodyY, bw, bh);
         }
+      } else if (npc.type === 'kame') {
+        this.drawMasterRoshi(ctx);
+      } else if (npc.type === 'karin') {
+        this.drawMasterKarin(ctx);
+      } else if (npc.type === 'hatmit') {
+        this.drawBaba(ctx);
+      } else {
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(-12, -45, 24, 45);
       }
 
       ctx.fillStyle = '#fef08a';
       ctx.font = 'bold 12px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(npc.name, 0, -22);
+      ctx.fillText(npc.name, 0, -68);
+
       ctx.fillStyle = '#38bdf8';
       ctx.font = '10px monospace';
-      ctx.fillText('💬 [E]', 0, -36);
+      ctx.fillText('💬 [E]', 0, -82);
 
       ctx.restore();
     });
+  }
+
+  drawMasterRoshi(ctx) {
+    // Mai rùa tím trên lưng
+    ctx.fillStyle = '#7c3aed';
+    ctx.beginPath();
+    ctx.ellipse(-14, -30, 10, 18, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Thân áo cam Kame
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(-12, -34, 24, 24);
+    ctx.fillStyle = '#18181b';
+    ctx.fillRect(-12, -22, 24, 4);
+
+    // Quần trắng
+    ctx.fillStyle = '#f4f4f5';
+    ctx.fillRect(-10, -10, 20, 10);
+
+    // Đầu hói da hồng
+    ctx.fillStyle = '#fed7aa';
+    ctx.beginPath();
+    ctx.arc(0, -42, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Kính râm đen gọng đỏ
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(-9, -46, 18, 6);
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(-8, -45, 7, 4);
+    ctx.fillRect(1, -45, 7, 4);
+
+    // Râu ria mép trắng dài
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-9, -38);
+    ctx.lineTo(0, -26);
+    ctx.lineTo(9, -38);
+    ctx.closePath();
+    ctx.fill();
+
+    // Gậy gỗ cầm tay
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(14, -50);
+    ctx.lineTo(14, 0);
+    ctx.stroke();
+  }
+
+  drawMasterKarin(ctx) {
+    // Thần Mèo Karin trắng
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.ellipse(0, -18, 12, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Đầu mèo
+    ctx.beginPath();
+    ctx.arc(0, -38, 13, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tai mèo
+    ctx.fillStyle = '#f472b6';
+    ctx.beginPath();
+    ctx.moveTo(-10, -48);
+    ctx.lineTo(-4, -56);
+    ctx.lineTo(0, -48);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, -48);
+    ctx.lineTo(4, -56);
+    ctx.lineTo(10, -48);
+    ctx.fill();
+
+    // Mắt híp cười ^ ^
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(-5, -39, 3, Math.PI, 0);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(5, -39, 3, Math.PI, 0);
+    ctx.stroke();
+
+    // Mũi hồng và râu
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath();
+    ctx.arc(0, -35, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Gậy thần mèo
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(12, -45);
+    ctx.lineTo(12, 0);
+    ctx.stroke();
+  }
+
+  drawBaba(ctx) {
+    // Quả cầu pha lê phát sáng
+    const ballGrad = ctx.createRadialGradient(-3, -18, 2, 0, -16, 16);
+    ballGrad.addColorStop(0, '#e0e7ff');
+    ballGrad.addColorStop(0.5, '#818cf8');
+    ballGrad.addColorStop(1, '#312e81');
+    ctx.fillStyle = ballGrad;
+    ctx.beginPath();
+    ctx.arc(0, -16, 16, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bà Hạt Mít ngồi trên quả cầu
+    ctx.fillStyle = '#581c87';
+    ctx.fillRect(-10, -36, 20, 20);
+
+    // Khuôn mặt
+    ctx.fillStyle = '#fed7aa';
+    ctx.beginPath();
+    ctx.arc(0, -42, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nón phù thủy
+    ctx.fillStyle = '#1e1b4b';
+    ctx.beginPath();
+    ctx.moveTo(-16, -46);
+    ctx.lineTo(0, -62);
+    ctx.lineTo(16, -46);
+    ctx.closePath();
+    ctx.fill();
   }
 
   renderMonsters() {
@@ -1128,34 +1367,28 @@ export class GameEngine {
       if (m.isDead) return;
 
       ctx.save();
-      ctx.translate(m.x, m.y - 50);
+      ctx.translate(m.x, m.y);
 
-      if (m.hitFlash > 0) ctx.filter = 'brightness(2.5)';
+      if (m.hitFlash > 0) ctx.filter = 'brightness(2.2)';
       if (m.isStunned) ctx.filter = 'hue-rotate(90deg) brightness(1.2)';
 
       if (m.type === 'dummy') {
-        // Mộc nhân tập võ
-        ctx.fillStyle = '#a16207';
-        ctx.fillRect(10, 5, 22, 45);
-        ctx.fillRect(-4, 18, 48, 10);
-        ctx.fillStyle = '#ca8a04';
-        ctx.beginPath();
-        ctx.arc(21, -4, 14, 0, Math.PI * 2);
-        ctx.fill();
+        // MỘC NHÂN TẬP VÕ CHUẨN NRO
+        this.drawTrainingDummy(ctx, m);
       } else if (m.type === 'boss_dino') {
         // Khủng Long Mẹ to lớn
         ctx.fillStyle = '#991b1b';
-        ctx.fillRect(0, -25, 75, 75);
+        ctx.fillRect(-30, -55, 60, 55);
         ctx.fillStyle = '#dc2626';
         ctx.beginPath();
-        ctx.arc(m.direction === 1 ? 70 : 5, -28, 24, 0, Math.PI * 2);
+        ctx.arc(m.direction === 1 ? 25 : -25, -55, 20, 0, Math.PI * 2);
         ctx.fill();
       } else {
         ctx.fillStyle = '#047857';
-        ctx.fillRect(0, 0, 44, 50);
+        ctx.fillRect(-20, -45, 40, 45);
         ctx.fillStyle = '#10b981';
         ctx.beginPath();
-        ctx.arc(m.direction === 1 ? 42 : 2, 0, 16, 0, Math.PI * 2);
+        ctx.arc(m.direction === 1 ? 16 : -16, -45, 14, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -1165,22 +1398,63 @@ export class GameEngine {
       const barWidth = 48;
       const hpPercent = Math.max(0, m.hp / m.maxHp);
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, -20, barWidth, 6);
+      ctx.fillRect(-barWidth / 2, -72, barWidth, 6);
       ctx.fillStyle = '#ef4444';
-      ctx.fillRect(1, -19, (barWidth - 2) * hpPercent, 4);
+      ctx.fillRect(-barWidth / 2 + 1, -71, (barWidth - 2) * hpPercent, 4);
 
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 10px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(m.name, barWidth / 2, -25);
+      ctx.fillText(m.name, 0, -78);
 
       if (m.isStunned) {
         ctx.fillStyle = '#facc15';
-        ctx.fillText('💫 CHOÁNG', barWidth / 2, -38);
+        ctx.fillText('💫 CHOÁNG', 0, -90);
       }
 
       ctx.restore();
     });
+  }
+
+  drawTrainingDummy(ctx, m) {
+    const shake = m.hitFlash > 0 ? (Math.random() - 0.5) * 6 : 0;
+    ctx.translate(shake, 0);
+
+    // Trụ gỗ chính cắm xuống đất
+    const woodGrad = ctx.createLinearGradient(-11, 0, 11, 0);
+    woodGrad.addColorStop(0, '#92400e');
+    woodGrad.addColorStop(0.5, '#b45309');
+    woodGrad.addColorStop(1, '#78350f');
+    ctx.fillStyle = woodGrad;
+    ctx.fillRect(-11, -52, 22, 52);
+
+    // Cánh tay gỗ chìa sang 2 bên
+    ctx.fillStyle = '#d97706';
+    ctx.fillRect(-26, -36, 52, 8);
+    ctx.fillStyle = '#78350f';
+    ctx.strokeRect(-26, -36, 52, 8);
+
+    // Đầu gỗ tròn trên đỉnh
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.arc(0, -56, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dải băng vải quấn quanh thân
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(-11, -26, 22, 5);
+    ctx.fillRect(-11, -16, 22, 5);
+
+    // Băng đô trắng buộc đầu
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(-12, -60, 24, 4);
+    // Dải ruy băng bay
+    ctx.beginPath();
+    ctx.moveTo(10, -58);
+    ctx.lineTo(20, -54);
+    ctx.lineTo(18, -62);
+    ctx.closePath();
+    ctx.fill();
   }
 
   // VẼ NHÂN VẬT THẬT VỚI SPRITES GỐC NRO
@@ -1188,41 +1462,55 @@ export class GameEngine {
     const ctx = this.ctx;
     const p = this.player;
 
+    const baseCenterX = p.x + p.width / 2;
+    const baseGroundY = p.y + p.height;
+
     ctx.save();
-    ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
+    ctx.translate(baseCenterX, baseGroundY);
     ctx.scale(p.facing, 1);
 
-    // Hào quang Super Saiyan vàng rực bao quanh
+    // 1. Hào quang Super Saiyan / Tụ Ki vàng rực bao quanh
     if (p.isSuperSaiyan || p.isChargingKi) {
-      const auraPulse = Math.sin(p.ssjTimer * 0.3) * 10 + 45;
-      const auraGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, auraPulse);
-      auraGrad.addColorStop(0, 'rgba(254, 240, 138, 0.9)');
-      auraGrad.addColorStop(0.5, p.isSuperSaiyan ? 'rgba(245, 158, 11, 0.8)' : 'rgba(59, 130, 246, 0.7)');
-      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      const pulse = Math.sin(p.ssjTimer * 0.3) * 6 + 38;
+      const auraGrad = ctx.createRadialGradient(0, -32, 6, 0, -32, pulse);
+      if (p.isSuperSaiyan) {
+        auraGrad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
+        auraGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.7)');
+        auraGrad.addColorStop(1, 'rgba(234, 179, 8, 0)');
+      } else {
+        const planet = PLANETS[p.planet] || PLANETS[0];
+        auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        auraGrad.addColorStop(0.5, (planet.primaryColor || '#3b82f6') + 'aa');
+        auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      }
       ctx.fillStyle = auraGrad;
       ctx.beginPath();
-      ctx.arc(0, 0, auraPulse, 0, Math.PI * 2);
+      ctx.arc(0, -32, pulse, 0, Math.PI * 2);
       ctx.fill();
 
-      // Giật sét tia chớp
-      if (Math.random() < 0.4) {
+      // Tia chớp điện giật Super Saiyan
+      if (Math.random() < 0.5) {
         ctx.strokeStyle = '#fef08a';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo((Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40);
-        ctx.lineTo((Math.random() - 0.5) * 50, (Math.random() - 0.5) * 50);
+        const startRad = Math.random() * Math.PI * 2;
+        const r1 = 18;
+        const r2 = 36;
+        ctx.moveTo(Math.cos(startRad) * r1, -32 + Math.sin(startRad) * r1);
+        ctx.lineTo(Math.cos(startRad + 0.3) * (r1 + r2) / 2, -32 + Math.sin(startRad + 0.3) * (r1 + r2) / 2);
+        ctx.lineTo(Math.cos(startRad) * r2, -32 + Math.sin(startRad) * r2);
         ctx.stroke();
       }
     }
 
-    // Xác định Sprite Head / Body / Leg dựa theo chuyển động
+    // 2. Xác định Sprite Head / Body / Leg dựa theo hành động
     const isMoving = Math.abs(p.vx) > 0.5;
     let headImg = null;
     let bodyImg = null;
     let legImg = null;
 
     if (p.planet === 2) {
-      // Xayda (Vegeta)
+      // Xayda (Vegeta / Cađíc)
       headImg = isMoving ? assets.get('vegeta_head_run') : assets.get('vegeta_head_idle');
     } else if (p.planet === 1) {
       // Namếc (Piccolo)
@@ -1232,7 +1520,7 @@ export class GameEngine {
       headImg = isMoving ? assets.get('goku_head_run') : assets.get('goku_head_idle');
     }
 
-    // Body Sprite
+    // Thân (Body)
     if (p.isBeaming) {
       bodyImg = assets.get('body_beam');
     } else if (p.isChargingKi) {
@@ -1247,7 +1535,7 @@ export class GameEngine {
       bodyImg = assets.get('body_idle');
     }
 
-    // Leg Sprite
+    // Chân (Leg)
     if (p.isFlying) {
       legImg = assets.get('leg_fly');
     } else if (p.isChargingKi) {
@@ -1260,44 +1548,60 @@ export class GameEngine {
       legImg = assets.get('leg_idle');
     }
 
-    // Vẽ Leg, Body, Head theo thứ tự layer
-    const renderScale = 1.35;
+    // 3. Tỷ lệ ghép Sprite chính xác NRO
+    const scale = 0.58;
 
-    // 1. Chân (Leg)
+    const cw = legImg && legImg.naturalWidth ? legImg.naturalWidth * scale : 40;
+    const ch = legImg && legImg.naturalHeight ? legImg.naturalHeight * scale : 28;
+
+    const bw = bodyImg && bodyImg.naturalWidth ? bodyImg.naturalWidth * scale : 42;
+    const bh = bodyImg && bodyImg.naturalHeight ? bodyImg.naturalHeight * scale : 28;
+
+    const hw = headImg && headImg.naturalWidth ? headImg.naturalWidth * scale : 54;
+    const hh = headImg && headImg.naturalHeight ? headImg.naturalHeight * scale : 46;
+
+    // Tọa độ tương đối từ gót chân (y = 0)
+    const legX = -cw / 2;
+    const legY = -ch;
+
+    const bodyX = -bw / 2;
+    const bodyY = legY + 12 - bh;
+
+    const headX = -hw / 2;
+    const headY = bodyY + 18 - hh;
+
+    // HIỆU ỨNG SUPER SAIYAN TÓC VÀNG CHO TRÁI ĐẤT
+    if (p.isSuperSaiyan && p.planet === 0) {
+      ctx.filter = 'sepia(0.85) hue-rotate(-12deg) saturate(3.5) brightness(1.15)';
+    }
+
+    // VẼ THEO THỨ TỰ: 1. Chân -> 2. Đầu -> 3. Thân (Thân vẽ đè cổ che khớp)
     if (legImg && legImg.complete && legImg.naturalWidth > 0) {
-      const lw = legImg.width * renderScale;
-      const lh = legImg.height * renderScale;
-      ctx.drawImage(legImg, -lw / 2, 4, lw, lh);
+      ctx.drawImage(legImg, legX, legY, cw, ch);
     }
-
-    // 2. Thân (Body)
-    if (bodyImg && bodyImg.complete && bodyImg.naturalWidth > 0) {
-      const bw = bodyImg.width * renderScale;
-      const bh = bodyImg.height * renderScale;
-      ctx.drawImage(bodyImg, -bw / 2, -18, bw, bh);
-    }
-
-    // 3. Đầu (Head)
     if (headImg && headImg.complete && headImg.naturalWidth > 0) {
-      const hw = headImg.width * renderScale;
-      const hh = headImg.height * renderScale;
-      ctx.drawImage(headImg, -hw / 2, -38, hw, hh);
+      ctx.drawImage(headImg, headX, headY, hw, hh);
+    }
+    if (bodyImg && bodyImg.complete && bodyImg.naturalWidth > 0) {
+      ctx.drawImage(bodyImg, bodyX, bodyY, bw, bh);
     }
 
+    ctx.filter = 'none';
     ctx.restore();
 
-    // Tên & Huy hiệu trên đầu
+    // 4. Tên & Danh hiệu trên đầu
     ctx.fillStyle = p.isSuperSaiyan ? '#facc15' : '#ffffff';
     ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`${p.name} ${p.isSuperSaiyan ? '⚡ [SSJ]' : ''}`, p.x + p.width / 2, p.y - 24);
+    ctx.fillText(`${p.name} ${p.isSuperSaiyan ? '⚡ [SSJ]' : ''}`, p.x + p.width / 2, p.y - 18);
 
-    // Thanh máu nhỏ trên đầu
+    // 5. Thanh máu nhỏ trên đầu
     const hpPct = Math.max(0, p.hp / p.maxHp);
+    const barW = 44;
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(p.x - 2, p.y - 14, p.width + 4, 6);
+    ctx.fillRect(p.x + p.width / 2 - barW / 2 - 1, p.y - 12, barW + 2, 5);
     ctx.fillStyle = p.isSuperSaiyan ? '#f59e0b' : '#ef4444';
-    ctx.fillRect(p.x - 1, p.y - 13, (p.width + 2) * hpPct, 4);
+    ctx.fillRect(p.x + p.width / 2 - barW / 2, p.y - 11, barW * hpPct, 3);
   }
 
   // CHƯỞNG KAMEHAMEHA PHÁT SÁNG

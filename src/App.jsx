@@ -90,10 +90,9 @@ export function App() {
       },
       () => {
         setShowShenron(true);
-      }
+      },
+      playerState
     );
-
-    Object.assign(engine.player, playerState);
     engineRef.current = engine;
     engine.start();
 
