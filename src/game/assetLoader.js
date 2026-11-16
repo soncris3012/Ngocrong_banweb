@@ -74,6 +74,7 @@ class AssetLoader {
     this.loadImage('bg_nuixa', '/assets/hud/giaodienngoai/traidat/nuixa_traidat.png');
     this.loadImage('bg_nui', '/assets/hud/giaodienngoai/traidat/nui_traidat.png');
     this.loadImage('bg_nuicay', '/assets/hud/giaodienngoai/traidat/nuicay_traidat.png');
+    this.loadImage('bg_nuithap', '/assets/hud/giaodienngoai/traidat/nuithap_traidat.png');
     this.loadImage('eff_khoimay', '/assets/hieuung/hieuungmap/khoimay.png');
 
     // Hiệu ứng ánh sáng & lửa trại Làng Aru
@@ -111,13 +112,18 @@ class AssetLoader {
     }
 
     // 3. Nhân vật Xayda (Vegeta / Cađíc)
-    this.loadImage('vegeta_avt', '/assets/nhanvat/xayda/avatar/Cađíc_base/avt.png');
+    this.loadImage('xayda_avt', '/assets/nhanvat/xayda/avatar/Cađíc_base/avt.png');
     this.loadImage('vegeta_head_idle', '/assets/nhanvat/xayda/avatar/Cađíc_base/daudung.png');
     this.loadImage('vegeta_head_run', '/assets/nhanvat/xayda/avatar/Cađíc_base/dauchay.png');
+    this.loadImage('xayda_body_idle', '/assets/hud/giaodienngoai/xayda/thanxayda.png');
+    this.loadImage('xayda_leg_idle', '/assets/hud/giaodienngoai/xayda/chanxayda.png');
 
     // 4. Nhân vật Namếc (Piccolo)
+    this.loadImage('namek_avt', '/assets/nhanvat/detu/namek/avtlon.png');
     this.loadImage('namek_head_idle', '/assets/nhanvat/namek/avatar/namek_base/daudung.png');
     this.loadImage('namek_head_run', '/assets/nhanvat/namek/avatar/namek_base/dauchay.png');
+    this.loadImage('namek_body_idle', '/assets/hud/giaodienngoai/namek/thannamek.png');
+    this.loadImage('namek_leg_idle', '/assets/hud/giaodienngoai/namek/channamek.png');
 
     // 5. Cây Đậu Thần Karin 10 Cấp
     for (let i = 1; i <= 10; i++) {

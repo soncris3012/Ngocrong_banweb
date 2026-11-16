@@ -131,9 +131,9 @@ export function App() {
   }, [characterSelected, assetsLoaded]);
 
   const handleSelectCharacter = (newChar) => {
-    setPlayerState(prev => ({ ...prev, ...newChar }));
+    setPlayerState(prev => ({ ...prev, ...newChar, x: 620, y: 420 }));
     setCharacterSelected(true);
-    saveCharacterData(newChar);
+    saveCharacterData({ ...newChar, x: 620, y: 420 });
   };
 
   const handleUpdatePlayer = (updatedPlayer) => {

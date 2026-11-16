@@ -31,8 +31,8 @@ export class GameEngine {
     this.player = {
       name: 'SonGoku',
       planet: 0,
-      x: 320,
-      y: 460,
+      x: 620,
+      y: 420,
       vx: 0,
       vy: 0,
       width: 40,
@@ -100,10 +100,10 @@ export class GameEngine {
     this.droppedItems = [];
     this.particles = [];
 
-    // Cây Đậu Thần Karin (1 -> 10 hạt) - Đặt tại bãi cỏ thoáng đãng
+    // Cây Đậu Thần Karin (1 -> 10 hạt) - Đặt tại vị trí thông thoáng
     this.senzuTree = {
-      x: 1340,
-      y: 520,
+      x: 1920,
+      y: 480,
       beansReady: 6,
       maxBeans: 10,
       growTimer: 0
@@ -111,8 +111,8 @@ export class GameEngine {
 
     // Rương Đồ Làng Aru
     this.storageChest = {
-      x: 700,
-      y: 520
+      x: 380,
+      y: 480
     };
 
     // Đám mây trôi
@@ -1006,10 +1006,10 @@ export class GameEngine {
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, this.virtualWidth, 260);
 
-    // Nửa dưới (y > 240): Thung lũng xanh rừng già nguyên thủy
-    // Khớp 100% màu đáy rgb(23, 94, 28) của núi tháp NRO
-    ctx.fillStyle = '#175e1c';
-    ctx.fillRect(0, 240, this.virtualWidth, 360);
+    // Nửa dưới (y >= 360): Thung lũng xanh rừng già nguyên thủy
+    // Khớp 100% màu đáy rgb(21, 94, 29) của núi tháp NRO
+    ctx.fillStyle = '#155e1d';
+    ctx.fillRect(0, 360, this.virtualWidth, 240);
 
     // ============================================
     // 2. PARALLAX NỀN CHUẨN NRO GỐC (SCREEN SPACE)
@@ -1046,10 +1046,21 @@ export class GameEngine {
       const nuicayImg = assets.get('bg_nuicay');
       if (nuicayImg && nuicayImg.complete && nuicayImg.naturalWidth > 0) {
         const cw = 336;
-        const ch = 160;
+        const ch = 146;
         const offset = -(camX * 0.36) % cw;
         for (let sx = offset - cw; sx < this.virtualWidth + cw * 2; sx += cw) {
           ctx.drawImage(nuicayImg, sx, 150, cw, ch);
+        }
+      }
+
+      // Layer 4: Núi tháp gần chân đồi (Parallax factor 0.48)
+      const nuithapImg = assets.get('bg_nuithap');
+      if (nuithapImg && nuithapImg.complete && nuithapImg.naturalWidth > 0) {
+        const tw = 336;
+        const th = 160;
+        const offset = -(camX * 0.48) % tw;
+        for (let sx = offset - tw; sx < this.virtualWidth + tw * 2; sx += tw) {
+          ctx.drawImage(nuithapImg, sx, 220, tw, th);
         }
       }
     }
@@ -1061,7 +1072,7 @@ export class GameEngine {
     ctx.translate(-camX + shakeOffsetX, shakeOffsetY);
 
     const groundY = this.currentMap.groundY || 480;
-    const mapW = this.currentMap.width || 2540;
+    const mapW = this.currentMap.width || 2700;
 
     if (this.currentMap.id === 0) {
       // Sương mù & mây trắng bay lượn huyền ảo
@@ -1072,55 +1083,50 @@ export class GameEngine {
         const timeOffset = ((Date.now() / 1000) * 25) % kw;
         ctx.save();
         ctx.globalAlpha = 0.45;
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 5; i++) {
           ctx.drawImage(khoiImg, i * kw - timeOffset, groundY - 140, kw, kh);
         }
         ctx.restore();
       }
 
-      // Layer 4: CẢNH QUAN LÀNG ARU CHUẨN NRO GỐC (Nhà Cửa & Đại Thụ)
-      // Nhà Ông Gôhan (x = 180)
+      // Layer 5: CẢNH QUAN LÀNG ARU CHUẨN NRO GỐC (Nhà Cửa & Đại Thụ)
+      // Nhà Ông Gôhan (x = 100)
       const gohanHouse = assets.get('nhacua_gohan');
       if (gohanHouse && gohanHouse.complete && gohanHouse.naturalWidth > 0) {
         const hw = 246;
         const hh = 224;
-        ctx.drawImage(gohanHouse, 180, groundY - hh + 6, hw, hh);
+        ctx.drawImage(gohanHouse, 100, groundY - hh + 6, hw, hh);
       }
 
-      // Nhà Làng Aru mái rơm (x = 980)
+      // Lửa trại nướng đùi gà ở làng (x = 760)
+      const cuiImg = assets.get('deco_cui');
+      if (cuiImg && cuiImg.complete && cuiImg.naturalWidth > 0) {
+        ctx.drawImage(cuiImg, 760, groundY - 48, 66, 48);
+        const luaIdx = (Math.floor(Date.now() / 120) % 4) + 1;
+        const luaImg = assets.get(`eff_lua_${luaIdx}`);
+        if (luaImg && luaImg.complete && luaImg.naturalWidth > 0) {
+          ctx.drawImage(luaImg, 781, groundY - 38, 24, 41);
+        }
+      }
+
+      // Cây đại thụ 1 (x = 1120)
+      const tree1 = assets.get('caycoi_1');
+      if (tree1 && tree1.complete && tree1.naturalWidth > 0) {
+        ctx.drawImage(tree1, 1120, groundY - 234 + 6, 230, 234);
+      }
+
+      // Nhà Làng Aru mái rơm (x = 1520)
       const villageHouse = assets.get('nhacua_lang');
       if (villageHouse && villageHouse.complete && villageHouse.naturalWidth > 0) {
         const hw = 246;
         const hh = 224;
-        ctx.drawImage(villageHouse, 980, groundY - hh + 6, hw, hh);
+        ctx.drawImage(villageHouse, 1520, groundY - hh + 6, hw, hh);
       }
 
-      // Cây đại thụ 1 (x = 640)
-      const tree1 = assets.get('caycoi_1');
-      if (tree1 && tree1.complete && tree1.naturalWidth > 0) {
-        ctx.drawImage(tree1, 640, groundY - 250 + 10, 242, 250);
-      }
-
-      // Cây đại thụ 2 (x = 1880)
-      if (tree1 && tree1.complete && tree1.naturalWidth > 0) {
-        ctx.drawImage(tree1, 1880, groundY - 250 + 10, 242, 250);
-      }
-
-      // Cây cổ thụ 2 (x = 1480)
+      // Cây cổ thụ 2 (x = 2160)
       const tree2 = assets.get('caycoi_2');
       if (tree2 && tree2.complete && tree2.naturalWidth > 0) {
-        ctx.drawImage(tree2, 1480, groundY - 192 + 10, 184, 192);
-      }
-
-      // Lửa trại nướng đùi gà ở làng (x = 480)
-      const cuiImg = assets.get('deco_cui');
-      if (cuiImg && cuiImg.complete && cuiImg.naturalWidth > 0) {
-        ctx.drawImage(cuiImg, 480, groundY - 32, 54, 38);
-        const luaIdx = (Math.floor(Date.now() / 120) % 4) + 1;
-        const luaImg = assets.get(`eff_lua_${luaIdx}`);
-        if (luaImg && luaImg.complete && luaImg.naturalWidth > 0) {
-          ctx.drawImage(luaImg, 500, groundY - 48, 28, 34);
-        }
+        ctx.drawImage(tree2, 2160, groundY - 192 + 10, 184, 192);
       }
 
       // Tia sáng thiên thần rọi xuống làng
@@ -1129,8 +1135,8 @@ export class GameEngine {
         ctx.save();
         ctx.globalAlpha = 0.22;
         ctx.drawImage(lightImg, 220, 180, 480, 360);
-        ctx.drawImage(lightImg, 1020, 180, 480, 360);
-        ctx.drawImage(lightImg, 1820, 180, 480, 360);
+        ctx.drawImage(lightImg, 1120, 180, 480, 360);
+        ctx.drawImage(lightImg, 1920, 180, 480, 360);
         ctx.restore();
       }
     } else {
@@ -1828,41 +1834,50 @@ export class GameEngine {
     if (p.planet === 2) {
       // Xayda (Vegeta / Cađíc)
       headImg = isMoving ? assets.get('vegeta_head_run') : assets.get('vegeta_head_idle');
+      bodyImg = assets.get('xayda_body_idle') || assets.get('body_idle');
+      legImg = assets.get('xayda_leg_idle') || assets.get('leg_idle');
     } else if (p.planet === 1) {
       // Namếc (Piccolo)
       headImg = isMoving ? assets.get('namek_head_run') : assets.get('namek_head_idle');
+      bodyImg = assets.get('namek_body_idle') || assets.get('body_idle');
+      legImg = assets.get('namek_leg_idle') || assets.get('leg_idle');
     } else {
       // Trái Đất (Goku)
       headImg = isMoving ? assets.get('goku_head_run') : assets.get('goku_head_idle');
+
+      // Thân (Body)
+      if (p.isBeaming) {
+        bodyImg = assets.get('body_beam');
+      } else if (p.isChargingKi) {
+        bodyImg = assets.get('body_charge');
+      } else if (p.isAttacking) {
+        bodyImg = assets.get('body_beam') || assets.get('body_guard');
+      } else if (!p.onGround) {
+        bodyImg = p.vy < 0 ? assets.get('body_jump') : assets.get('body_fall');
+      } else if (isMoving) {
+        bodyImg = assets.get(`body_run_${p.runAnimFrame}`);
+      } else {
+        bodyImg = assets.get('body_idle');
+      }
+
+      // Chân (Leg)
+      if (p.isFlying) {
+        legImg = assets.get('leg_fly');
+      } else if (p.isChargingKi) {
+        legImg = assets.get('leg_charge');
+      } else if (!p.onGround) {
+        legImg = p.vy < 0 ? assets.get('leg_jump') : assets.get('leg_fall');
+      } else if (isMoving) {
+        legImg = assets.get(`leg_run_${p.runAnimFrame}`);
+      } else {
+        legImg = assets.get('leg_idle');
+      }
     }
 
-    // Thân (Body)
-    if (p.isBeaming) {
-      bodyImg = assets.get('body_beam');
-    } else if (p.isChargingKi) {
-      bodyImg = assets.get('body_charge');
-    } else if (p.isAttacking) {
-      bodyImg = assets.get('body_beam') || assets.get('body_guard');
-    } else if (!p.onGround) {
-      bodyImg = p.vy < 0 ? assets.get('body_jump') : assets.get('body_fall');
-    } else if (isMoving) {
-      bodyImg = assets.get(`body_run_${p.runAnimFrame}`);
-    } else {
-      bodyImg = assets.get('body_idle');
-    }
-
-    // Chân (Leg)
-    if (p.isFlying) {
-      legImg = assets.get('leg_fly');
-    } else if (p.isChargingKi) {
-      legImg = assets.get('leg_charge');
-    } else if (!p.onGround) {
-      legImg = p.vy < 0 ? assets.get('leg_jump') : assets.get('leg_fall');
-    } else if (isMoving) {
-      legImg = assets.get(`leg_run_${p.runAnimFrame}`);
-    } else {
-      legImg = assets.get('leg_idle');
-    }
+    // Bảo hiểm an toàn 100% không bao giờ tàng hình thân hoặc chân
+    if (!headImg) headImg = assets.get('goku_head_idle');
+    if (!bodyImg) bodyImg = assets.get('body_idle');
+    if (!legImg) legImg = assets.get('leg_idle');
 
     // 3. Tỷ lệ ghép Sprite chính xác NRO
     const scale = 0.55;
@@ -1883,8 +1898,9 @@ export class GameEngine {
     const bodyX = -bw / 2;
     const bodyY = legY + 10 - bh;
 
+    const headOverlap = p.planet === 2 ? 18 : 16;
     const headX = -hw / 2;
-    const headY = bodyY + 16 - hh;
+    const headY = bodyY + headOverlap - hh;
 
     // HIỆU ỨNG SUPER SAIYAN TÓC VÀNG CHO TRÁI ĐẤT
     if (p.isSuperSaiyan && p.planet === 0) {
