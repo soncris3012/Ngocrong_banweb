@@ -1,8 +1,7 @@
 import React from 'react';
 import { 
-  Heart, Zap, Shield, Swords, Sparkles, 
-  Coins, Diamond, Volume2, VolumeX, Trophy, 
-  Database, Package, ShoppingBag, ArrowRight
+  Sparkles, Volume2, VolumeX, Trophy, 
+  Database, Package, ShoppingBag, Zap, Shield, Heart, Award
 } from 'lucide-react';
 import { PLANETS, QUESTS } from '../game/constants';
 import { sound } from '../game/audio';
@@ -13,7 +12,7 @@ export const HUD = ({
   onOpenShop, 
   onOpenLeaderboard, 
   onOpenSupabase, 
-  onTriggerAction,
+  onOpenShenron,
   engineRef 
 }) => {
   const [isMuted, setIsMuted] = React.useState(false);
@@ -27,171 +26,183 @@ export const HUD = ({
 
   const hpPercent = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
   const kiPercent = Math.max(0, Math.min(100, (player.ki / player.maxKi) * 100));
+  const dragonBallCount = (player.dragonBalls || []).filter(Boolean).length;
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 select-none">
-      {/* HEADER / TOP BAR */}
+    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-2.5 sm:p-4 select-none">
+      {/* ================= TOP BAR ================= */}
       <div className="flex justify-between items-start w-full">
-        {/* THÔNG TIN NHÂN VẬT & CHỈ SỐ */}
-        <div className="pointer-events-auto bg-gray-900/90 backdrop-blur border-2 border-yellow-500/70 rounded-xl p-2.5 shadow-2xl flex items-center gap-3">
-          {/* Avatar Hành Tinh */}
+        {/* AVATAR & THANH MÁU CHUẨN GIAO DIỆN NRO */}
+        <div className="pointer-events-auto bg-gray-950/90 backdrop-blur-md border-2 border-yellow-500/80 rounded-2xl p-2.5 shadow-2xl flex items-center gap-3">
+          {/* Avatar Nhân vật */}
           <div 
-            className="w-14 h-14 rounded-lg flex flex-col items-center justify-center font-bold text-2xl border-2 border-white/20 shadow-inner"
-            style={{ backgroundColor: planet.primaryColor }}
+            className="w-14 h-14 rounded-xl flex flex-col items-center justify-center font-bold text-2xl border-2 border-white/30 shadow-inner relative overflow-hidden"
+            style={{ backgroundColor: player.isSuperSaiyan ? '#ca8a04' : planet.primaryColor }}
           >
-            <span>{planet.symbol}</span>
-            <span className="text-[9px] font-pixel text-white uppercase mt-0.5">{planet.name}</span>
+            <span>{player.isSuperSaiyan ? '⚡' : planet.symbol}</span>
+            <span className="text-[9px] font-pixel text-white uppercase drop-shadow">
+              {player.isSuperSaiyan ? 'SSJ' : planet.name}
+            </span>
+            {player.isSuperSaiyan && (
+              <span className="absolute inset-0 bg-yellow-400/20 animate-pulse pointer-events-none" />
+            )}
           </div>
 
           {/* Thanh HP & KI & Sức Mạnh */}
-          <div className="flex flex-col gap-1 w-44 sm:w-56">
-            <div className="flex justify-between items-center text-xs font-bold text-yellow-400">
-              <span className="truncate max-w-[120px]">{player.name}</span>
-              <span className="text-[10px] text-gray-300 font-pixel">Map: {player.currentMapName || 'Làng Aru'}</span>
+          <div className="flex flex-col gap-1 w-44 sm:w-60">
+            <div className="flex justify-between items-center text-xs font-bold text-yellow-300">
+              <span className="truncate max-w-[130px] flex items-center gap-1">
+                {player.name}
+                {player.isSuperSaiyan && <span className="text-[10px] text-yellow-400 font-pixel">[SSJ]</span>}
+              </span>
+              <span className="text-[10px] text-gray-300 font-mono">Map: {player.currentMapName || 'Làng Aru'}</span>
             </div>
 
-            {/* Thanh Máu HP */}
-            <div className="relative w-full h-4 bg-gray-950 rounded-full overflow-hidden border border-red-900/60">
+            {/* Thanh HP Đỏ */}
+            <div className="relative w-full h-4 bg-gray-900 rounded-full overflow-hidden border border-red-800 shadow-inner">
               <div 
-                className="h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-150"
+                className="h-full bg-gradient-to-r from-red-600 via-rose-500 to-red-400 transition-all duration-150"
                 style={{ width: `${hpPercent}%` }}
               />
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow">
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow font-mono">
                 HP: {Math.round(player.hp)} / {player.maxHp}
               </span>
             </div>
 
-            {/* Thanh Nội Lực KI */}
-            <div className="relative w-full h-4 bg-gray-950 rounded-full overflow-hidden border border-blue-900/60">
+            {/* Thanh KI Lam */}
+            <div className="relative w-full h-4 bg-gray-900 rounded-full overflow-hidden border border-blue-800 shadow-inner">
               <div 
-                className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-150"
+                className="h-full bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400 transition-all duration-150"
                 style={{ width: `${kiPercent}%` }}
               />
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow">
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow font-mono">
                 KI: {Math.round(player.ki)} / {player.maxKi}
               </span>
             </div>
 
             {/* Sức mạnh & Tiềm năng */}
-            <div className="flex justify-between text-[11px] font-semibold text-gray-200 mt-0.5">
-              <span className="text-amber-300 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> SM: {player.power.toLocaleString()}
+            <div className="flex justify-between text-[11px] font-bold text-gray-200 mt-0.5">
+              <span className="text-amber-300 flex items-center gap-1 font-mono">
+                <Sparkles className="w-3.5 h-3.5 text-yellow-400" /> SM: {player.power.toLocaleString()}
               </span>
-              <span className="text-cyan-300">TN: {player.potential.toLocaleString()}</span>
+              <span className="text-cyan-300 font-mono">TN: {player.potential.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
-        {/* TRACKER NHIỆM VỤ HIỆN TẠI (CENTER) */}
+        {/* TRACKER NHIỆM VỤ (CENTER) */}
         {curQuest && (
-          <div className="pointer-events-auto hidden md:flex flex-col items-center bg-gray-900/85 backdrop-blur border border-amber-500/50 rounded-xl px-4 py-2 shadow-lg max-w-md text-center">
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-wide">
-              📜 Nhiệm Vụ: {curQuest.title}
+          <div className="pointer-events-auto hidden md:flex flex-col items-center bg-gray-950/85 backdrop-blur border border-yellow-500/60 rounded-2xl px-4 py-2 shadow-xl max-w-md text-center">
+            <span className="text-xs font-bold text-yellow-400 uppercase tracking-wide">
+              📜 {curQuest.title}
             </span>
-            <span className="text-[11px] text-gray-300 mt-0.5">
-              {curQuest.desc}
-            </span>
-            <div className="flex items-center gap-2 mt-1 text-[11px] font-bold text-green-400">
+            <span className="text-[11px] text-gray-300 mt-0.5">{curQuest.desc}</span>
+            <div className="flex items-center gap-2 mt-1 text-[11px] font-bold text-green-400 font-mono">
               <span>Tiến độ: {player.questProgress} / {curQuest.targetCount}</span>
               {player.questProgress >= curQuest.targetCount && (
-                <span className="text-yellow-300 animate-pulse">✓ Xong!</span>
+                <span className="text-yellow-300 animate-pulse font-pixel text-[10px]">✓ HOÀN THÀNH</span>
               )}
             </div>
           </div>
         )}
 
-        {/* NÚT TÍNH NĂNG & TIỀN TỆ (TOP RIGHT) */}
+        {/* TIỀN TỆ & NGỌC RỒNG & NÚT CHỨC NĂNG (RIGHT) */}
         <div className="pointer-events-auto flex flex-col items-end gap-2">
-          {/* Vàng & Ngọc */}
-          <div className="bg-gray-900/90 backdrop-blur border border-yellow-500/50 rounded-xl px-3 py-1.5 flex items-center gap-3 text-xs font-bold shadow-lg">
-            <div className="flex items-center gap-1 text-yellow-400">
-              <Coins className="w-4 h-4" />
+          {/* Vàng, Ngọc & Đậu thần */}
+          <div className="bg-gray-950/90 backdrop-blur border border-yellow-500/60 rounded-2xl px-3 py-1.5 flex items-center gap-3 text-xs font-bold shadow-xl">
+            {/* Vàng */}
+            <div className="flex items-center gap-1.5 text-yellow-400 font-mono">
+              <img src="/assets/hud/giaodientrong/vang.png" alt="Vàng" className="w-4 h-4 object-contain" />
               <span>{player.gold.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-1 text-cyan-400">
-              <Diamond className="w-4 h-4" />
+
+            {/* Ngọc Xanh */}
+            <div className="flex items-center gap-1.5 text-cyan-400 font-mono">
+              <img src="/assets/hud/giaodientrong/ngoc.png" alt="Ngọc" className="w-4 h-4 object-contain" />
               <span>{player.gem.toLocaleString()}</span>
             </div>
+
+            {/* Đậu Thần */}
             <div 
               onClick={() => engineRef.current?.eatSenzu()}
               title="Click để ăn đậu thần hồi 100% HP/KI (Phím H)"
-              className="flex items-center gap-1 text-green-400 bg-green-950/60 hover:bg-green-800/60 px-2 py-0.5 rounded cursor-pointer transition border border-green-500/40"
+              className="flex items-center gap-1.5 text-green-400 bg-green-950/60 hover:bg-green-800/60 px-2 py-0.5 rounded-lg cursor-pointer transition border border-green-500/40"
             >
-              <span>🌱</span>
-              <span>{player.senzuCount}</span>
+              <img src="/assets/hud/giaodientrong/odauthan.png" alt="Đậu" className="w-4 h-4 object-contain" />
+              <span className="font-mono">{player.senzuCount}</span>
             </div>
           </div>
 
-          {/* Danh sách nút Action */}
-          <div className="flex items-center gap-1.5 bg-gray-900/80 backdrop-blur p-1 rounded-xl border border-gray-700">
-            <button 
-              onClick={onOpenInventory}
-              title="Hành Trang & Trang Bị"
-              className="p-2 rounded-lg bg-gray-800 hover:bg-amber-600 transition text-white shadow"
-            >
+          {/* THANH 7 VIÊN NGỌC RỒNG */}
+          <div 
+            onClick={() => {
+              if (dragonBallCount >= 7) onOpenShenron();
+            }}
+            title={dragonBallCount >= 7 ? "Click để gọi Rồng Thần Shenron!" : "Đánh quái để thu thập đủ 7 viên ngọc rồng!"}
+            className={`flex items-center gap-1 bg-gray-950/90 backdrop-blur border px-2.5 py-1 rounded-xl shadow-lg transition ${
+              dragonBallCount >= 7 ? 'border-yellow-400 animate-pulse cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.6)]' : 'border-gray-800 opacity-90'
+            }`}
+          >
+            {Array.from({ length: 7 }).map((_, i) => {
+              const collected = player.dragonBalls && player.dragonBalls[i];
+              return (
+                <img 
+                  key={i}
+                  src={`/assets/vatpham/vatphamgame/ngocrong/nr${i + 1}s.png`}
+                  alt={`${i + 1} sao`}
+                  className={`w-4 h-4 object-contain transition ${collected ? 'opacity-100 scale-110 drop-shadow' : 'opacity-25 grayscale'}`}
+                />
+              );
+            })}
+            <span className={`text-[10px] font-bold ml-1 font-mono ${dragonBallCount >= 7 ? 'text-yellow-400 animate-bounce' : 'text-gray-400'}`}>
+              {dragonBallCount >= 7 ? 'GỌI RỒNG!' : `${dragonBallCount}/7`}
+            </span>
+          </div>
+
+          {/* DANH SÁCH NÚT ICON MODAL */}
+          <div className="flex items-center gap-1.5 bg-gray-950/80 backdrop-blur p-1 rounded-xl border border-gray-800">
+            <button onClick={onOpenInventory} title="Hành Trang" className="p-2 rounded-lg bg-gray-900 hover:bg-amber-600 transition text-white shadow">
               <Package className="w-4 h-4" />
             </button>
-            <button 
-              onClick={onOpenShop}
-              title="Cửa Hàng Santa"
-              className="p-2 rounded-lg bg-gray-800 hover:bg-red-600 transition text-white shadow"
-            >
+            <button onClick={onOpenShop} title="Cửa Hàng Santa" className="p-2 rounded-lg bg-gray-900 hover:bg-red-600 transition text-white shadow">
               <ShoppingBag className="w-4 h-4" />
             </button>
-            <button 
-              onClick={onOpenLeaderboard}
-              title="Bảng Xếp Hạng Cao Thủ"
-              className="p-2 rounded-lg bg-gray-800 hover:bg-yellow-600 transition text-white shadow"
-            >
+            <button onClick={onOpenLeaderboard} title="Bảng Xếp Hạng" className="p-2 rounded-lg bg-gray-900 hover:bg-yellow-600 transition text-white shadow">
               <Trophy className="w-4 h-4" />
             </button>
-            <button 
-              onClick={onOpenSupabase}
-              title="Cấu Hình Supabase Cloud Database"
-              className="p-2 rounded-lg bg-gray-800 hover:bg-emerald-600 transition text-white shadow"
-            >
+            <button onClick={onOpenSupabase} title="Cấu Hình Supabase DB" className="p-2 rounded-lg bg-gray-900 hover:bg-emerald-600 transition text-white shadow">
               <Database className="w-4 h-4" />
             </button>
-            <button 
-              onClick={toggleSound}
-              title="Bật/Tắt Âm Thanh"
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition text-white shadow"
-            >
+            <button onClick={toggleSound} title="Bật/Tắt Âm Thanh" className="p-2 rounded-lg bg-gray-900 hover:bg-gray-800 transition text-white shadow">
               {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-green-400" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* FOOTER / BOTTOM BAR: PHÍM NÓNG & ĐIỀU KHIỂN */}
+      {/* ================= BOTTOM BAR: PHÍM NÓNG & SKILL HOTBAR ================= */}
       <div className="flex justify-between items-end w-full">
-        {/* MOBILE D-PAD (TRÁI / PHẢI / NHẢY / CÚI) */}
-        <div className="pointer-events-auto flex md:hidden items-center gap-2 bg-gray-900/70 p-2 rounded-2xl backdrop-blur border border-white/10">
+        {/* MOBILE VIRTUAL JOYSTICK */}
+        <div className="pointer-events-auto flex md:hidden items-center gap-1.5 bg-gray-950/80 p-2 rounded-2xl backdrop-blur border border-white/10">
           <button 
             onTouchStart={() => { if (engineRef.current) engineRef.current.mobileControls.left = true; }}
             onTouchEnd={() => { if (engineRef.current) engineRef.current.mobileControls.left = false; }}
-            onMouseDown={() => { if (engineRef.current) engineRef.current.mobileControls.left = true; }}
-            onMouseUp={() => { if (engineRef.current) engineRef.current.mobileControls.left = false; }}
-            className="w-12 h-12 bg-gray-800/90 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow"
+            className="w-12 h-12 bg-gray-900 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow border border-gray-700"
           >
             ◀
           </button>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             <button 
               onTouchStart={() => { if (engineRef.current) engineRef.current.mobileControls.up = true; }}
               onTouchEnd={() => { if (engineRef.current) engineRef.current.mobileControls.up = false; }}
-              onMouseDown={() => { if (engineRef.current) engineRef.current.mobileControls.up = true; }}
-              onMouseUp={() => { if (engineRef.current) engineRef.current.mobileControls.up = false; }}
-              className="w-12 h-12 bg-gray-800/90 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow"
+              className="w-12 h-12 bg-gray-900 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow border border-gray-700"
             >
               ▲
             </button>
             <button 
               onTouchStart={() => { if (engineRef.current) engineRef.current.mobileControls.down = true; }}
               onTouchEnd={() => { if (engineRef.current) engineRef.current.mobileControls.down = false; }}
-              onMouseDown={() => { if (engineRef.current) engineRef.current.mobileControls.down = true; }}
-              onMouseUp={() => { if (engineRef.current) engineRef.current.mobileControls.down = false; }}
-              className="w-12 h-12 bg-gray-800/90 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow"
+              className="w-12 h-12 bg-gray-900 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow border border-gray-700"
             >
               ▼
             </button>
@@ -199,32 +210,59 @@ export const HUD = ({
           <button 
             onTouchStart={() => { if (engineRef.current) engineRef.current.mobileControls.right = true; }}
             onTouchEnd={() => { if (engineRef.current) engineRef.current.mobileControls.right = false; }}
-            onMouseDown={() => { if (engineRef.current) engineRef.current.mobileControls.right = true; }}
-            onMouseUp={() => { if (engineRef.current) engineRef.current.mobileControls.right = false; }}
-            className="w-12 h-12 bg-gray-800/90 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow"
+            className="w-12 h-12 bg-gray-900 active:bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow border border-gray-700"
           >
             ▶
           </button>
         </div>
 
-        {/* THANH SKILL HOTBAR (CENTER) */}
-        <div className="pointer-events-auto flex items-center gap-2 bg-gray-900/90 backdrop-blur border border-yellow-500/40 p-2 rounded-2xl shadow-2xl mx-auto">
-          {/* Nút Đấm [J] */}
+        {/* THANH SKILL HOTBAR VỚI REAL ICONS GỐC NRO */}
+        <div className="pointer-events-auto flex items-center gap-2 bg-gray-950/95 backdrop-blur border-2 border-yellow-500/60 p-2.5 rounded-3xl shadow-2xl mx-auto">
+          {/* Skill 1: Đấm [J] */}
           <button 
             onClick={() => engineRef.current?.triggerAttack()}
-            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-b from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 active:scale-95 transition rounded-xl border-2 border-red-400/80 shadow-lg"
+            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gray-900 hover:bg-gray-800 active:scale-95 transition rounded-2xl border border-red-500 shadow-lg overflow-hidden"
           >
-            <span className="text-xl">🥊</span>
-            <span className="text-[10px] font-bold text-white font-pixel">ĐẤM [J]</span>
+            <img src="/assets/kynang/iconkynang/traidat/skill1_traidat.png" alt="Đấm" className="w-8 h-8 object-contain" />
+            <span className="text-[9px] font-pixel text-yellow-300 font-bold mt-0.5">ĐẤM [J]</span>
           </button>
 
-          {/* Nút Chưởng [K] */}
+          {/* Skill 2: Kamehameha [K] */}
           <button 
             onClick={() => engineRef.current?.triggerBeam()}
-            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-b from-blue-600 to-cyan-700 hover:from-blue-500 hover:to-cyan-600 active:scale-95 transition rounded-xl border-2 border-cyan-400/80 shadow-lg"
+            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gray-900 hover:bg-gray-800 active:scale-95 transition rounded-2xl border border-cyan-400 shadow-lg overflow-hidden"
           >
-            <span className="text-xl">💥</span>
-            <span className="text-[10px] font-bold text-white font-pixel truncate max-w-[50px]">{planet.signatureSkill} [K]</span>
+            <img src="/assets/kynang/iconkynang/traidat/skill2_traidat.png" alt="Kame" className="w-8 h-8 object-contain" />
+            <span className="text-[9px] font-pixel text-cyan-300 font-bold mt-0.5">KAME [K]</span>
+          </button>
+
+          {/* Skill 3: Thái Dương Hạ San [U] */}
+          <button 
+            onClick={() => engineRef.current?.triggerSolarFlare()}
+            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gray-900 hover:bg-gray-800 active:scale-95 transition rounded-2xl border border-yellow-400 shadow-lg overflow-hidden"
+          >
+            <img src="/assets/kynang/iconkynang/traidat/skill3_traidat.png" alt="Thái dương" className="w-8 h-8 object-contain" />
+            <span className="text-[9px] font-pixel text-yellow-300 font-bold mt-0.5">CHÓI [U]</span>
+          </button>
+
+          {/* Skill 4: Quả Cầu Kênh Khi [I] */}
+          <button 
+            onClick={() => engineRef.current?.triggerSpiritBomb()}
+            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gray-900 hover:bg-gray-800 active:scale-95 transition rounded-2xl border border-blue-500 shadow-lg overflow-hidden"
+          >
+            <img src="/assets/kynang/iconkynang/traidat/skill4_traidat.png" alt="Kênh khi" className="w-8 h-8 object-contain" />
+            <span className="text-[9px] font-pixel text-blue-300 font-bold mt-0.5">KHI [I]</span>
+          </button>
+
+          {/* Skill 5: Biến Hình Super Saiyan [O] */}
+          <button 
+            onClick={() => engineRef.current?.toggleSuperSaiyan()}
+            className={`group relative flex flex-col items-center justify-center w-14 h-14 active:scale-95 transition rounded-2xl border-2 shadow-lg overflow-hidden ${
+              player.isSuperSaiyan ? 'bg-amber-900 border-yellow-300 shadow-[0_0_15px_rgba(250,204,21,0.8)]' : 'bg-gray-900 border-yellow-600 hover:bg-gray-800'
+            }`}
+          >
+            <img src="/assets/kynang/iconkynang/traidat/skill8_traidat.png" alt="Super Saiyan" className="w-8 h-8 object-contain" />
+            <span className="text-[9px] font-pixel text-yellow-400 font-bold mt-0.5">SSJ [O]</span>
           </button>
 
           {/* Nút Tụ Ki [L] */}
@@ -233,40 +271,41 @@ export const HUD = ({
             onMouseUp={() => engineRef.current?.toggleChargeKi(false)}
             onTouchStart={() => engineRef.current?.toggleChargeKi(true)}
             onTouchEnd={() => engineRef.current?.toggleChargeKi(false)}
-            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-b from-amber-500 to-yellow-700 hover:from-amber-400 hover:to-yellow-600 active:scale-95 transition rounded-xl border-2 border-amber-300 shadow-lg"
+            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gray-900 hover:bg-gray-800 active:scale-95 transition rounded-2xl border border-amber-400 shadow-lg"
           >
-            <span className="text-xl">⚡</span>
-            <span className="text-[10px] font-bold text-white font-pixel">TỤ KI [L]</span>
+            <span className="text-2xl">⚡</span>
+            <span className="text-[9px] font-pixel text-amber-300 font-bold">TỤ KI [L]</span>
           </button>
 
           {/* Nút Ăn Đậu [H] */}
           <button 
             onClick={() => engineRef.current?.eatSenzu()}
-            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-b from-emerald-600 to-green-800 hover:from-emerald-500 hover:to-green-700 active:scale-95 transition rounded-xl border-2 border-green-400 shadow-lg"
+            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gray-900 hover:bg-gray-800 active:scale-95 transition rounded-2xl border border-green-400 shadow-lg"
           >
-            <span className="text-xl">🌱</span>
-            <span className="text-[10px] font-bold text-white font-pixel">ĐẬU [H]</span>
+            <img src="/assets/hud/giaodientrong/odauthan.png" alt="Đậu" className="w-7 h-7 object-contain" />
+            <span className="text-[9px] font-pixel text-green-300 font-bold">ĐẬU [H]</span>
           </button>
 
-          {/* Nút Tương Tác / Cổng [E] */}
+          {/* Nút Nói [E] */}
           <button 
             onClick={() => engineRef.current?.checkInteractions()}
-            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-b from-purple-600 to-indigo-800 hover:from-purple-500 hover:to-indigo-700 active:scale-95 transition rounded-xl border-2 border-purple-400 shadow-lg"
+            className="group relative flex flex-col items-center justify-center w-14 h-14 bg-gray-900 hover:bg-gray-800 active:scale-95 transition rounded-2xl border border-purple-400 shadow-lg"
           >
-            <span className="text-xl">💬</span>
-            <span className="text-[10px] font-bold text-white font-pixel">NÓI [E]</span>
+            <span className="text-2xl">💬</span>
+            <span className="text-[9px] font-pixel text-purple-300 font-bold">NÓI [E]</span>
           </button>
         </div>
 
-        {/* HƯỚNG DẪN BÀN PHÍM (DESKTOP TRÊN GÓC PHẢI DƯỚI) */}
-        <div className="pointer-events-auto hidden lg:flex flex-col text-[11px] bg-gray-900/80 backdrop-blur p-2.5 rounded-xl border border-gray-700 text-gray-300 leading-relaxed shadow-lg">
-          <span className="font-bold text-yellow-400 mb-0.5">🎮 Phím điều khiển:</span>
-          <span>• A / D hoặc ◀ ▶: Chạy</span>
-          <span>• W hoặc ▲ / Space: Nhảy / Bay</span>
-          <span>• S hoặc ▼: Hạ cánh</span>
-          <span>• J: Đấm | K: Chưởng</span>
-          <span>• L: Tụ KI | H: Ăn Đậu Karin</span>
-          <span>• E: Tương tác NPC / Qua cổng</span>
+        {/* HƯỚNG DẪN BÀN PHÍM */}
+        <div className="pointer-events-auto hidden xl:flex flex-col text-[11px] bg-gray-950/90 backdrop-blur p-3 rounded-2xl border border-yellow-500/50 text-gray-300 leading-relaxed shadow-xl">
+          <span className="font-bold text-yellow-400 mb-0.5">🎮 Bảng phím chiêu thức:</span>
+          <span>• <b>J:</b> Đấm combo 3 hit</span>
+          <span>• <b>K:</b> Kamehameha xuyên màn hình</span>
+          <span>• <b>U:</b> Thái Dương Hạ San (Gây choáng)</span>
+          <span>• <b>I:</b> Quả Cầu Kênh Khi (Sát thương khủng)</span>
+          <span>• <b>O:</b> Biến hình Super Saiyan (x2 Công)</span>
+          <span>• <b>L:</b> Giữ Tụ KI | <b>H:</b> Ăn Đậu Karin</span>
+          <span>• <b>E:</b> Trò chuyện NPC / Rương đồ / Cổng</span>
         </div>
       </div>
     </div>

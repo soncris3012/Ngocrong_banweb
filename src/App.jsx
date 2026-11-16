@@ -7,7 +7,8 @@ import { InventoryModal } from './components/InventoryModal';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { SupabaseModal } from './components/SupabaseModal';
 import { AuthModal } from './components/AuthModal';
-import { saveCharacterData, loadCharacterData, isSupabaseConfigured } from './services/supabase';
+import { ShenronModal } from './components/ShenronModal';
+import { saveCharacterData, loadCharacterData } from './services/supabase';
 
 export function App() {
   const canvasRef = useRef(null);
@@ -18,22 +19,24 @@ export function App() {
   const [playerState, setPlayerState] = useState({
     name: 'SonGoku',
     planet: 0,
-    hp: 1200,
-    maxHp: 1200,
-    ki: 1000,
-    maxKi: 1000,
-    attack: 55,
-    defense: 12,
-    crit: 5,
+    hp: 1500,
+    maxHp: 1500,
+    ki: 1200,
+    maxKi: 1200,
+    attack: 65,
+    defense: 15,
+    crit: 8,
     power: 2000,
     potential: 2000,
-    gold: 1500,
-    gem: 20,
+    gold: 5000,
+    gem: 50,
     senzuCount: 10,
     senzuLevel: 1,
     questId: 1,
     questProgress: 0,
     currentMapName: 'Làng Aru',
+    isSuperSaiyan: false,
+    dragonBalls: [false, false, false, false, false, false, false],
     inventory: []
   });
 
@@ -43,6 +46,7 @@ export function App() {
   const [showInventory, setShowInventory] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSupabase, setShowSupabase] = useState(false);
+  const [showShenron, setShowShenron] = useState(false);
 
   // Tự động kiểm tra nhân vật đã lưu trước đó
   useEffect(() => {
@@ -64,7 +68,6 @@ export function App() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Kích thước canvas full viewport
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -77,7 +80,6 @@ export function App() {
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Tạo Engine mới
     const engine = new GameEngine(
       canvas,
       (updatedState) => {
@@ -85,15 +87,17 @@ export function App() {
       },
       (npc) => {
         setActiveNPC(npc);
+      },
+      () => {
+        setShowShenron(true);
       }
     );
 
-    // Nạp state đã chọn vào player của engine
     Object.assign(engine.player, playerState);
     engineRef.current = engine;
     engine.start();
 
-    // Auto-save định kỳ 15s một lần lên Supabase/LocalStorage
+    // Auto-save định kỳ 15s một lần
     const saveInterval = setInterval(() => {
       if (engineRef.current) {
         saveCharacterData(engineRef.current.player);
@@ -107,14 +111,12 @@ export function App() {
     };
   }, [characterSelected]);
 
-  // Handler khi người chơi chọn nhân vật mới
   const handleSelectCharacter = (newChar) => {
     setPlayerState(prev => ({ ...prev, ...newChar }));
     setCharacterSelected(true);
     saveCharacterData(newChar);
   };
 
-  // Cập nhật người chơi từ modal (mua đồ, nâng chỉ số)
   const handleUpdatePlayer = (updatedPlayer) => {
     setPlayerState(updatedPlayer);
     if (engineRef.current) {
@@ -137,7 +139,7 @@ export function App() {
       />
 
       {/* 3. HIỆU ỨNG ARCADE SCANLINE RETRO */}
-      <div className="absolute inset-0 scanline z-10 pointer-events-none opacity-40" />
+      <div className="absolute inset-0 scanline z-10 pointer-events-none opacity-30" />
 
       {/* 4. HEADS-UP DISPLAY (HUD) */}
       {characterSelected && (
@@ -149,6 +151,7 @@ export function App() {
             onOpenShop={() => setShowShop(true)}
             onOpenLeaderboard={() => setShowLeaderboard(true)}
             onOpenSupabase={() => setShowSupabase(true)}
+            onOpenShenron={() => setShowShenron(true)}
           />
         </div>
       )}
@@ -187,6 +190,14 @@ export function App() {
       {showSupabase && (
         <SupabaseModal 
           onClose={() => setShowSupabase(false)} 
+        />
+      )}
+
+      {showShenron && (
+        <ShenronModal 
+          player={playerState} 
+          onClose={() => setShowShenron(false)} 
+          onGrantWish={handleUpdatePlayer}
         />
       )}
     </div>
