@@ -55,6 +55,8 @@ export class GameEngine {
       // Animation frame counters
       runAnimFrame: 1,
       animTick: 0,
+      targetMoveX: null,
+      clickMarker: null,
 
       // Kỹ năng đặc biệt
       isSpiritBomb: false,
@@ -179,14 +181,58 @@ export class GameEngine {
       if (e.code === 'KeyL') this.toggleChargeKi(false);
     };
 
+    // Điều khiển Click / Chạm màn hình di chuyển & tấn công chuẩn Dragon Boy
+    this.handleCanvasClick = (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const clickScreenX = (e.clientX - rect.left) / this.scale;
+      const clickScreenY = (e.clientY - rect.top) / this.scale;
+      const worldX = clickScreenX + this.cameraX;
+      const worldY = clickScreenY;
+
+      // 1. Click vào NPC
+      for (const npc of this.currentMap.npcs) {
+        if (Math.hypot(worldX - npc.x, worldY - (npc.y - 35)) < 45) {
+          this.player.targetMoveX = npc.x + (this.player.x < npc.x ? -55 : 55);
+          this.player.clickMarker = { x: npc.x, y: npc.y - 35, type: 'npc', frame: 0, tick: 0 };
+          this.pendingInteraction = { type: 'npc', target: npc };
+          return;
+        }
+      }
+
+      // 2. Click vào Quái vật / Mộc Nhân để đánh
+      for (const m of this.monsters) {
+        if (!m.isDead && Math.hypot(worldX - m.x, worldY - (m.y - 35)) < 55) {
+          this.player.targetMoveX = m.x + (this.player.x < m.x ? -50 : 50);
+          this.player.clickMarker = { x: m.x, y: m.y - 35, type: 'npc', frame: 0, tick: 0 };
+          this.pendingInteraction = { type: 'monster', target: m };
+          return;
+        }
+      }
+
+      // 3. Click vào Cây Đậu Thần Karin
+      if (this.currentMap.id === 0 && Math.hypot(worldX - this.senzuTree.x, worldY - (this.senzuTree.y - 70)) < 65) {
+        this.player.targetMoveX = this.senzuTree.x + (this.player.x < this.senzuTree.x ? -55 : 55);
+        this.player.clickMarker = { x: this.senzuTree.x, y: this.senzuTree.y - 40, type: 'move', frame: 0, tick: 0 };
+        this.pendingInteraction = { type: 'senzu' };
+        return;
+      }
+
+      // 4. Click di chuyển bình thường tới tọa độ
+      this.player.targetMoveX = Math.max(30, Math.min(this.currentMap.width - 60, worldX));
+      this.player.clickMarker = { x: worldX, y: this.currentMap.groundY - 10, type: 'move', frame: 0, tick: 0 };
+      this.pendingInteraction = null;
+    };
+
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
+    this.canvas.addEventListener('pointerdown', this.handleCanvasClick);
   }
 
   destroy() {
     this.isRunning = false;
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    this.canvas.removeEventListener('pointerdown', this.handleCanvasClick);
   }
 
   start() {
@@ -218,6 +264,12 @@ export class GameEngine {
     const moveUp = this.keys['KeyW'] || this.keys['ArrowUp'] || this.keys['Space'] || this.mobileControls.up;
     const moveDown = this.keys['KeyS'] || this.keys['ArrowDown'] || this.mobileControls.down;
 
+    // Hủy di chuyển theo click nếu người chơi nhấn phím điều hướng
+    if (moveLeft || moveRight || moveUp || moveDown) {
+      p.targetMoveX = null;
+      this.pendingInteraction = null;
+    }
+
     const baseSpeed = p.isSuperSaiyan ? 6.0 : 4.5;
 
     if (!p.isBeaming && !p.isChargingKi && !p.isSpiritBomb) {
@@ -234,6 +286,33 @@ export class GameEngine {
         p.animTick++;
         if (p.animTick % 5 === 0) {
           p.runAnimFrame = (p.runAnimFrame % 5) + 1;
+        }
+      } else if (p.targetMoveX !== null) {
+        // Tự động chạy tới điểm click trên màn hình
+        const distToTarget = p.targetMoveX - (p.x + p.width / 2);
+        if (Math.abs(distToTarget) > 8) {
+          p.vx = Math.sign(distToTarget) * baseSpeed;
+          p.facing = p.vx > 0 ? 1 : -1;
+          p.animTick++;
+          if (p.animTick % 5 === 0) {
+            p.runAnimFrame = (p.runAnimFrame % 5) + 1;
+          }
+        } else {
+          p.vx = 0;
+          p.targetMoveX = null;
+          p.runAnimFrame = 1;
+
+          // Thực hiện hành động đang chờ khi đã chạy tới nơi
+          if (this.pendingInteraction) {
+            if (this.pendingInteraction.type === 'npc') {
+              if (this.onOpenDialog) this.onOpenDialog(this.pendingInteraction.target);
+            } else if (this.pendingInteraction.type === 'monster') {
+              this.triggerAttack();
+            } else if (this.pendingInteraction.type === 'senzu') {
+              this.checkInteractions();
+            }
+            this.pendingInteraction = null;
+          }
         }
       } else {
         p.vx *= 0.75;
@@ -389,26 +468,43 @@ export class GameEngine {
     p.attackCooldown = 12;
     sound.playPunch();
 
-    setTimeout(() => { p.isAttacking = false; }, 140);
+    setTimeout(() => { p.isAttacking = false; }, 160);
 
     const hitBox = {
-      x: p.facing === 1 ? p.x + p.width : p.x - 55,
-      y: p.y + 10,
-      width: 55,
-      height: 48
+      left: p.facing === 1 ? p.x + p.width - 15 : p.x - 75,
+      right: p.facing === 1 ? p.x + p.width + 75 : p.x + 15,
+      top: p.y - 15,
+      bottom: p.y + p.height + 25
     };
 
     const multiplier = p.isSuperSaiyan ? 2.2 : 1.0;
 
     this.monsters.forEach(m => {
       if (m.isDead) return;
+      const mLeft = m.x - 45;
+      const mRight = m.x + 45;
+      const mTop = m.y - 85;
+      const mBottom = m.y + 15;
+
       if (
-        hitBox.x < m.x + 55 &&
-        hitBox.x + hitBox.width > m.x &&
-        hitBox.y < m.y + 65 &&
-        hitBox.y + hitBox.height > m.y
+        hitBox.left < mRight &&
+        hitBox.right > mLeft &&
+        hitBox.top < mBottom &&
+        hitBox.bottom > mTop
       ) {
         this.damageMonster(m, p.attack * multiplier, false);
+        // Hiệu ứng tia lửa va chạm
+        for (let i = 0; i < 4; i++) {
+          this.particles.push({
+            x: m.x + (Math.random() - 0.5) * 20,
+            y: m.y - 35 + (Math.random() - 0.5) * 20,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            radius: Math.random() * 3 + 2,
+            color: '#facc15',
+            life: 14
+          });
+        }
       }
     });
   }
@@ -518,25 +614,25 @@ export class GameEngine {
   checkBeamHits() {
     const p = this.player;
     const beamLength = 950;
-    const beamY = p.y + 15;
-    const beamHeight = 50;
-
-    const beamBox = {
-      x: p.facing === 1 ? p.x + p.width : p.x - beamLength,
-      y: beamY,
-      width: beamLength,
-      height: beamHeight
-    };
+    const beamLeft = p.facing === 1 ? p.x + p.width - 20 : p.x - beamLength;
+    const beamRight = p.facing === 1 ? p.x + p.width + beamLength : p.x + 20;
+    const beamTop = p.y - 25;
+    const beamBottom = p.y + p.height + 25;
 
     const multiplier = p.isSuperSaiyan ? 5.0 : 3.5;
 
     this.monsters.forEach(m => {
       if (m.isDead) return;
+      const mLeft = m.x - 45;
+      const mRight = m.x + 45;
+      const mTop = m.y - 85;
+      const mBottom = m.y + 15;
+
       if (
-        beamBox.x < m.x + 55 &&
-        beamBox.x + beamBox.width > m.x &&
-        beamBox.y < m.y + 65 &&
-        beamBox.y + beamBox.height > m.y
+        beamLeft < mRight &&
+        beamRight > mLeft &&
+        beamTop < mBottom &&
+        beamBottom > mTop
       ) {
         this.damageMonster(m, p.attack * multiplier, true);
       }
@@ -1084,14 +1180,23 @@ export class GameEngine {
     // 11. NHÂN VẬT THẬT (GOKU / VEGETA / PICCOLO)
     this.renderRealPlayer();
 
-    // 12. FOREGROUND TỰ NHIÊN: Cành cây, tán lá trước mặt (maparusau.png)
-    if (this.currentMap.id === 0) {
-      const mapSau = assets.get('map_aru_sau');
-      if (mapSau && mapSau.complete && mapSau.naturalWidth > 0) {
-        const mw = 2544;
-        const mh = 1008;
-        const mapY = this.currentMap.groundY - 795;
-        ctx.drawImage(mapSau, 0, mapY, mw, mh);
+    // 12. Hiệu ứng Click di chuyển / Click NPC (Chuẩn NRO)
+    if (this.player.clickMarker) {
+      const cm = this.player.clickMarker;
+      cm.tick++;
+      if (cm.tick % 3 === 0) {
+        cm.frame++;
+      }
+      if (cm.frame < 4) {
+        const prefix = cm.type === 'npc' ? 'click_npc' : 'click_move';
+        const cImg = assets.get(`${prefix}_${cm.frame + 1}`);
+        if (cImg && cImg.complete && cImg.naturalWidth > 0) {
+          const cw = cImg.naturalWidth * 0.7;
+          const ch = cImg.naturalHeight * 0.7;
+          ctx.drawImage(cImg, cm.x - cw / 2, cm.y - ch / 2, cw, ch);
+        }
+      } else {
+        this.player.clickMarker = null;
       }
     }
 
@@ -1737,7 +1842,7 @@ export class GameEngine {
     } else if (p.isChargingKi) {
       bodyImg = assets.get('body_charge');
     } else if (p.isAttacking) {
-      bodyImg = assets.get('body_guard');
+      bodyImg = assets.get('body_beam') || assets.get('body_guard');
     } else if (!p.onGround) {
       bodyImg = p.vy < 0 ? assets.get('body_jump') : assets.get('body_fall');
     } else if (isMoving) {

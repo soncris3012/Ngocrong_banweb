@@ -161,6 +161,12 @@ class AssetLoader {
     this.loadImage('nhacua_lang', '/assets/map/traidat/chung/nhacua/nhacua2_earth.png');
     this.loadImage('caycoi_1', '/assets/map/traidat/chung/caycoi/caycoi1_traidat.png');
     this.loadImage('caycoi_2', '/assets/map/traidat/chung/caycoi/caycoi2_traidat.png');
+
+    // 12. Hiệu ứng Click di chuyển & NPC
+    for (let i = 1; i <= 4; i++) {
+      this.loadImage(`click_move_${i}`, `/assets/hieuung/hieuunggame/click_di_chuyen/${i}.png`);
+      this.loadImage(`click_npc_${i}`, `/assets/hieuung/hieuunggame/click_npc/${i}.png`);
+    }
   }
 }
 
