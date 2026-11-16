@@ -63,27 +63,23 @@ export const MAPS = [
     name: 'Làng Aru',
     planetId: 0,
     width: 2540,
-    height: 700,
-    groundY: 520,
+    height: 650,
+    groundY: 480,
     bgGradient: ['#19b0f8', '#38bdf8', '#bae6fd'],
-    platforms: [
-      { x: 450, y: 410, width: 140, height: 14 },
-      { x: 1050, y: 360, width: 160, height: 14 },
-      { x: 1850, y: 400, width: 180, height: 14 }
-    ],
+    platforms: [],
     portals: [
-      { x: 2360, y: 450, targetMap: 1, targetX: 120, label: 'Sang Đảo Kame ➜' }
+      { x: 2420, y: 420, targetMap: 1, targetX: 120, label: 'Sang Đảo Kame ➜' }
     ],
     npcs: [
-      { id: 1, name: 'Ông Gôhan', x: 360, y: 520, type: 'gohan' },
-      { id: 2, name: 'Bà Hạt Mít', x: 800, y: 520, type: 'hatmit' },
-      { id: 3, name: 'Quy Lão Kame', x: 1120, y: 520, type: 'kame' },
-      { id: 4, name: 'Thần Mèo Karin', x: 1420, y: 520, type: 'karin' }
+      { id: 1, name: 'Ông Gôhan', x: 380, y: 480, type: 'gohan' },
+      { id: 2, name: 'Thầy Hiếu', x: 860, y: 480, type: 'thay_hieu' },
+      { id: 3, name: 'Thần Mèo Karin', x: 1160, y: 480, type: 'karin' },
+      { id: 4, name: 'Admin Huy Khôi', x: 1680, y: 480, type: 'huykhoi' }
     ],
     monsters: [
-      { id: 101, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 560, y: 520, atk: 0, exp: 80, gold: 20 },
-      { id: 102, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 960, y: 520, atk: 0, exp: 80, gold: 20 },
-      { id: 103, name: 'Mộc Nhân Khổng Lồ', type: 'dummy', maxHp: 800, hp: 800, x: 1780, y: 520, atk: 0, exp: 250, gold: 60 }
+      { id: 101, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 580, y: 480, atk: 0, exp: 80, gold: 20 },
+      { id: 102, name: 'Mộc Nhân', type: 'dummy', maxHp: 300, hp: 300, x: 1380, y: 480, atk: 0, exp: 80, gold: 20 },
+      { id: 103, name: 'Mộc Nhân Khổng Lồ', type: 'dummy', maxHp: 800, hp: 800, x: 2150, y: 480, atk: 0, exp: 250, gold: 60 }
     ]
   },
   {

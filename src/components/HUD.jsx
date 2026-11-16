@@ -34,15 +34,28 @@ export const HUD = ({
       <div className="flex justify-between items-start w-full">
         {/* AVATAR & THANH MÁU CHUẨN GIAO DIỆN NRO */}
         <div className="pointer-events-auto bg-gray-950/90 backdrop-blur-md border-2 border-yellow-500/80 rounded-2xl p-2.5 shadow-2xl flex items-center gap-3">
-          {/* Avatar Nhân vật */}
+          {/* Avatar Nhân vật Thật Chuẩn NRO */}
           <div 
-            className="w-14 h-14 rounded-xl flex flex-col items-center justify-center font-bold text-2xl border-2 border-white/30 shadow-inner relative overflow-hidden"
-            style={{ backgroundColor: player.isSuperSaiyan ? '#ca8a04' : planet.primaryColor }}
+            className={`w-14 h-14 rounded-xl flex items-center justify-center border-2 shadow-inner relative overflow-hidden ${
+              player.isSuperSaiyan ? 'border-yellow-400 ring-2 ring-yellow-400 bg-amber-900/40' : 'border-white/30 bg-gray-800/80'
+            }`}
           >
-            <span>{player.isSuperSaiyan ? '⚡' : planet.symbol}</span>
-            <span className="text-[9px] font-pixel text-white uppercase drop-shadow">
-              {player.isSuperSaiyan ? 'SSJ' : planet.name}
-            </span>
+            <img 
+              src={
+                player.planet === 2 
+                  ? '/assets/nhanvat/xayda/avatar/Cađíc_base/avt.png'
+                  : player.planet === 1
+                  ? '/assets/nhanvat/detu/namek/avtlon.png'
+                  : '/assets/nhanvat/traidat/avatar/Goku_base/avt.png'
+              }
+              alt={player.name}
+              className="w-full h-full object-contain scale-110 translate-y-1"
+            />
+            {player.isSuperSaiyan && (
+              <span className="absolute top-0 right-0 bg-yellow-500 text-black text-[8px] font-black px-1 rounded-bl">
+                SSJ
+              </span>
+            )}
             {player.isSuperSaiyan && (
               <span className="absolute inset-0 bg-yellow-400/20 animate-pulse pointer-events-none" />
             )}

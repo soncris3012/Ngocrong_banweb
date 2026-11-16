@@ -64,9 +64,14 @@ export const NPCModal = ({ npc, player, onClose, onUpdatePlayer }) => {
                 "Chào cháu yêu quý! Ta là Ông Gôhan. Ở Làng Aru này cháu hãy chăm chỉ đấm vào các Mộc Nhân và hái Đậu Thần Karin để tích lũy sức mạnh và tiềm năng võ thuật!"
               </>
             )}
-            {npc.type === 'kame' && (
+            {(npc.type === 'kame' || npc.type === 'thay_hieu') && (
               <>
-                "Chào con! Ta là Quy Lão Kame - Thầy võ của Son Goku. Hãy dùng điểm <b>Tiềm Năng</b> kiếm được từ việc đánh quái để nâng cao thể lực và sức đánh!"
+                "Chào con! Ta là Thầy Hiếu - Đại võ sư Làng Aru. Hãy dùng điểm <b>Tiềm Năng</b> kiếm được từ việc rèn luyện nắm đấm và hạ gục Mộc Nhân để nâng cao thể lực và sức đánh!"
+              </>
+            )}
+            {npc.type === 'huykhoi' && (
+              <>
+                "Chào chiến binh trẻ tuổi! Ta là Huy Khôi - Hộ vệ tối cao Làng Aru. Hãy trang bị đầy đủ áo giáp, găng tay và học các chiêu thức tối thượng để chuẩn bị sang Đảo Kame!"
               </>
             )}
             {npc.type === 'hatmit' && (

@@ -47,6 +47,7 @@ class AssetLoader {
     this.loadImage('bg_nui', '/assets/hud/giaodienngoai/traidat/nui_traidat.png');
     this.loadImage('bg_nuicay', '/assets/hud/giaodienngoai/traidat/nuicay_traidat.png');
     this.loadImage('bg_nuithap', '/assets/hud/giaodienngoai/traidat/nuithap_traidat.png');
+    this.loadImage('eff_khoimay', '/assets/hieuung/hieuungmap/khoimay.png');
 
     // Hiệu ứng ánh sáng & lửa trại Làng Aru
     this.loadImage('deco_cui', '/assets/map/traidat/chung/trangtri/cuinuongduiga.png');
@@ -96,11 +97,25 @@ class AssetLoader {
       this.loadImage(`caydau_${i}`, `/assets/nhanvat/npc/dau_traidat/caydau${i}.png`);
     }
 
-    // 6. Rương Đồ & NPC
+    // 6. Rương Đồ & NPC Thật Chuẩn NRO
     this.loadImage('ruong_do', '/assets/nhanvat/npc/ruong_do/1.png');
     this.loadImage('gohan_head', '/assets/nhanvat/npc/ong_gohan/dau.png');
     this.loadImage('gohan_body', '/assets/nhanvat/npc/ong_gohan/than.png');
     this.loadImage('gohan_leg', '/assets/nhanvat/npc/ong_gohan/chan.png');
+
+    // Thầy Hiếu (Võ sư Làng Aru / Quy Lão Kame)
+    this.loadImage('thay_hieu_dau', '/assets/nhanvat/npc/thay_hieu/dau.png');
+    this.loadImage('thay_hieu_than', '/assets/nhanvat/npc/thay_hieu/than.png');
+    this.loadImage('thay_hieu_chan', '/assets/nhanvat/npc/thay_hieu/chan.png');
+
+    // Admin Huy Khôi (Cao thủ võ lâm Làng Aru)
+    this.loadImage('huykhoi_dau', '/assets/nhanvat/npc/admin_huykhoi/dau.png');
+    this.loadImage('huykhoi_than', '/assets/nhanvat/npc/admin_huykhoi/than.png');
+    this.loadImage('huykhoi_chan', '/assets/nhanvat/npc/admin_huykhoi/chan.png');
+
+    // Mèo Thần Karin (Sprite Pet chuẩn)
+    this.loadImage('karin_pet_1', '/assets/nhanvat/npc/npc_pet/traidat/1.png');
+    this.loadImage('karin_pet_2', '/assets/nhanvat/npc/npc_pet/traidat/2.png');
 
     // 7. Ngọc Rồng 1 sao -> 7 sao
     for (let i = 1; i <= 7; i++) {
@@ -130,6 +145,22 @@ class AssetLoader {
     this.loadImage('item_gang', '/assets/vatpham/do/traidat/set_cam/gang.png');
     this.loadImage('item_giay', '/assets/vatpham/do/traidat/set_cam/giay.png');
     this.loadImage('item_rada', '/assets/vatpham/do/rada/rada1.png');
+
+    // 11. Địa hình chuẩn NRO (Tiles)
+    for (let i = 1; i <= 5; i++) {
+      this.loadImage(`matdat_${i}`, `/assets/map/traidat/chung/dat/matdat_traidat${i}.png`);
+    }
+    for (let i = 1; i <= 3; i++) {
+      this.loadImage(`dat_${i}`, `/assets/map/traidat/chung/dat/dat_traidat${i}.png`);
+      this.loadImage(`longdat_${i}`, `/assets/map/traidat/chung/dat/longdat_traidat${i}.png`);
+    }
+    for (let i of [1, 3, 4, 5]) {
+      this.loadImage(`cayco_${i}`, `/assets/map/traidat/chung/cayco/cayco${i}_traidat.png`);
+    }
+    this.loadImage('nhacua_gohan', '/assets/map/traidat/chung/nhacua/nhacua1_earth.png');
+    this.loadImage('nhacua_lang', '/assets/map/traidat/chung/nhacua/nhacua2_earth.png');
+    this.loadImage('caycoi_1', '/assets/map/traidat/chung/caycoi/caycoi1_traidat.png');
+    this.loadImage('caycoi_2', '/assets/map/traidat/chung/caycoi/caycoi2_traidat.png');
   }
 }
 
