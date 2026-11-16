@@ -5,6 +5,12 @@ class AssetLoader {
     this.loadedCount = 0;
     this.totalCount = 0;
     this.isReady = false;
+    this.progressCallback = null;
+    this.initialized = false;
+  }
+
+  onProgress(callback) {
+    this.progressCallback = callback;
   }
 
   loadImage(key, src) {
@@ -15,15 +21,20 @@ class AssetLoader {
     this.images[key] = img;
     this.totalCount++;
 
-    img.onload = () => {
+    const checkDone = () => {
       this.loadedCount++;
+      if (this.progressCallback) {
+        this.progressCallback(this.loadedCount, this.totalCount);
+      }
       if (this.loadedCount >= this.totalCount) {
         this.isReady = true;
       }
     };
+
+    img.onload = checkDone;
     img.onerror = () => {
       console.warn(`Không thể tải ảnh: ${src}`);
-      this.loadedCount++;
+      checkDone();
     };
 
     return img;
@@ -33,10 +44,27 @@ class AssetLoader {
     return this.images[key] || null;
   }
 
+  waitForReady(timeoutMs = 4000) {
+    if (this.isReady) return Promise.resolve();
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      const check = () => {
+        if (this.isReady || (Date.now() - startTime > timeoutMs)) {
+          this.isReady = true;
+          resolve();
+        } else {
+          setTimeout(check, 40);
+        }
+      };
+      check();
+    });
+  }
+
   init() {
-    // 1. Bản đồ & Nền
-    this.loadImage('map_aru', '/assets/map/traidat/lang_aru/maparu.png');
-    this.loadImage('map_aru_sau', '/assets/map/traidat/lang_aru/maparusau.png');
+    if (this.initialized) return;
+    this.initialized = true;
+
+    // 1. Bản đồ & Nền Parallax Ngọc Rồng gốc (Siêu nhẹ, loại bỏ các file thừa nặng)
     this.loadImage('map_0', '/assets/map/ban_do/map0.png');
     this.loadImage('map_1', '/assets/map/ban_do/map1.png');
     this.loadImage('map_2', '/assets/map/ban_do/map2.png');
@@ -46,7 +74,6 @@ class AssetLoader {
     this.loadImage('bg_nuixa', '/assets/hud/giaodienngoai/traidat/nuixa_traidat.png');
     this.loadImage('bg_nui', '/assets/hud/giaodienngoai/traidat/nui_traidat.png');
     this.loadImage('bg_nuicay', '/assets/hud/giaodienngoai/traidat/nuicay_traidat.png');
-    this.loadImage('bg_nuithap', '/assets/hud/giaodienngoai/traidat/nuithap_traidat.png');
     this.loadImage('eff_khoimay', '/assets/hieuung/hieuungmap/khoimay.png');
 
     // Hiệu ứng ánh sáng & lửa trại Làng Aru
