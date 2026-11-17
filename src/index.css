@@ -2,12 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'DragonBoy';
+  src: url('/assets/font/fontt.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DragonBoyThuong';
+  src: url('/assets/font/fontthuong.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @layer base {
   body {
-    font-family: 'Signika', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'DragonBoy', 'Signika', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     user-select: none;
     -webkit-user-select: none;
   }
+}
+
+.font-dragon {
+  font-family: 'DragonBoy', sans-serif;
+}
+
+.font-dragon-thuong {
+  font-family: 'DragonBoyThuong', sans-serif;
 }
 
 .font-pixel {

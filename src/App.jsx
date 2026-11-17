@@ -6,8 +6,12 @@ import { ShopModal } from './components/ShopModal';
 import { InventoryModal } from './components/InventoryModal';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { SupabaseModal } from './components/SupabaseModal';
-import { AuthModal } from './components/AuthModal';
 import { ShenronModal } from './components/ShenronModal';
+import { MainMenu } from './components/desktop_ui/MainMenu';
+import { ServerSelectModal } from './components/desktop_ui/ServerSelectModal';
+import { LoginModal } from './components/desktop_ui/LoginModal';
+import { CharacterCreateModal } from './components/desktop_ui/CharacterCreateModal';
+import { SplashScreen } from './components/desktop_ui/SplashScreen';
 import { saveCharacterData, loadCharacterData } from './services/supabase';
 import { assets } from './game/assetLoader';
 
@@ -19,8 +23,21 @@ export function App() {
   const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [loadPercent, setLoadPercent] = useState(15);
 
-  // Trạng thái nhân vật
-  const [characterSelected, setCharacterSelected] = useState(false);
+  // Màn hình hiện tại: 'MENU' | 'CHAR_CREATE' | 'SPLASH' | 'GAME'
+  const [screenView, setScreenView] = useState('MENU');
+
+  // Modals mở từ Menu
+  const [showServerSelect, setShowServerSelect] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [currentServer, setCurrentServer] = useState(() => {
+    const saved = localStorage.getItem('nro_server');
+    return saved ? (isNaN(saved) ? saved : Number(saved)) : 1;
+  });
+
+  // Trạng thái nhân vật đã lưu
+  const [savedCharacter, setSavedCharacter] = useState(null);
+
+  // Trạng thái người chơi hiện tại
   const [playerState, setPlayerState] = useState({
     name: 'SonGoku',
     planet: 0,
@@ -45,7 +62,7 @@ export function App() {
     inventory: []
   });
 
-  // Trạng thái Modals
+  // Trạng thái Modals trong game
   const [activeNPC, setActiveNPC] = useState(null);
   const [showShop, setShowShop] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
@@ -68,25 +85,27 @@ export function App() {
     });
   }, []);
 
-  // Tự động kiểm tra nhân vật đã lưu trước đó
+  // Tự động kiểm tra nhân vật đã lưu trước đó để hiển thị trên nút [ TK. username ]
   useEffect(() => {
     const lastCharName = localStorage.getItem('nro_last_character');
     if (lastCharName) {
       loadCharacterData(lastCharName).then(data => {
         if (data) {
-          // Đảm bảo không bị lưu đè vị trí cũ vào rương hoặc NPC
           const spawnX = (!data.x || data.x < 560) ? 640 : data.x;
           const spawnY = (!data.y || data.y > 440) ? 420 : data.y;
-          setPlayerState(prev => ({ ...prev, ...data, x: spawnX, y: spawnY }));
-          setCharacterSelected(true);
+          const fullData = { ...data, x: spawnX, y: spawnY };
+          setSavedCharacter(fullData);
+          setPlayerState(prev => ({ ...prev, ...fullData }));
+        } else {
+          setSavedCharacter({ name: lastCharName, planet: 0 });
         }
       });
     }
   }, []);
 
-  // Khởi tạo Canvas và GameEngine khi đã chọn nhân vật và tài nguyên đã sẵn sàng
+  // Khởi tạo Canvas và GameEngine khi vào trạng thái 'GAME'
   useEffect(() => {
-    if (!characterSelected || !assetsLoaded) return;
+    if (screenView !== 'GAME') return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -131,12 +150,43 @@ export function App() {
       window.removeEventListener('resize', handleResize);
       engine.destroy();
     };
-  }, [characterSelected, assetsLoaded]);
+  }, [screenView]);
 
+  // Vào game từ nhân vật có sẵn
+  const handleEnterGame = () => {
+    setScreenView('SPLASH');
+  };
+
+  // Tạo nhân vật mới thành công
   const handleSelectCharacter = (newChar) => {
-    setPlayerState(prev => ({ ...prev, ...newChar, x: 620, y: 420 }));
-    setCharacterSelected(true);
-    saveCharacterData({ ...newChar, x: 620, y: 420 });
+    const charData = { ...newChar, x: 620, y: 420 };
+    setPlayerState(prev => ({ ...prev, ...charData }));
+    setSavedCharacter(charData);
+    localStorage.setItem('nro_last_character', newChar.name);
+    saveCharacterData(charData);
+    setScreenView('SPLASH');
+  };
+
+  // Đăng nhập thành công từ LoginModal
+  const handleLoginSuccess = (user) => {
+    loadCharacterData(user.name).then(data => {
+      const charData = data || { name: user.name, planet: 0, power: 2000, potential: 2000 };
+      setSavedCharacter(charData);
+      setPlayerState(prev => ({ ...prev, ...charData }));
+    });
+  };
+
+  // Xóa dữ liệu đã lưu
+  const handleClearData = () => {
+    localStorage.removeItem('nro_last_character');
+    localStorage.removeItem('nro_account_user');
+    setSavedCharacter(null);
+  };
+
+  // Đổi server
+  const handleSelectServer = (server) => {
+    setCurrentServer(server);
+    localStorage.setItem('nro_server', String(server));
   };
 
   const handleUpdatePlayer = (updatedPlayer) => {
@@ -149,121 +199,150 @@ export function App() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-gray-950 font-sans select-none">
-      {/* 0. MÀN HÌNH TẢI TÀI NGUYÊN (PRELOADER) ĐẢM BẢO KHÔNG LỖI ĐỒ HOẠ */}
+      {/* 0. MÀN HÌNH TẢI TÀI NGUYÊN BAN ĐẦU */}
       {!assetsLoaded && (
-        <div className="fixed inset-0 z-[100] bg-gray-950 flex flex-col items-center justify-center p-6 select-none">
-          {/* Logo Ngọc Rồng */}
-          <div className="relative flex flex-col items-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-200 shadow-[0_0_50px_rgba(251,191,36,0.6)] flex items-center justify-center animate-bounce mb-4 border-2 border-yellow-300">
-              <span className="text-4xl">⭐</span>
-            </div>
-            <h1 className="font-pixel text-2xl sm:text-3xl text-yellow-400 drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)] tracking-wider">
-              NGỌC RỒNG ONLINE
-            </h1>
-            <p className="text-yellow-200/80 text-xs mt-1 font-mono tracking-widest uppercase">
-              Web Edition • Siêu mượt 60 FPS
-            </p>
-          </div>
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 select-none">
+          <img 
+            src="/assets/hud/giaodienngoai/chung/chuberong.png" 
+            alt="Ngọc Rồng Online" 
+            className="w-72 sm:w-96 object-contain mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+          />
 
-          {/* Thanh Tiến Độ Tải */}
-          <div className="w-full max-w-md bg-gray-900 border-2 border-yellow-500/80 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
-            <div className="flex justify-between items-center text-xs font-mono">
+          <div className="w-full max-w-md bg-gray-950 border-2 border-yellow-500/80 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
+            <div className="flex justify-between items-center text-xs font-dragon">
               <span className="text-yellow-300 font-bold flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-yellow-400 animate-ping" />
-                Đang nạp đồ hoạ & Sprite...
+                Đang nạp đồ hoạ Sprite & Bản đồ...
               </span>
-              <span className="text-yellow-400 font-black text-sm">{loadPercent}%</span>
+              <span className="text-yellow-400 font-bold text-sm">{loadPercent}%</span>
             </div>
 
-            {/* Thanh Bar */}
-            <div className="w-full bg-gray-950 rounded-xl h-4 p-0.5 border border-yellow-600/40 overflow-hidden relative">
+            <div className="w-full bg-gray-900 rounded-xl h-4 p-0.5 border border-yellow-600/40 overflow-hidden relative">
               <div 
                 className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 rounded-lg transition-all duration-150 shadow-[0_0_12px_rgba(250,204,21,0.8)]"
                 style={{ width: `${loadPercent}%` }}
               />
             </div>
 
-            <p className="text-[11px] text-gray-400 text-center font-mono mt-1">
-              Vui lòng chờ trong giây lát để bản đồ tải đầy đủ 100% không giật lag...
+            <p className="text-[11px] text-gray-400 text-center font-dragon mt-1">
+              Khởi động hệ thống Web Edition 60 FPS chuẩn LibGDX...
             </p>
           </div>
-
-          {/* Mẹo phím tắt hữu ích */}
-          <div className="mt-8 bg-gray-900/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-400 text-xs font-mono max-w-md text-center">
-            💡 <b className="text-yellow-300">Mẹo:</b> Phím <span className="text-white font-bold">[J]</span> Đấm • <span className="text-white font-bold">[K]</span> Kamehameha • <span className="text-white font-bold">[O]</span> Hóa Super Saiyan • Click chuột bất kỳ đâu để chạy tới!
-          </div>
         </div>
       )}
 
-      {/* 1. MÀN HÌNH CHỌN NHÂN VẬT NẾU CHƯA CHỌN */}
-      {assetsLoaded && !characterSelected && (
-        <AuthModal onSelectCharacter={handleSelectCharacter} />
+      {/* 1. MÀN HÌNH CHÍNH (MAIN MENU) CHUẨN LIBGDX DESKTOP */}
+      {assetsLoaded && screenView === 'MENU' && (
+        <MainMenu
+          savedCharacter={savedCharacter}
+          currentServer={currentServer}
+          onEnterGame={handleEnterGame}
+          onOpenCharacterCreate={() => setScreenView('CHAR_CREATE')}
+          onOpenLogin={() => setShowLoginModal(true)}
+          onOpenServerSelect={() => setShowServerSelect(true)}
+          onClearData={handleClearData}
+        />
       )}
 
-      {/* 2. GAME CANVAS 60 FPS */}
-      <canvas 
-        ref={canvasRef} 
-        className="absolute inset-0 block w-full h-full cursor-crosshair z-0"
-      />
+      {/* 2. MÀN HÌNH CHỌN HÀNH TINH & TẠO NHÂN VẬT CHUẨN MANHINHCHOIMOI */}
+      {assetsLoaded && screenView === 'CHAR_CREATE' && (
+        <CharacterCreateModal
+          currentServer={currentServer}
+          onOpenServerSelect={() => setShowServerSelect(true)}
+          onSelectCharacter={handleSelectCharacter}
+          onClose={() => setScreenView('MENU')}
+        />
+      )}
 
-      {/* 3. HEADS-UP DISPLAY (HUD) */}
-      {characterSelected && (
-        <div className="z-20 relative w-full h-full pointer-events-none">
-          <HUD 
-            player={playerState}
-            engineRef={engineRef}
-            onOpenInventory={() => setShowInventory(true)}
-            onOpenShop={() => setShowShop(true)}
-            onOpenLeaderboard={() => setShowLeaderboard(true)}
-            onOpenSupabase={() => setShowSupabase(true)}
-            onOpenShenron={() => setShowShenron(true)}
+      {/* 3. MÀN HÌNH SPLASH CHUYỂN CẢNH (MANHINHSPLASH) */}
+      {screenView === 'SPLASH' && (
+        <SplashScreen
+          onFinish={() => setScreenView('GAME')}
+          message="Đang tiến vào thế giới Ngọc Rồng..."
+        />
+      )}
+
+      {/* 4. MODALS MỞ TỪ NGOÀI GIAO DIỆN */}
+      {showServerSelect && (
+        <ServerSelectModal
+          currentServer={currentServer}
+          onSelectServer={handleSelectServer}
+          onClose={() => setShowServerSelect(false)}
+        />
+      )}
+
+      {showLoginModal && (
+        <LoginModal
+          onLoginSuccess={handleLoginSuccess}
+          onClose={() => setShowLoginModal(false)}
+        />
+      )}
+
+      {/* 5. GIAO DIỆN TRONG GAME (GAME ENGINE & HUD) */}
+      {screenView === 'GAME' && (
+        <>
+          <canvas 
+            ref={canvasRef} 
+            className="absolute inset-0 block w-full h-full cursor-crosshair z-0"
           />
-        </div>
-      )}
 
-      {/* 5. MODALS & POPUPS */}
-      {activeNPC && (
-        <NPCModal 
-          npc={activeNPC} 
-          player={playerState} 
-          onClose={() => setActiveNPC(null)} 
-          onUpdatePlayer={handleUpdatePlayer}
-        />
-      )}
+          <div className="z-20 relative w-full h-full pointer-events-none">
+            <HUD 
+              player={playerState}
+              engineRef={engineRef}
+              onOpenInventory={() => setShowInventory(true)}
+              onOpenShop={() => setShowShop(true)}
+              onOpenLeaderboard={() => setShowLeaderboard(true)}
+              onOpenSupabase={() => setShowSupabase(true)}
+              onOpenShenron={() => setShowShenron(true)}
+              onReturnToMenu={() => setScreenView('MENU')}
+            />
+          </div>
 
-      {showShop && (
-        <ShopModal 
-          player={playerState} 
-          onClose={() => setShowShop(false)} 
-          onUpdatePlayer={handleUpdatePlayer}
-        />
-      )}
+          {activeNPC && (
+            <NPCModal 
+              npc={activeNPC} 
+              player={playerState} 
+              onClose={() => setActiveNPC(null)} 
+              onUpdatePlayer={handleUpdatePlayer}
+            />
+          )}
 
-      {showInventory && (
-        <InventoryModal 
-          player={playerState} 
-          onClose={() => setShowInventory(false)} 
-        />
-      )}
+          {showShop && (
+            <ShopModal 
+              player={playerState} 
+              onClose={() => setShowShop(false)} 
+              onUpdatePlayer={handleUpdatePlayer}
+            />
+          )}
 
-      {showLeaderboard && (
-        <LeaderboardModal 
-          onClose={() => setShowLeaderboard(false)} 
-        />
-      )}
+          {showInventory && (
+            <InventoryModal 
+              player={playerState} 
+              onClose={() => setShowInventory(false)} 
+            />
+          )}
 
-      {showSupabase && (
-        <SupabaseModal 
-          onClose={() => setShowSupabase(false)} 
-        />
-      )}
+          {showLeaderboard && (
+            <LeaderboardModal 
+              onClose={() => setShowLeaderboard(false)} 
+            />
+          )}
 
-      {showShenron && (
-        <ShenronModal 
-          player={playerState} 
-          onClose={() => setShowShenron(false)} 
-          onGrantWish={handleUpdatePlayer}
-        />
+          {showSupabase && (
+            <SupabaseModal 
+              onClose={() => setShowSupabase(false)} 
+            />
+          )}
+
+          {showShenron && (
+            <ShenronModal 
+              player={playerState} 
+              onClose={() => setShowShenron(false)} 
+              onGrantWish={handleUpdatePlayer}
+            />
+          )}
+        </>
       )}
     </div>
   );

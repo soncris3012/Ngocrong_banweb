@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Sparkles, Volume2, VolumeX, Trophy, 
-  Database, Package, ShoppingBag, Zap, Shield, Heart, Award
+  Database, Package, ShoppingBag, Zap, Shield, Heart, Award, LogOut
 } from 'lucide-react';
 import { PLANETS, QUESTS } from '../game/constants';
 import { sound } from '../game/audio';
@@ -13,6 +13,7 @@ export const HUD = ({
   onOpenLeaderboard, 
   onOpenSupabase, 
   onOpenShenron,
+  onReturnToMenu,
   engineRef 
 }) => {
   const [isMuted, setIsMuted] = React.useState(false);
@@ -188,6 +189,9 @@ export const HUD = ({
             </button>
             <button onClick={toggleSound} title="Bật/Tắt Âm Thanh" className="p-2 rounded-lg bg-gray-900 hover:bg-gray-800 transition text-white shadow">
               {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-green-400" />}
+            </button>
+            <button onClick={onReturnToMenu} title="Màn hình chính / Đổi nhân vật" className="p-2 rounded-lg bg-gray-900 hover:bg-orange-600 transition text-white shadow">
+              <LogOut className="w-4 h-4 text-amber-300" />
             </button>
           </div>
         </div>
