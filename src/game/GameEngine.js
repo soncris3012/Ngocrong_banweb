@@ -80,7 +80,6 @@ export class GameEngine {
       : 0;
     const mapDef = MAPS_CONFIG[startMapId];
 
-    // Chuẩn hóa toạ độ y theo gốc dưới-trái LibGDX (tránh y=420 cũ của bản lỗi trước)
     let startX = Number(initialPlayer.x) || mapDef.defaultSpawn.x;
     let startY = Number(initialPlayer.y);
     if (!startY || startY > 380 || startY < 80) {
@@ -96,7 +95,7 @@ export class GameEngine {
       y: startY,
       vx: 0,
       vy: 0,
-      dir: 1, // 1: nhìn sang phải, -1: nhìn sang trái
+      dir: 1,
       onGround: true,
       isFlying: false,
       isCharging: false,
@@ -117,20 +116,22 @@ export class GameEngine {
       defense: Number(initialPlayer.defense) || planetDef.baseStats.defense,
       crit: Number(initialPlayer.crit) || planetDef.baseStats.crit,
 
-      power: Number(initialPlayer.power) || 2000,
-      potential: Number(initialPlayer.potential) || 2500,
-      gold: Number(initialPlayer.gold) ?? 15000,
-      gem: Number(initialPlayer.gem) ?? 50,
-      senzuCount: Number(initialPlayer.senzuCount) ?? 10,
+      power: Number(initialPlayer.power) || 1200,
+      potential: Number(initialPlayer.potential) || 1200,
+      gold: Number(initialPlayer.gold) ?? 2000,
+      gem: Number(initialPlayer.gem) ?? 20,
+      senzuCount: Number(initialPlayer.senzuCount) ?? 5,
       senzuLevel: Number(initialPlayer.senzuLevel) || 1,
 
       questId: Number(initialPlayer.questId) || 1,
+      questStep: Number(initialPlayer.questStep) || 0,
       questProgress: Number(initialPlayer.questProgress) || 0,
       mapId: startMapId,
 
+      // Mới tạo nhân vật mặc đồ cơ bản chuẩn ManHinhNhaGohan.java dòng 110; nhiệm vụ 2 Ông Gôhan tặng Áo Võ Phục!
       equipped: initialPlayer.equipped || {
-        ao: { id: 'ao_cam', stars: 0, sockets: 1 },
-        quan: { id: 'quan_cam', stars: 0, sockets: 1 },
+        ao: null,
+        quan: null,
         gang: null,
         giay: null,
         rada: null,
@@ -141,8 +142,7 @@ export class GameEngine {
         aura: null
       },
       bag: Array.isArray(initialPlayer.bag) ? initialPlayer.bag : [
-        { id: 've_quay', stars: 0, sockets: 0 },
-        { id: 'nr_4s', stars: 0, sockets: 0 }
+        { id: 've_quay', stars: 0, sockets: 0 }
       ],
       chest: Array.isArray(initialPlayer.chest) ? initialPlayer.chest : [],
       redeemedCodes: Array.isArray(initialPlayer.redeemedCodes) ? initialPlayer.redeemedCodes : [],
@@ -183,9 +183,12 @@ export class GameEngine {
     this.clickMarker = null;
     this.selectedTarget = null;
 
-    // Màn hình chuyển cảnh Ngọc Rồng xoay (ManHinhSplash / MapToi)
+    // Màn hình chuyển cảnh chuẩn ManHinhSplash.java & Tàu Vũ Trụ Capsule
     this.mapTransitionTimer = 0;
     this.mapTransitionLabel = '';
+    this.spaceshipAnim = initialPlayer.isNewCharacter
+      ? { phase: 'landing', x: startX, y: startY + 340, targetY: startY, timer: 0 }
+      : null;
 
     // Bàn phím
     this.keys = {};
@@ -423,7 +426,32 @@ export class GameEngine {
     this.spawnFloatingText(p.x, p.y + 72, `+${formatNroNum(healHp)} HP  +${formatNroNum(healKi)} KI`, '#4ade80');
   }
 
-  // ==================== CỐT TRUYỆN & CHUYỂN BẢN ĐỒ ====================
+  // ==================== CỐT TRUYỆN NHIỀU BƯỚC & CHUYỂN BẢN ĐỒ CHUẨN GAME GỐC ====================
+  advanceQuestEvent(eventType, targetId, amount = 1) {
+    const p = this.player;
+    const quest = STORY_QUESTS.find((q) => q.id === p.questId);
+    if (!quest) return false;
+    const stepIdx = p.questStep || 0;
+    const curStep = quest.steps[stepIdx];
+    if (!curStep) return false;
+
+    if (curStep.type !== eventType || curStep.targetId !== targetId) return false;
+
+    p.questProgress = Math.min(curStep.count, (p.questProgress || 0) + amount);
+    if (p.questProgress >= curStep.count) {
+      if (stepIdx < quest.steps.length - 1) {
+        p.questStep = stepIdx + 1;
+        p.questProgress = 0;
+        const nextStep = quest.steps[p.questStep];
+        sound.playCoin();
+        this.hud.pushBanner(`Hoàn thành! Tiếp theo: ${nextStep.text}`, '#86efac');
+      } else {
+        this.completeCurrentQuest();
+      }
+    }
+    return true;
+  }
+
   completeCurrentQuest() {
     const p = this.player;
     const quest = STORY_QUESTS.find((q) => q.id === p.questId);
@@ -438,37 +466,35 @@ export class GameEngine {
     }
 
     sound.playCoin();
-    this.hud.pushBanner(`Hoàn thành [${quest.title}]! Nhận thưởng lớn!`, '#fde047');
+    this.hud.pushBanner(
+      `Hoàn thành [${quest.title}]! +${formatNroNum(quest.reward.power)} SM & TN!`,
+      '#fde047'
+    );
 
     p.questId = quest.id + 1;
+    p.questStep = 0;
     p.questProgress = 0;
     this.recalcStats();
   }
 
   onMonsterKilled(m) {
-    const p = this.player;
-    const quest = STORY_QUESTS.find((q) => q.id === p.questId);
-    if (quest && quest.type === 'kill' && quest.targetId === m.templateId) {
-      p.questProgress = Math.min(quest.count, p.questProgress + 1);
-      if (p.questProgress === quest.count) {
-        this.hud.pushBanner(`Đã hoàn thành mục tiêu [${quest.title}]! Mở Nhiệm Vụ hoặc gặp NPC nhận thưởng!`, '#4ade80');
-      }
-    }
+    this.advanceQuestEvent('kill', m.templateId, 1);
 
-    // Rơi Vàng / Đá Pha Lê / Ngọc Rồng trên mặt đất
     const groundY = this.getGroundTopAt(m.x);
     this.groundDrops.push({
       kind: 'gold',
-      amount: m.gold + Math.floor(Math.random() * 120),
+      amount: m.gold + Math.floor(Math.random() * 80),
       icon: 'hud/giaodientrong/vang.png',
-      x: m.x - 12,
+      x: m.x - 10,
       y: groundY,
       ttl: 25
     });
 
+    if (m.templateId === 'moc_nhan') return;
+
     const roll = Math.random();
-    if (m.isBoss || roll < 0.16) {
-      const dbStars = m.isBoss ? [1, 2, 3, 4, 5] : [4, 5, 6, 7];
+    if (m.isBoss || roll < 0.14) {
+      const dbStars = m.isBoss ? [1, 2, 3, 5] : [5, 6, 7];
       const star = dbStars[Math.floor(Math.random() * dbStars.length)];
       this.groundDrops.push({
         kind: 'item',
@@ -479,7 +505,7 @@ export class GameEngine {
         y: groundY,
         ttl: 35
       });
-    } else if (roll < 0.34) {
+    } else if (roll < 0.30) {
       const crystals = ['da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki'];
       const cid = crystals[Math.floor(Math.random() * crystals.length)];
       this.groundDrops.push({
@@ -494,7 +520,25 @@ export class GameEngine {
     }
   }
 
-  changeMap(targetMapId, spawnX, spawnY) {
+  // Bay xuyên hành tinh bằng Tàu Vũ Trụ Capsule chuẩn Ngọc Rồng Online!
+  flyBySpaceship(targetMapId, spawnX, spawnY) {
+    const p = this.player;
+    p.vx = 0;
+    p.vy = 0;
+    p.moveTargetX = null;
+    sound.playJump();
+    this.spaceshipAnim = {
+      phase: 'takeoff',
+      x: p.x,
+      y: p.y,
+      timer: 0,
+      targetMapId,
+      spawnX,
+      spawnY
+    };
+  }
+
+  changeMap(targetMapId, spawnX, spawnY, withPodLanding = false) {
     const mapCfg = MAPS_CONFIG[targetMapId];
     if (!mapCfg) return;
 
@@ -508,6 +552,8 @@ export class GameEngine {
     this.player.onGround = true;
     this.player.moveTargetX = null;
     this.player.moveTargetY = null;
+    this.pendingInteractNpc = null;
+    this.pendingWaypoint = null;
 
     if (this.player.detu) {
       this.player.detu.x = this.player.x - 45;
@@ -516,8 +562,19 @@ export class GameEngine {
     this.petFollower.x = this.player.x - 36;
     this.petFollower.y = this.player.y;
 
-    this.mapTransitionTimer = 0.55;
+    // Màn hình đen ManHinhSplash ("Xin chờ..." + Ngọc Rồng 5 Sao xoay) chuẩn 100% game gốc!
+    this.mapTransitionTimer = 0.68;
     this.mapTransitionLabel = mapCfg.name;
+
+    if (withPodLanding) {
+      this.spaceshipAnim = {
+        phase: 'landing',
+        x: this.player.x,
+        y: this.player.y + 340,
+        targetY: this.player.y,
+        timer: -0.62
+      };
+    }
 
     this.loadMapEntities(targetMapId, true);
     this.updateCamera(1);
@@ -585,8 +642,11 @@ export class GameEngine {
         templateId: m.template,
         name: tpl.name,
         renderType: tpl.renderType,
+        idleTex: tpl.idleTex || null,
+        hitTex: tpl.hitTex || null,
         frames: tpl.frames || null,
         sheet: tpl.sheet || null,
+        nativeLeft: Boolean(tpl.nativeLeft),
         frameCount: tpl.frameCount || 1,
         drawW: tpl.drawW || 64,
         drawH: tpl.drawH || 64,
@@ -880,6 +940,35 @@ export class GameEngine {
 
     if (this.mapTransitionTimer > 0) {
       this.mapTransitionTimer = Math.max(0, this.mapTransitionTimer - dt);
+      return; // Đang hiện màn hình đen "Xin chờ..." chuẩn ManHinhSplash thì tạm dừng vật lý!
+    }
+
+    // Hoạt cảnh Tàu Vũ Trụ Capsule cất cánh / hạ cánh chuẩn Ngọc Rồng Online!
+    if (this.spaceshipAnim) {
+      const sa = this.spaceshipAnim;
+      sa.timer += dt;
+      if (sa.phase === 'takeoff') {
+        sa.y += 680 * dt;
+        if (sa.timer >= 0.52) {
+          const destMap = sa.targetMapId;
+          const dx = sa.spawnX;
+          const dy = sa.spawnY;
+          this.spaceshipAnim = null;
+          this.changeMap(destMap, dx, dy, true);
+        }
+        return;
+      }
+      if (sa.phase === 'landing') {
+        if (sa.y > sa.targetY) {
+          sa.y = Math.max(sa.targetY, sa.y - 620 * dt);
+          if (sa.y === sa.targetY) sound.playExplosion();
+          return;
+        }
+        if (sa.timer >= 0.48) {
+          this.spaceshipAnim = null;
+        }
+        return;
+      }
     }
 
     // Giảm hồi chiêu & hiệu lực buff
@@ -947,6 +1036,12 @@ export class GameEngine {
           this.pendingInteractNpc = null;
           this.hud.openNpcDialog(npc);
         }
+        if (this.pendingWaypoint) {
+          const wp = this.pendingWaypoint;
+          this.pendingWaypoint = null;
+          this.changeMap(wp.targetMapId, wp.targetX, wp.targetY);
+          return;
+        }
       }
     } else {
       p.vx = 0;
@@ -998,17 +1093,23 @@ export class GameEngine {
       p.vy = 0;
     }
 
-    // Kiểm tra đi bộ chạm biên chuyển Map tự động (Waypoints)
+    // Kiểm tra đi bộ chạm mép trái/phải chuyển Map tự động chuẩn checkQuaMap() trong ManHinhLangAru.java & ManHinhDoiHoaCuc.java!
+    let hasLeftEdgeExit = false;
+    let hasRightEdgeExit = false;
     for (let i = 0; i < mapCfg.waypoints.length; i++) {
       const wp = mapCfg.waypoints[i];
-      if (wp.triggerX && p.x >= wp.triggerX[0] && p.x <= wp.triggerX[1] && this.mapTransitionTimer <= 0) {
+      if (wp.kind === 'left_edge') hasLeftEdgeExit = true;
+      if (wp.kind === 'right_edge') hasRightEdgeExit = true;
+      if (wp.edgeTriggerX && p.y < 320 && p.x >= wp.edgeTriggerX[0] && p.x <= wp.edgeTriggerX[1] && this.mapTransitionTimer <= 0) {
         this.changeMap(wp.targetMapId, wp.targetX, wp.targetY);
         return;
       }
     }
 
-    // Kẹp biên ngang nếu map không có lối đi ở phía đó
-    p.x = Math.max(24, Math.min(mapCfg.width - 24, p.x));
+    // Mở biên khi có lối qua map ở rìa trái/phải (đúng hệt setLaiToaDoNhanVat() của ManHinhLangAru.java)
+    const minBoundX = hasLeftEdgeExit && p.y < 320 ? -80 : 28;
+    const maxBoundX = hasRightEdgeExit && p.y < 320 ? mapCfg.width + 80 : mapCfg.width - 28;
+    p.x = Math.max(minBoundX, Math.min(maxBoundX, p.x));
 
     // Cập nhật Pet chạy theo
     if (p.equipped.pet) {
@@ -1072,7 +1173,9 @@ export class GameEngine {
       }
 
       const distToPlayer = Math.hypot(p.x - m.x, p.y - m.y);
-      if (distToPlayer < (m.isBoss ? 340 : 210) && m.hp < m.maxHp) {
+      if (m.speed <= 0) {
+        // Mộc nhân đứng yên chịu đòn chuẩn game gốc!
+      } else if (distToPlayer < (m.isBoss ? 340 : 210) && m.hp < m.maxHp) {
         // Đuổi đánh người chơi khi bị khiêu khích
         m.dir = p.x >= m.x ? 1 : -1;
         if (Math.abs(p.x - m.x) > 48) {
@@ -1250,6 +1353,28 @@ export class GameEngine {
 
     const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
 
+    // NẾU ĐANG CHUYỂN MAP -> VẼ MÀN HÌNH ĐEN TUYỆT ĐỐI CHUẨN ManHinhSplash.java (chuberong.png + "Xin chờ..." + nr5s xoay)
+    if (this.mapTransitionTimer > 0) {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+
+      this.hud.drawTex(ctx, 'hud/giaodienngoai/chung/chuberong.png', VIRTUAL_W / 2 - 156, VIRTUAL_H / 2 + 8, 320, 195);
+      this.hud.drawText(ctx, 'Xin chờ...', VIRTUAL_W / 2, VIRTUAL_H / 2 - 36, {
+        size: 13.5, color: '#ffffff', stroke: null, strokeWidth: 0, align: 'center'
+      });
+
+      const dbImg = assets.tex('vatpham/vatphamgame/ngocrong/nr5s.png');
+      if (dbImg) {
+        ctx.save();
+        ctx.translate(VIRTUAL_W / 2, VIRTUAL_H - VIRTUAL_H / 2);
+        ctx.rotate(performance.now() * 0.012);
+        ctx.drawImage(dbImg, -13, -13, 26, 26);
+        ctx.restore();
+      }
+      ctx.restore();
+      return;
+    }
+
     // 1. NỀN TRỜI & PARALLAX NÚI XA CHUẨN HÀNH TINH
     this.renderParallaxBackground(ctx, mapCfg);
 
@@ -1259,20 +1384,24 @@ export class GameEngine {
     // 3. VẬT PHẨM RƠI TRÊN ĐẤT & DẤU CLICK DI CHUYỂN
     this.renderGroundDropsAndMarkers(ctx);
 
-    // 4. NPC CHUẨN MODULAR / CÂY ĐẬU THẦN / RƯƠNG ĐỒ
+    // 4. NPC CHUẨN MODULAR / CÂY ĐẬU THẦN / RƯƠNG ĐỒ / TÀU VŨ TRỤ
     this.renderNpcs(ctx);
 
     // 5. QUÁI VẬT & BOSS DÙNG 100% SPRITE THẬT
     this.renderMonsters(ctx);
 
-    // 6. PET, ĐỆ TỬ & NHÂN VẬT NGƯỜI CHƠI CHUẨN MODULAR LIBGDX
+    // 6. PET, ĐỆ TỬ, NHÂN VẬT HOẶC HOẠT CẢNH TÀU VŨ TRỤ HẠ CÁNH
     if (this.player.equipped.pet) {
       this.renderPetFollower(ctx);
     }
     if (this.player.detu && !this.player.isFused && this.player.detu.mode !== 'home') {
       this.renderDeTu(ctx);
     }
-    this.renderPlayer(ctx);
+    if (this.spaceshipAnim) {
+      this.renderSpaceshipCutscene(ctx);
+    } else {
+      this.renderPlayer(ctx);
+    }
 
     // 7. CHƯỞNG KHÍ, HIỆU ỨNG KỸ NĂNG & CHỮ SÁT THƯƠNG
     this.renderProjectilesAndEffects(ctx);
@@ -1280,28 +1409,11 @@ export class GameEngine {
     // 8. LỚP TIỀN CẢNH BẢN ĐỒ (maparusau.png, doihoacucsau.png, doihoacuctruoc.png, khoimay.png)
     this.renderMapForegroundLayer(ctx, mapCfg);
 
-    // 9. BẢNG TÊN LỐI CHUYỂN MAP (WAYPOINT SIGNS CHUẨN MANHINHLANGARU)
+    // 9. BẢNG TÊN LỐI CHUYỂN MAP CHUẨN ManHinhNhaGohan / ManHinhLangAru (CHỈ HIỆN KHI ĐỨNG GẦN CỬA/MÉP MAP!)
     this.renderWaypointSigns(ctx, mapCfg);
 
     // 10. GIAO DIỆN HUD TRONG GAME CHUẨN VEHUD.JAVA
     this.hud.render(ctx);
-
-    // 11. HIỆU ỨNG CHUYỂN BẢN ĐỒ NGỌC RỒNG XOAY (nr5s.png)
-    if (this.mapTransitionTimer > 0) {
-      ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(0.92, this.mapTransitionTimer * 2.2)})`;
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
-      const dbImg = assets.tex('vatpham/vatphamgame/ngocrong/nr5s.png');
-      if (dbImg) {
-        ctx.save();
-        ctx.translate(VIRTUAL_W / 2, VIRTUAL_H / 2 - 14);
-        ctx.rotate(this.animClock * 8);
-        ctx.drawImage(dbImg, -22, -22, 44, 44);
-        ctx.restore();
-      }
-      this.hud.drawText(ctx, `Đang tới ${this.mapTransitionLabel}...`, VIRTUAL_W / 2, VIRTUAL_H / 2 - 48, {
-        size: 14, color: '#fde047', align: 'center'
-      });
-    }
 
     ctx.restore();
   }
@@ -1429,6 +1541,35 @@ export class GameEngine {
       return;
     }
 
+    if (mapCfg.key === 'vach_nui_aru' || mapCfg.key === 'thung_lung_tre') {
+      // Hai bản đồ Trái Đất mở rộng: Vách núi Aru (Trạm Tàu Vũ Trụ) & Thung lũng tre (Đảo Kame)
+      if (mapCfg.key === 'thung_lung_tre') {
+        this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua1_earth.png', 200, 172, 236, 214);
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 760, 172, 220, 224);
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1420, 172, 220, 224);
+      } else {
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 420, 172, 215, 220);
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1120, 172, 220, 224);
+        this.drawWorldTex(ctx, 'map/traidat/chung/dat/doc_traidat.png', 1460, 0, 400, 165);
+      }
+
+      const maxTiles = Math.ceil(mapCfg.width / 50) + 2;
+      for (let i = -2; i < maxTiles; i++) {
+        const tx = i * 50;
+        const mIdx = ((i + 50) % 5) + 1;
+        const dIdx = ((i + 30) % 3) + 1;
+        if (i % 2 === 0) {
+          this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco3_traidat.png', tx, 172, 50, 50);
+        }
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/matdat_traidat${mIdx}.png`, tx, 125, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/dat_traidat${dIdx}.png`, tx, 75, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, 25, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, -25, 51, 51);
+        this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco5_traidat.png', tx, 173, 51, 12);
+      }
+      return;
+    }
+
     if (mapCfg.key === 'vach_nui_kakarot') {
       // Vách Núi Kakarot dùng 100% Texture Xayda thật
       this.drawWorldTex(ctx, 'map/xayda/chung/nhacua/nhacua1_xayda.png', 150, 170, 240, 220);
@@ -1508,37 +1649,55 @@ export class GameEngine {
     ctx.restore();
   }
 
-  // ==================== BẢNG CHỈ ĐƯỜNG CHUYỂN MAP (WAYPOINT SIGNS) ====================
+  // ==================== BẢNG TÊN QUA MAP CHUẨN 100% ManHinhNhaGohan & ManHinhLangAru ====================
   renderWaypointSigns(ctx, mapCfg) {
     const p = this.player;
     for (let i = 0; i < mapCfg.waypoints.length; i++) {
       const wp = mapCfg.waypoints[i];
+
+      // Vệt sáng trắng xanh sát mặt đất ở rìa lối đi chuẩn Ngọc Rồng Online Teamobi
+      if (typeof wp.groundGlowX === 'number') {
+        const gTop = this.getGroundTopAt(wp.groundGlowX, mapCfg);
+        const gv = this.worldToView(wp.groundGlowX, gTop);
+        if (gv.vx > -60 && gv.vx < VIRTUAL_W + 60) {
+          const pulse = 0.55 + Math.sin(this.animClock * 5) * 0.2;
+          ctx.save();
+          ctx.globalAlpha = pulse;
+          this.hud.fillRectGdx(ctx, gv.vx - 26, gv.vy - 2, 52, 8, '#e0f2fe', '#38bdf8', 1.5);
+          ctx.restore();
+        }
+      }
+
+      // CHỈ hiện bảng tên khu vực khi nhân vật đứng trong vùng cửa / mép map (đúng hệt ManHinhNhaGohan dòng 469 & ManHinhLangAru dòng 414!)
       const inRange = p.x >= wp.showRangeX[0] && p.x <= wp.showRangeX[1];
+      if (!inRange) continue;
+
       const sr = wp.signRect;
       const { vx, vy } = this.worldToView(sr.x, sr.y);
       if (vx + sr.w < -20 || vx > VIRTUAL_W + 20) continue;
 
-      ctx.save();
-      ctx.globalAlpha = inRange ? 0.95 : 0.65;
-      this.hud.fillRectGdx(ctx, vx, vy, sr.w, sr.h, 'rgba(15, 23, 42, 0.78)', '#f59e0b', 2);
-      const bob = Math.sin(this.animClock * 5) * 3;
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/chung/muitenvang.png', vx + 12 + bob, vy + 14, 24, 24);
-      this.hud.drawText(ctx, wp.label, vx + sr.w / 2 + 10, vy + 29, {
-        size: 12.5, color: '#fde047', align: 'center'
+      // Đúng chuẩn: nền đen bán trong suốt rgba(0,0,0,0.5) 230x60 + chữ trắng viền mảnh chính giữa!
+      this.hud.fillRectGdx(ctx, vx, vy, sr.w, sr.h, 'rgba(0, 0, 0, 0.52)', null);
+      this.hud.drawText(ctx, wp.label, vx + sr.w / 2, vy + 24, {
+        size: 15,
+        color: '#ffffff',
+        stroke: '#3f3f46',
+        strokeWidth: 2,
+        align: 'center'
       });
-      this.hud.drawText(ctx, 'Click để qua map', vx + sr.w / 2 + 10, vy + 11, {
-        size: 9.5, color: '#86efac', align: 'center'
-      });
-      ctx.restore();
     }
   }
 
   // ==================== VẼ NPC CHUẨN MODULAR ====================
   renderNpcs(ctx) {
     const bob = Math.floor(this.animClock * 3) % 2 === 0 ? 0 : -1.2;
+    const quest = STORY_QUESTS.find((q) => q.id === this.player.questId);
+    const curStep = quest ? quest.steps[this.player.questStep || 0] : null;
 
     for (let i = 0; i < this.npcs.length; i++) {
       const npc = this.npcs[i];
+      if (npc.kind === 'meat' && npc.eaten) continue;
+
       let headTopY = npc.y + 72;
 
       if (npc.kind === 'senzu_tree') {
@@ -1549,6 +1708,12 @@ export class GameEngine {
         const th = img ? img.naturalHeight * 0.55 : 108;
         this.drawWorldTex(ctx, treePath, npc.x - tw / 2, npc.y, tw, th);
         headTopY = npc.y + th + 6;
+      } else if (npc.kind === 'spaceship') {
+        const img = assets.tex(npc.tex);
+        const iw = img ? img.naturalWidth * 1.45 : 96;
+        const ih = img ? img.naturalHeight * 1.45 : 82;
+        this.drawWorldTex(ctx, npc.tex, npc.x - iw / 2, npc.y, iw, ih);
+        headTopY = npc.y + ih + 8;
       } else if (npc.kind === 'chest' || npc.kind === 'meat') {
         const img = assets.tex(npc.tex);
         const iw = img ? img.naturalWidth * 0.55 : 42;
@@ -1574,7 +1739,6 @@ export class GameEngine {
           const thanY = npc.y + ch + bob - 10.2 + off.thanY + (off.extraThanY || 0);
           const dauY = npc.y + ch + bob + th + off.dauY;
 
-          // Thứ tự vẽ chuẩn Npc.java: Chân -> Đầu -> Thân
           this.drawWorldTex(ctx, `nhanvat/npc/${npc.folder}/chan.png`, npc.x - cw / 2 + off.chanX, chanY, cw, ch);
           this.drawWorldTex(ctx, `nhanvat/npc/${npc.folder}/dau.png`, npc.x - dw / 2 + off.dauX, dauY, dw, dh);
           this.drawWorldTex(ctx, `nhanvat/npc/${npc.folder}/than.png`, npc.x - tw / 2 + off.thanX, thanY, tw, th);
@@ -1582,13 +1746,11 @@ export class GameEngine {
         }
       }
 
-      // Tên NPC màu vàng cam chuẩn NRO + mũi tên đỏ clicknpc.png nếu đang chọn
       const { vx, vy } = this.worldToView(npc.x, headTopY);
       this.hud.drawText(ctx, npc.name, vx, vy, { size: 11.5, color: '#fde047', align: 'center' });
 
-      // Chấm than nhiệm vụ trên đầu NPC cốt truyện
-      const quest = STORY_QUESTS.find((q) => q.id === this.player.questId);
-      if (quest && quest.npcId === npc.id && (quest.id === 1 || this.player.questProgress >= quest.count)) {
+      // Hiển thị dấu chấm hỏi nhiệm vụ ngay trên NPC cần tương tác của bước hiện tại!
+      if (curStep && curStep.targetId === npc.id) {
         this.hud.drawTex(ctx, 'hud/giaodientrong/dauhoicham.png', vx - 9, vy + 14 + Math.sin(this.animClock * 6) * 3, 18, 24);
       }
 
@@ -1608,22 +1770,31 @@ export class GameEngine {
       if (vx < -160 || vx > VIRTUAL_W + 160) continue;
 
       let topOffset = 58;
-      // Sprite gốc nhìn sang TRÁI -> khi m.dir === 1 (đi sang phải) thì lật ngang
-      const flipRight = m.dir > 0;
+      // Kiểm tra hướng gốc của từng sprite (nativeLeft: true thì đi sang phải cần flip, ngược lại đi sang trái cần flip)
+      const flipX = m.nativeLeft ? m.dir > 0 : m.dir < 0;
 
       ctx.save();
       if (m.hurtTimer > 0) {
-        ctx.filter = 'brightness(1.85)';
+        ctx.filter = 'brightness(1.6)';
       }
 
-      if (m.renderType === 'frames' && m.frames) {
-        const fIdx = Math.floor(this.animClock * 9 + i) % m.frames.length;
+      if (m.renderType === 'dummy') {
+        const texPath = m.hurtTimer > 0 ? m.hitTex : m.idleTex;
+        const img = assets.tex(texPath);
+        if (img) {
+          const w = img.naturalWidth * m.scale;
+          const h = img.naturalHeight * m.scale;
+          this.drawWorldTex(ctx, texPath, m.x - w / 2, m.y, w, h, false);
+          topOffset = h + 6;
+        }
+      } else if (m.renderType === 'frames' && m.frames) {
+        const fIdx = Math.floor(this.animClock * 7 + i) % m.frames.length;
         const fPath = m.frames[fIdx];
         const img = assets.tex(fPath);
         if (img) {
           const w = img.naturalWidth * m.scale;
           const h = img.naturalHeight * m.scale;
-          this.drawWorldTex(ctx, fPath, m.x - w / 2, m.y, w, h, flipRight);
+          this.drawWorldTex(ctx, fPath, m.x - w / 2, m.y, w, h, flipX);
           topOffset = h + 6;
         }
       } else if (m.renderType === 'sheet_vertical' && m.sheet) {
@@ -1634,7 +1805,7 @@ export class GameEngine {
           const dw = m.drawW;
           const dh = m.drawH;
           const cy = VIRTUAL_H - vy - dh;
-          if (flipRight) {
+          if (flipX) {
             ctx.save();
             ctx.translate(vx + dw / 2, cy);
             ctx.scale(-1, 1);
@@ -1646,7 +1817,6 @@ export class GameEngine {
           topOffset = dh + 6;
         }
       } else if (m.renderType === 'caitrang' && m.caitrangKey) {
-        // Quái Khỉ Đột & Boss Broly / Black Goku Rosé dùng đúng bộ sprite modular Cải trang thật!
         if (m.isBoss) {
           const auraFrames = m.auraColor === 'tim'
             ? ['Small975.png', 'Small977.png', 'Small978.png', 'Small986.png']
@@ -1668,8 +1838,7 @@ export class GameEngine {
 
       ctx.restore();
 
-      // Thanh HP nhỏ & Tên quái phía trên đầu
-      const barW = m.isBoss ? 76 : 48;
+      const barW = m.isBoss ? 76 : 46;
       const barH = m.isBoss ? 7 : 5;
       const hpRatio = m.maxHp > 0 ? Math.max(0, m.hp / m.maxHp) : 0;
       const headY = vy + topOffset;
@@ -1677,7 +1846,7 @@ export class GameEngine {
       this.hud.fillRectGdx(ctx, vx - barW / 2, headY, barW, barH, '#111827', '#000000', 1);
       this.hud.fillRectGdx(ctx, vx - barW / 2 + 1, headY + 1, (barW - 2) * hpRatio, barH - 2, m.isBoss ? '#f59e0b' : '#ef4444', null);
 
-      if (m.isBoss || this.selectedTarget === m) {
+      if (m.isBoss || m.renderType === 'dummy' || this.selectedTarget === m) {
         this.hud.drawText(ctx, m.name, vx, headY + barH + 5, {
           size: m.isBoss ? 11.5 : 10,
           color: m.isBoss ? '#fca5a5' : '#ffffff',
@@ -1688,6 +1857,26 @@ export class GameEngine {
       if (this.selectedTarget === m) {
         this.hud.drawTex(ctx, 'hud/giaodientrong/clicknpc.png', vx - 10, headY + barH + 18 + Math.sin(this.animClock * 8) * 3, 20, 20);
       }
+    }
+  }
+
+  // ==================== HOẠT CẢNH TÀU VŨ TRỤ CAPSULE CẤT / HẠ CÁNH ====================
+  renderSpaceshipCutscene(ctx) {
+    const sa = this.spaceshipAnim;
+    if (!sa) return;
+    const isOpen = sa.phase === 'landing' && sa.y <= sa.targetY + 2;
+    const podTex = isOpen ? 'vatpham/taubay/myTexture2dmaybay4b.png' : 'vatpham/taubay/myTexture2dmaybay4a.png';
+    const podW = isOpen ? 96 : 72;
+    const podH = 72;
+
+    if (!isOpen) {
+      // Vệt lửa phản lực bên dưới tàu vũ trụ
+      const fireF = (Math.floor(this.animClock * 16) % 4) + 1;
+      this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireF}.png`, sa.x - 18, sa.y - 26, 36, 40);
+    }
+    this.drawWorldTex(ctx, podTex, sa.x - podW / 2, sa.y, podW, podH);
+    if (isOpen) {
+      this.renderPlayer(ctx);
     }
   }
 
@@ -2010,9 +2199,27 @@ export class GameEngine {
         ctx.stroke();
         ctx.restore();
 
-        // Đầu chưởng dùng texture thật hieuungkynang/e_0..e_2.png
-        const ef = Math.floor(this.animClock * 16) % 3;
-        this.drawWorldTex(ctx, `hieuung/hieuungkynang/e_${ef}.png`, pr.x - 28, pr.y - 28, 56, 56);
+        // Đầu chưởng & gốc chưởng cắt đúng frame từ spritesheet dọc e_0.png & e_2.png
+        const headImg = assets.tex('hieuung/hieuungkynang/e_0.png');
+        if (headImg) {
+          const fh = headImg.naturalHeight / 4;
+          const fIdx = Math.floor(this.animClock * 18) % 2;
+          ctx.save();
+          ctx.translate(vx, cy);
+          if (pr.vx < 0) ctx.scale(-1, 1);
+          ctx.drawImage(headImg, 0, fIdx * fh, headImg.naturalWidth, fh, -30, -28, 60, 56);
+          ctx.restore();
+        }
+        const origImg = assets.tex('hieuung/hieuungkynang/e_2.png');
+        if (origImg) {
+          const fh = origImg.naturalHeight / 4;
+          const fIdx = Math.floor(this.animClock * 18) % 2;
+          ctx.save();
+          ctx.translate(startV.vx, scy);
+          if (pr.vx < 0) ctx.scale(-1, 1);
+          ctx.drawImage(origImg, 0, fIdx * fh, origImg.naturalWidth, fh, -26, -26, 52, 52);
+          ctx.restore();
+        }
       } else if (pr.kind === 'orb') {
         ctx.save();
         const grad = ctx.createRadialGradient(vx, cy, 8, vx, cy, 48);
@@ -2027,20 +2234,24 @@ export class GameEngine {
       }
     }
 
-    // Hiệu ứng Nổ / Đánh trúng / Dịch chuyển / Thái Dương Hạ San
+    // Hiệu ứng Nổ / Đánh trúng / Dịch chuyển / Thái Dương Hạ San (Dùng bom1/bom2 chuẩn, xoá nồi cơm điện Mafuba!)
     for (let i = 0; i < this.skillEffects.length; i++) {
       const ef = this.skillEffects[i];
       if (ef.type === 'HitSpark') {
-        const f = Math.min(2, Math.floor((ef.timer / ef.duration) * 3));
-        this.drawWorldTex(ctx, `hieuung/hieuungkynang/e_${f}.png`, ef.x - 26, ef.y - 26, 52, 52);
-      } else if (ef.type === 'Explosion') {
-        const size = ef.big ? 130 : 76;
-        const f = 21668 + Math.min(10, Math.floor((ef.timer / ef.duration) * 11));
-        if (!assets.tex(`hieuung/hieuungkynang/${f}.png`)) {
-          this.drawWorldTex(ctx, 'hieuung/hieuunggame/bien_khi/bom1.png', ef.x - size / 2, ef.y - size / 2, size, size);
-        } else {
-          this.drawWorldTex(ctx, `hieuung/hieuungkynang/${f}.png`, ef.x - size / 2, ef.y - size / 2, size, size);
+        const sparkImg = assets.tex('hieuung/hieuungkynang/e_0.png');
+        if (sparkImg) {
+          const fh = sparkImg.naturalHeight / 4;
+          const { vx, vy } = this.worldToView(ef.x, ef.y);
+          ctx.drawImage(sparkImg, 0, 2 * fh, sparkImg.naturalWidth, fh, vx - 22, VIRTUAL_H - vy - 22, 44, 44);
         }
+      } else if (ef.type === 'Explosion') {
+        const ratio = ef.timer / ef.duration;
+        const size = (ef.big ? 135 : 74) * (0.65 + ratio * 0.55);
+        const bomTex = ratio < 0.5 ? 'hieuung/hieuunggame/bien_khi/bom1.png' : 'hieuung/hieuunggame/bien_khi/bom2.png';
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - ratio * 0.85);
+        this.drawWorldTex(ctx, bomTex, ef.x - size / 2, ef.y - size / 2, size, size);
+        ctx.restore();
       } else if (ef.type === 'Tele') {
         const f = Math.min(3, Math.floor((ef.timer / ef.duration) * 3) + 1);
         this.drawWorldTex(ctx, `hieuung/hieuunggame/bien_mat/${f}.png`, ef.x - 24, ef.y, 48, 64);
@@ -2083,18 +2294,33 @@ export class GameEngine {
       const wy = gy + (this.camY - 305);
       const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
 
-      // 2. Kiểm tra click vào bảng Waypoint chuyển Map
+      // 2. Kiểm tra click vào bảng tên Waypoint khi đang đứng gần cửa / rìa map (chuẩn ManHinhNhaGohan dòng 490 & ManHinhLangAru dòng 464)
       for (let wp of mapCfg.waypoints) {
+        const inRange = this.player.x >= wp.showRangeX[0] && this.player.x <= wp.showRangeX[1];
+        if (!inRange) continue;
         const sr = wp.signRect;
         if (wx >= sr.x && wx <= sr.x + sr.w && wy >= sr.y && wy <= sr.y + sr.h) {
-          this.changeMap(wp.targetMapId, wp.targetX, wp.targetY);
+          if (wp.kind === 'door') {
+            if (wp.doorRangeX && (this.player.x < wp.doorRangeX[0] || this.player.x > wp.doorRangeX[1])) {
+              this.player.moveTargetX = (wp.doorRangeX[0] + wp.doorRangeX[1]) / 2;
+              this.pendingWaypoint = wp;
+            } else {
+              this.changeMap(wp.targetMapId, wp.targetX, wp.targetY);
+            }
+          } else if (wp.kind === 'left_edge') {
+            this.player.moveTargetX = -35;
+          } else if (wp.kind === 'right_edge') {
+            this.player.moveTargetX = mapCfg.width + 35;
+          }
           return;
         }
       }
 
-      // 3. Kiểm tra click vào NPC
+      // 3. Kiểm tra click vào NPC / Tàu Vũ Trụ / Đùi Gà
       for (let npc of this.npcs) {
-        if (Math.abs(wx - npc.x) <= 44 && wy >= npc.y - 10 && wy <= npc.y + 92) {
+        if (npc.kind === 'meat' && npc.eaten) continue;
+        const hitHalfW = npc.kind === 'spaceship' ? 58 : 44;
+        if (Math.abs(wx - npc.x) <= hitHalfW && wy >= npc.y - 10 && wy <= npc.y + 98) {
           this.selectedTarget = npc;
           if (Math.abs(this.player.x - npc.x) <= 115) {
             this.hud.openNpcDialog(npc);
@@ -2106,21 +2332,21 @@ export class GameEngine {
         }
       }
 
-      // 4. Kiểm tra click vào Quái vật / Boss (Click 1 lần chọn mục tiêu, click khi đã chọn -> Tấn công!)
+      // 4. Kiểm tra click vào Quái vật / Boss
       for (let m of this.monsters) {
         if (!m.dead && Math.abs(wx - m.x) <= 48 && wy >= m.y - 12 && wy <= m.y + 95) {
-          if (this.selectedTarget === m) {
-            this.castSkillBySlot(this.player.activeSkillSlot || 0);
-          } else {
-            this.selectedTarget = m;
-            this.castSkillBySlot(this.player.activeSkillSlot || 0);
-          }
+          this.selectedTarget = m;
+          this.castSkillBySlot(this.player.activeSkillSlot || 0);
           return;
         }
       }
 
-      // 5. Click xuống mặt đất / bầu trời để di chuyển nhân vật chuẩn Dragon Boy!
-      this.player.moveTargetX = Math.max(24, Math.min(mapCfg.width - 24, wx));
+      // 5. Click xuống mặt đất / rìa map để di chuyển (cho phép click sát mép trái/phải để chạy thẳng sang map kế!)
+      let allowMinX = 28;
+      let allowMaxX = mapCfg.width - 28;
+      if (mapCfg.waypoints.some((w) => w.kind === 'left_edge')) allowMinX = -45;
+      if (mapCfg.waypoints.some((w) => w.kind === 'right_edge')) allowMaxX = mapCfg.width + 45;
+      this.player.moveTargetX = Math.max(allowMinX, Math.min(allowMaxX, wx));
       const gTop = this.getGroundTopAt(this.player.moveTargetX, mapCfg);
       if (wy > gTop + 65 && this.player.ki > 10) {
         this.player.isFlying = true;
@@ -2169,7 +2395,16 @@ export class GameEngine {
       } else if (e.code === 'KeyM' || e.code === 'KeyB' || e.code === 'KeyC') {
         this.hud.popupOpen = !this.hud.popupOpen;
       } else if (e.code === 'Enter') {
-        this.hud.openChatBox('CHAT');
+        // Chuẩn ManHinhNhaGohan dòng 487 & ManHinhLangAru dòng 461: đứng ngay cửa bấm Enter là vào/ra nhà!
+        const mapCfg = MAPS_CONFIG[this.currentMapId];
+        const doorWp = mapCfg?.waypoints.find(
+          (w) => w.kind === 'door' && w.doorRangeX && this.player.x >= w.doorRangeX[0] && this.player.x <= w.doorRangeX[1]
+        );
+        if (doorWp) {
+          this.changeMap(doorWp.targetMapId, doorWp.targetX, doorWp.targetY);
+        } else {
+          this.hud.openChatBox('CHAT');
+        }
       } else if (e.code === 'Escape') {
         this.hud.closeAllModals();
       }

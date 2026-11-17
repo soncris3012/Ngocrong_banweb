@@ -73,7 +73,7 @@ export function App() {
     if (lastCharName) {
       loadCharacterData(lastCharName).then((data) => {
         if (data) {
-          const validMap = typeof data.mapId === 'number' && data.mapId >= 0 && data.mapId <= 4 ? data.mapId : 0;
+          const validMap = typeof data.mapId === 'number' && data.mapId >= 0 && data.mapId <= 6 ? data.mapId : 0;
           const validY = data.y && data.y >= 100 && data.y <= 350 ? data.y : 175;
           const validX = data.x && data.x >= 40 ? data.x : 260;
           const normalized = { ...data, mapId: validMap, x: validX, y: validY };

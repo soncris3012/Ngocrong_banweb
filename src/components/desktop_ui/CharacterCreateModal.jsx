@@ -87,13 +87,15 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
       x: 325,
       y: 175,
       questId: 1,
+      questStep: 0,
       questProgress: 0,
-      power: 2000,
-      potential: 2500,
-      gold: 15000,
-      gem: 50,
-      senzuCount: 10,
+      power: 1200,
+      potential: 1200,
+      gold: 2000,
+      gem: 20,
+      senzuCount: 5,
       senzuLevel: 1,
+      isNewCharacter: true,
       ...baseStats
     });
   };

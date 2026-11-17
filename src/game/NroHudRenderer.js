@@ -235,8 +235,51 @@ export class NroHudRenderer {
     if (npc.id === 'dui_ga') {
       p.hp = p.maxHp;
       p.ki = p.maxKi;
+      npc.eaten = true;
       sound.playHeal();
-      this.pushBanner('Bạn vừa thưởng thức Đùi Gà Nướng thơm phức! Hồi 100% HP & KI!', '#86efac');
+      this.engine.advanceQuestEvent('eat_meat', 'dui_ga', 1);
+      this.pushBanner('Bạn vừa ăn Đùi Gà Nướng thơm phức! Hồi 100% HP & KI!', '#86efac');
+      return;
+    }
+
+    if (npc.id === 'tau_vu_tru') {
+      const curMap = this.engine.currentMapId;
+      const btns = [];
+      if (curMap !== 3) {
+        btns.push({
+          label: 'Bay tới\nTrái Đất',
+          action: () => {
+            this.npcDialog = null;
+            this.engine.flyBySpaceship(3, 320, 175);
+          }
+        });
+      }
+      if (curMap !== 5) {
+        btns.push({
+          label: 'Bay tới\nHành Tinh Xayda',
+          action: () => {
+            this.npcDialog = null;
+            this.engine.flyBySpaceship(5, 1620, 175);
+          }
+        });
+      }
+      if (curMap !== 6) {
+        btns.push({
+          label: 'Bay tới\nHành Tinh Namếc',
+          action: () => {
+            this.npcDialog = null;
+            this.engine.flyBySpaceship(6, 280, 175);
+          }
+        });
+      }
+      btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
+
+      this.npcDialog = {
+        npc,
+        avt: npc.tex || 'vatpham/taubay/myTexture2dmaybay4b.png',
+        text: 'Tàu Vũ Trụ Capsule đã nạp đầy nhiên liệu siêu không gian!\nChiến binh muốn khởi hành bay tới hành tinh nào?',
+        buttons: btns
+      };
       return;
     }
 
@@ -244,19 +287,20 @@ export class NroHudRenderer {
       this.npcDialog = {
         npc,
         avt: `nhanvat/npc/dau_traidat/caydau${Math.min(10, Math.max(1, p.senzuCount || 5))}.png`,
-        text: `Cây Đậu Thần Cấp ${p.senzuLevel || 1}\nHiện có: ${p.senzuCount}/10 hạt Đậu Thần trong túi.\nĐậu thần giúp hồi phục tức thì sinh lực và nội khí khi chiến đấu!`,
+        text: `Cây Đậu Thần Cấp ${p.senzuLevel || 1}\nHiện có: ${p.senzuCount} hạt Đậu Thần trong túi.\nĐậu thần giúp hồi phục tức thì HP và KI khi chiến đấu!`,
         buttons: [
           {
             label: 'Thu Hoạch',
             action: () => {
               p.senzuCount = 10 + (p.senzuLevel - 1) * 2;
               sound.playHeal();
-              this.pushBanner(`Đã thu hoạch đầy ${p.senzuCount} Đậu Thần Karin!`, '#86efac');
+              this.engine.advanceQuestEvent('harvest_senzu', 'dau_traidat', 1);
+              this.pushBanner(`Đã thu hoạch đầy ${p.senzuCount} Đậu Thần!`, '#86efac');
               this.npcDialog = null;
             }
           },
           {
-            label: `Nâng Cấp (${(p.senzuLevel || 1) * 15000} Vàng)`,
+            label: `Nâng Cấp\n(${(p.senzuLevel || 1) * 15}K Vàng)`,
             action: () => {
               const cost = (p.senzuLevel || 1) * 15000;
               if (p.gold < cost) {
@@ -278,33 +322,25 @@ export class NroHudRenderer {
     }
 
     if (npc.id === 'ong_gohan') {
-      let msg = `Chào cháu ${p.name}! Hãy chăm chỉ luyện tập võ công để bảo vệ Trái Đất nhé!`;
+      const curStep = quest ? quest.steps[p.questStep || 0] : null;
+      let msg = `Chào cháu ${p.name}! Cháu hãy chăm chỉ rèn luyện võ đạo nhé!`;
       const btns = [];
 
-      if (quest && quest.id === 1) {
-        msg = `Chào cháu ${p.name}! Ông đã chuẩn bị sẵn Áo Võ Phục và ít lộ phí cho cháu.\nHãy nhận lấy rồi sang Làng Aru rèn luyện bản lĩnh nhé!`;
+      if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'ong_gohan') {
+        msg = curStep.dialogReply || `Khá lắm ${p.name}! Cháu đã hoàn thành nhiệm vụ "${quest.title}"!`;
         btns.push({
-          label: 'Nhận Nhiệm Vụ',
+          label: 'Báo Cáo\nNhận Thưởng',
           action: () => {
-            this.engine.completeCurrentQuest();
+            this.engine.advanceQuestEvent('talk', 'ong_gohan', 1);
             this.npcDialog = null;
           }
         });
-      } else if (quest && quest.progress >= quest.count) {
-        msg = `Khá lắm ${p.name}! Cháu đã hoàn thành xuất sắc "${quest.title}". Hãy nhận phần thưởng xứng đáng!`;
-        btns.push({
-          label: 'Trả Nhiệm Vụ',
-          action: () => {
-            this.engine.completeCurrentQuest();
-            this.npcDialog = null;
-          }
-        });
-      } else if (quest) {
-        msg = `Nhiệm vụ hiện tại: ${quest.title} (${ p.questProgress }/${ quest.count })\n${quest.desc}`;
+      } else if (quest && curStep) {
+        msg = `Nhiệm vụ hiện tại: ${quest.title}\n- ${curStep.text} (${p.questProgress}/${curStep.count})\n${quest.desc.split('\n')[0]}`;
       }
 
       btns.push({
-        label: 'Hồi Phục',
+        label: 'Hồi Phục\n100% HP/KI',
         action: () => {
           p.hp = p.maxHp;
           p.ki = p.maxKi;
@@ -427,27 +463,34 @@ export class NroHudRenderer {
     }
 
     if (npc.id === 'admin_huykhoi') {
+      const curStep = quest ? quest.steps[p.questStep || 0] : null;
+      const btns = [];
+      let msg = 'Ta là Sứ Giả Quy Lão tại Thung Lũng Tre!\nMuốn bay ra ngoài vũ trụ tới Hành tinh Xayda hoặc Namếc, con hãy tới Trạm Tàu Vũ Trụ ở Vách núi Aru (phía Tây Làng Aru) nhé!';
+
+      if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'admin_huykhoi') {
+        msg = curStep.dialogReply || 'Khá lắm thiếu hiệp! Hãy nhận lấy phần thưởng xứng đáng!';
+        btns.push({
+          label: 'Báo Cáo\nNhận Thưởng',
+          action: () => {
+            this.engine.advanceQuestEvent('talk', 'admin_huykhoi', 1);
+            this.npcDialog = null;
+          }
+        });
+      }
+      btns.push({
+        label: 'Về Trạm\nTàu Vũ Trụ',
+        action: () => {
+          this.npcDialog = null;
+          this.engine.changeMap(3, 330, 175);
+        }
+      });
+      btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
+
       this.npcDialog = {
         npc,
         avt: 'nhanvat/npc/admin_huykhoi/avt.png',
-        text: `Phía Đông là Thung Lũng Namếc nơi Black Goku Rosé trú ngụ, phía Tây Làng Aru là Vách Núi Kakarot của Siêu Xayda Broly!\nCon muốn dịch chuyển tức thời tới đâu?`,
-        buttons: [
-          {
-            label: 'Tới Vách Núi Xayda',
-            action: () => {
-              this.npcDialog = null;
-              this.engine.changeMap(3, 1740, 175);
-            }
-          },
-          {
-            label: 'Tới Thung Lũng Namếc',
-            action: () => {
-              this.npcDialog = null;
-              this.engine.changeMap(4, 110, 175);
-            }
-          },
-          { label: 'Đóng', action: () => { this.npcDialog = null; } }
-        ]
+        text: msg,
+        buttons: btns
       };
     }
   }
@@ -604,9 +647,7 @@ export class NroHudRenderer {
     this.engine.recalcStats();
     p.hp = p.maxHp;
     p.ki = p.maxKi;
-    if (p.questId === 8) {
-      this.engine.completeCurrentQuest();
-    }
+    this.engine.advanceQuestEvent('shenron', 'shenron', 1);
     sound.playHeal();
     this.shenronActive = false;
   }
@@ -768,12 +809,17 @@ export class NroHudRenderer {
 
     const quest = STORY_QUESTS.find((q) => q.id === p.questId);
     if (quest) {
-      const qStr = `NV: ${quest.title} (${Math.min(p.questProgress, quest.count)}/${quest.count})`;
-      this.drawText(ctx, qStr, 938, 565, {
-        size: 10.5,
-        color: p.questProgress >= quest.count ? '#4ade80' : '#ffffff',
-        align: 'right'
-      });
+      const curStep = quest.steps[p.questStep || 0];
+      if (curStep) {
+        const qStr = curStep.type === 'talk'
+          ? `NV: ${curStep.text}`
+          : `NV: ${curStep.text} (${Math.min(p.questProgress, curStep.count)}/${curStep.count})`;
+        this.drawText(ctx, qStr, 938, 565, {
+          size: 10.5,
+          color: curStep.type === 'talk' ? '#4ade80' : '#ffffff',
+          align: 'right'
+        });
+      }
     }
 
     // Nút Chat chuẩn ochat.png (948, 542, 56, 56)
@@ -917,68 +963,76 @@ export class NroHudRenderer {
     else if (this.popupTab === 4) this.renderTabFunctions(ctx);
   }
 
-  // --- TAB 0: NHIỆM VỤ CỐT TRUYỆN ---
+  // --- TAB 0: NHIỆM VỤ CHUẨN HUDPopupRenderer.java (dòng 114-136) ---
   renderTabQuest(ctx) {
     const p = this.engine.player;
     const quest = STORY_QUESTS.find((q) => q.id === p.questId);
 
-    this.drawText(ctx, 'NHIỆM VỤ CHÍNH TUYẾN', 177, 424, {
-      size: 13.5, color: '#7c2d12', stroke: '#fef3c7', strokeWidth: 2, align: 'center'
-    });
-
     if (!quest) {
+      this.drawText(ctx, 'Hoàn thành cốt truyện!', 177, 420, {
+        size: 14, color: '#fef08a', align: 'center'
+      });
       this.drawWrappedText(
         ctx,
-        'Xin chúc mừng! Bạn đã hoàn thành toàn bộ cốt truyện Ngọc Rồng Online! Hãy tiếp tục săn Boss Broly, Black Goku Rosé và thu thập Ngọc Rồng gọi Rồng Thần bất cứ lúc nào!',
-        26,
-        390,
-        302,
+        'Chúc mừng chiến binh! Bạn đã chinh phục toàn bộ nhiệm vụ cốt truyện. Hãy tiếp tục luyện cấp, săn BOSS Broly, Black Goku Rosé và thu thập Ngọc Rồng gọi Rồng Thần!',
+        24,
+        385,
+        305,
         20,
-        { size: 12, color: '#1e293b', stroke: null, strokeWidth: 0 }
+        { size: 11.5, color: '#ffffff', stroke: '#000000', strokeWidth: 2, bold: false }
       );
       return;
     }
 
-    this.fillRectGdx(ctx, 22, 235, 311, 176, 'rgba(255,251,235,0.88)', '#92400e', 1.5);
-    this.drawText(ctx, `Chương ${quest.id}: ${quest.title}`, 32, 390, {
-      size: 12.5, color: '#b45309', stroke: null, strokeWidth: 0
+    // Tiêu đề nhiệm vụ căn giữa tại y=420 đúng chuẩn HUDPopupRenderer.java dòng 115
+    this.drawText(ctx, quest.title, 177, 420, {
+      size: 14, color: '#fde047', align: 'center'
     });
 
-    this.drawWrappedText(ctx, quest.desc, 32, 366, 290, 18, {
-      size: 11.5, color: '#1f2937', stroke: null, strokeWidth: 0, bold: false
-    });
-
-    const progRatio = Math.min(1, p.questProgress / Math.max(1, quest.count));
-    this.fillRectGdx(ctx, 32, 276, 290, 18, '#374151', '#000000', 1);
-    this.fillRectGdx(ctx, 33, 277, 288 * progRatio, 16, '#16a34a', null);
-    this.drawText(ctx, `Tiến độ: ${Math.min(p.questProgress, quest.count)} / ${quest.count}`, 177, 281, {
-      size: 10.5, color: '#ffffff', align: 'center'
-    });
-
-    this.drawWrappedText(ctx, `Chỉ dẫn: ${quest.hint}`, 26, 215, 302, 17, {
-      size: 11, color: '#7c2d12', stroke: null, strokeWidth: 0
-    });
-
-    // Phần thưởng
-    this.fillRectGdx(ctx, 22, 85, 311, 88, 'rgba(254,243,199,0.9)', '#b45309', 1.5);
-    this.drawText(ctx, 'Phần Thưởng Hoàn Thành:', 32, 154, {
-      size: 11.5, color: '#92400e', stroke: null, strokeWidth: 0
-    });
-    const itemReward = quest.reward.item ? ITEM_CATALOG[quest.reward.item]?.name : '';
-    this.drawText(ctx, `+ ${formatNroNum(quest.reward.gold)} Vàng   + ${quest.reward.gem} Ngọc Xanh`, 32, 132, {
-      size: 11, color: '#15803d', stroke: null, strokeWidth: 0
-    });
-    this.drawText(ctx, `+ ${formatNroNum(quest.reward.power)} Sức mạnh ${itemReward ? `& [${itemReward}]` : ''}`, 32, 110, {
-      size: 11, color: '#1d4ed8', stroke: null, strokeWidth: 0
-    });
-
-    if (p.questProgress >= quest.count) {
-      this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 97, 30, 160, 38);
-      this.drawText(ctx, 'NHẬN THƯỞNG NGAY', 177, 45, { size: 11.5, color: '#fef08a', align: 'center' });
-      this.addHit('btn_claim_quest', 97, 30, 160, 38, () => {
-        this.engine.completeCurrentQuest();
-      });
+    // Các phần nhiệm vụ: đã xong (xanh lá), đang làm (vàng sáng kèm tiến độ), chưa mở ("- ...") đúng dòng 118-121
+    const curStepIdx = p.questStep || 0;
+    let curY = 386;
+    for (let i = 0; i < quest.steps.length; i++) {
+      const st = quest.steps[i];
+      if (i < curStepIdx) {
+        const doneTxt = st.count > 1 ? `- ${st.text} (${st.count}/${st.count})` : `- ${st.text} (Xong)`;
+        this.drawText(ctx, doneTxt, 22, curY, { size: 11.5, color: '#86efac' });
+        curY -= 24;
+      } else if (i === curStepIdx) {
+        const activeTxt = st.type === 'talk'
+          ? `- ${st.text}`
+          : `- ${st.text} (${Math.min(p.questProgress, st.count)}/${st.count})`;
+        this.drawText(ctx, activeTxt, 22, curY, { size: 11.5, color: '#fef08a' });
+        curY -= 24;
+      } else {
+        this.drawText(ctx, '- ...', 22, curY, { size: 11.5, color: '#cbd5e1' });
+        curY -= 24;
+        break;
+      }
     }
+
+    // Đoạn mô tả chi tiết & phần thưởng bên dưới đúng chuẩn HUDPopupRenderer.java dòng 124-136
+    curY -= 10;
+    const descParts = String(quest.desc || '').split('\n');
+    for (let i = 0; i < descParts.length; i++) {
+      curY = this.drawWrappedText(ctx, descParts[i], 22, curY, 308, 19, {
+        size: 11.5, color: '#ffffff', stroke: '#000000', strokeWidth: 2, bold: false
+      });
+      curY -= 4;
+    }
+
+    // Tóm tắt thưởng rõ ràng ở cuối khung
+    this.fillRectGdx(ctx, 20, 26, 315, 76, 'rgba(15, 23, 42, 0.78)', '#f59e0b', 1.5);
+    this.drawText(ctx, 'Phần thưởng khi báo cáo hoàn thành:', 30, 82, { size: 11, color: '#fde047' });
+    const itemReward = quest.reward.item ? ITEM_CATALOG[quest.reward.item]?.name : '';
+    this.drawText(ctx, `+ ${formatNroNum(quest.reward.power)} Sức mạnh & Tiềm năng`, 30, 62, { size: 10.5, color: '#86efac' });
+    this.drawText(
+      ctx,
+      `+ ${formatNroNum(quest.reward.gold)} Vàng${itemReward ? `  |  [${itemReward}]` : ''}`,
+      30,
+      42,
+      { size: 10.5, color: '#67e8f9' }
+    );
   }
 
   // --- TAB 1: HÀNH TRANG + TRANG BỊ ĐANG MẶC + CỘNG TIỀM NĂNG ---
@@ -1304,16 +1358,17 @@ export class NroHudRenderer {
     });
   }
 
-  // --- TAB 4: CHỨC NĂNG (CAPSULE BẢN ĐỒ NHANH, BẢNG XẾP HẠNG, KHU VỰC, LƯU CLOUD, THOÁT MENU) ---
+  // --- TAB 4: CHỨC NĂNG (CAPSULE TRÁI ĐẤT, BẢNG XẾP HẠNG, KHU VỰC, LƯU CLOUD, THOÁT MENU) ---
   renderTabFunctions(ctx) {
     const p = this.engine.player;
 
-    this.drawText(ctx, 'CAPSULE DỊCH CHUYỂN NHANH', 177, 424, {
-      size: 12.5, color: '#7c2d12', stroke: null, strokeWidth: 0, align: 'center'
+    this.drawText(ctx, 'VIÊN CAPSULE DI CHUYỂN NHANH', 177, 424, {
+      size: 12.5, color: '#fde047', align: 'center'
     });
 
-    for (let i = 0; i < MAPS_CONFIG.length; i++) {
-      const m = MAPS_CONFIG[i];
+    const earthMaps = MAPS_CONFIG.filter((m) => m.planetTheme === 'traidat');
+    for (let i = 0; i < earthMaps.length; i++) {
+      const m = earthMaps[i];
       const my = 382 - i * 38;
       const isCur = this.engine.currentMapId === m.id;
       this.drawTex(
@@ -1324,7 +1379,7 @@ export class NroHudRenderer {
         290,
         32
       );
-      this.drawText(ctx, `${m.name} ${isCur ? '(Đang đứng)' : '-> Bay tới'}`, 177, my + 11, {
+      this.drawText(ctx, `${m.name} ${isCur ? '(Đang đứng)' : '-> Dùng Capsule'}`, 177, my + 11, {
         size: 11, color: isCur ? '#fde047' : '#ffffff', align: 'center'
       });
       this.addHit(`teleport_map_${m.id}`, 32, my, 290, 32, () => {
