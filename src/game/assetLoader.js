@@ -195,6 +195,20 @@ class AssetLoader {
     this.loadImage('caycoi_1', '/assets/map/traidat/chung/caycoi/caycoi1_traidat.png');
     this.loadImage('caycoi_2', '/assets/map/traidat/chung/caycoi/caycoi2_traidat.png');
 
+    // Cảnh quan Đồi Hoa Cúc & Tháp Karin
+    this.loadImage('thap_kirin', '/assets/map/traidat/doi_hoa_cuc/thapkirin.png');
+    this.loadImage('doi_hoa_cuc_sau', '/assets/map/traidat/doi_hoa_cuc/doihoacucsau.png');
+    this.loadImage('doi_hoa_cuc_truoc', '/assets/map/traidat/doi_hoa_cuc/doihoacuctruoc.png');
+    this.loadImage('doi_hoa_cuc', '/assets/map/traidat/doi_hoa_cuc/doihoacuc.png');
+
+    // Nấm khổng lồ Hành tinh Namek
+    for (let i = 371; i <= 377; i++) {
+      this.loadImage(`namek_nam_${i}`, `/assets/map/namek/${i}.png`);
+    }
+
+    // Ván bay Cân Đẩu Vân
+    this.loadImage('candauvan', '/assets/vatpham/vanbay/candauvan/candauvan.png');
+
     // 12. Hiệu ứng Click di chuyển & NPC
     for (let i = 1; i <= 4; i++) {
       this.loadImage(`click_move_${i}`, `/assets/hieuung/hieuunggame/click_di_chuyen/${i}.png`);

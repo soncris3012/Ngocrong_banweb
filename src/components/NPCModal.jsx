@@ -89,9 +89,14 @@ export const NPCModal = ({ npc, player, onClose, onUpdatePlayer }) => {
                 "Santa xin chào hiệp sĩ! Ta có rất nhiều trang bị, rada và đồ quý giá giúp con tăng sức mạnh vượt trội."
               </>
             )}
+            {npc.type === 'turtle' && (
+              <>
+                "Chào đại hiệp! Lão rùa ba ba đây. Sư phụ Quy Lão Kame đang đợi người ở phía trước bãi biển Đảo Kame, hãy cẩn thận lũ Cua Bọc Thép và sát thủ Tàu Pảy Pảy nhé!"
+              </>
+            )}
             {npc.type === 'guru' && (
               <>
-                "Ta là Trưởng lão Guru của hành tinh Namếc. Hãy giữ gìn hòa bình vũ trụ và tiêu diệt bọn quái vật hung ác ở Rừng Nấm!"
+                "Ta là Đại Trưởng Lão Guru của hành tinh Namếc. Hãy giữ gìn hòa bình vũ trụ, thanh trừng bọn Quái Đá Hắc Ám và Khủng Long Bạo Chúa ở Rừng Nấm!"
               </>
             )}
           </div>
