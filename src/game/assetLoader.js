@@ -24,6 +24,8 @@ const CORE_PRELOAD_PATHS = [
   'hud/giaodientrong/bg_attack_click.png',
   'hud/giaodientrong/change.png',
   'hud/giaodientrong/change_click.png',
+  'hud/giaodientrong/myTexture2dnut.png',
+  'hud/giaodientrong/myTexture2dnutF.png',
   'hud/giaodientrong/clicknpc.png',
   'hud/giaodientrong/ohanhtrang.jpg',
   'hud/giaodientrong/ohanhtrangclick.jpg',

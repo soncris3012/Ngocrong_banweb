@@ -54,6 +54,37 @@ export function App() {
   const [textInputActive, setTextInputActive] = useState(false);
   const [textInputVal, setTextInputVal] = useState('');
 
+  // Tự động co giãn chuẩn tỉ lệ FitViewport(1020, 610) & tự xoay ngang 90° nếu mở dọc trên điện thoại
+  const [viewport, setViewport] = useState(() => ({
+    winW: typeof window !== 'undefined' ? window.innerWidth : 1020,
+    winH: typeof window !== 'undefined' ? window.innerHeight : 610
+  }));
+
+  useEffect(() => {
+    let rafId = 0;
+    const syncViewport = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        setViewport({
+          winW: window.innerWidth || 1020,
+          winH: window.innerHeight || 610
+        });
+      });
+    };
+    window.addEventListener('resize', syncViewport);
+    window.addEventListener('orientationchange', syncViewport);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', syncViewport);
+      window.removeEventListener('orientationchange', syncViewport);
+    };
+  }, []);
+
+  const isPortrait = viewport.winH > viewport.winW;
+  const landW = isPortrait ? viewport.winH : viewport.winW;
+  const landH = isPortrait ? viewport.winW : viewport.winH;
+  const fitScale = Math.max(0.1, Math.min(landW / 1020, landH / 610));
+
   // Nạp toàn bộ tài nguyên cốt lõi của repo DANG-PH/ngoc-rong-online
   useEffect(() => {
     assets.init();
@@ -125,11 +156,21 @@ export function App() {
     };
   }, [screenView]);
 
+  const tryLockLandscape = () => {
+    try {
+      window.screen?.orientation?.lock?.('landscape')?.catch?.(() => {});
+    } catch {
+      // iOS Safari không hỗ trợ orientation.lock -> Đã tự xoay ngang 90° bằng Stage CSS!
+    }
+  };
+
   const handleEnterGame = () => {
+    tryLockLandscape();
     setScreenView('SPLASH');
   };
 
   const handleSelectCharacter = (newChar) => {
+    tryLockLandscape();
     setPlayerState(newChar);
     setSavedCharacter(newChar);
     localStorage.setItem('nro_last_character', newChar.name);
@@ -166,109 +207,123 @@ export function App() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
-      {/* 0. MÀN HÌNH NẠP TEXTURE KHỞI ĐẦU CHUẨN NRO */}
-      {!assetsLoaded && (
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 select-none">
-          <img
-            src="/assets/hud/giaodienngoai/chung/chuberong.png"
-            alt="Ngọc Rồng Online"
-            className="w-64 sm:w-80 object-contain mb-6"
+    <div className="fixed inset-0 overflow-hidden bg-black select-none touch-none">
+      {/* KHUNG CHUẨN TỈ LỆ FitViewport(1020, 610) + TỰ ĐỘNG XOAY NGANG 90° TRÊN ĐIỆN THOẠI DỌC */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '1020px',
+          height: '610px',
+          left: '50%',
+          top: '50%',
+          transformOrigin: 'center center',
+          transform: `translate(-50%, -50%) ${isPortrait ? 'rotate(90deg) ' : ''}scale(${fitScale})`
+        }}
+        className="overflow-hidden bg-black"
+      >
+        {/* 0. MÀN HÌNH NẠP TEXTURE KHỞI ĐẦU CHUẨN NRO */}
+        {!assetsLoaded && (
+          <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 select-none">
+            <img
+              src="/assets/hud/giaodienngoai/chung/chuberong.png"
+              alt="Ngọc Rồng Online"
+              className="w-72 object-contain mb-6"
+            />
+            <img
+              src="/assets/vatpham/vatphamgame/ngocrong/nr5s.png"
+              alt=""
+              className="w-10 h-10 object-contain animate-spin mb-3"
+            />
+            <p className="font-dragon text-[#fde047] text-sm font-bold">
+              Đang tải dữ liệu trò chơi... {loadPercent}%
+            </p>
+          </div>
+        )}
+
+        {/* 1. GIAO DIỆN NGOÀI (MAIN MENU CHUẨN MANHINHDANGNHAP) */}
+        {assetsLoaded && screenView === 'MENU' && (
+          <MainMenu
+            savedCharacter={savedCharacter}
+            currentServer={currentServer}
+            onEnterGame={handleEnterGame}
+            onOpenCharacterCreate={() => setScreenView('CHAR_CREATE')}
+            onOpenLogin={() => setShowLoginModal(true)}
+            onOpenServerSelect={() => setShowServerSelect(true)}
+            onClearData={handleClearData}
           />
-          <img
-            src="/assets/vatpham/vatphamgame/ngocrong/nr5s.png"
-            alt=""
-            className="w-10 h-10 object-contain animate-spin mb-3"
+        )}
+
+        {/* 2. MÀN HÌNH TẠO NHÂN VẬT CHUẨN MANHINHCHOIMOI */}
+        {assetsLoaded && screenView === 'CHAR_CREATE' && (
+          <CharacterCreateModal
+            currentServer={currentServer}
+            onOpenServerSelect={() => setShowServerSelect(true)}
+            onSelectCharacter={handleSelectCharacter}
+            onClose={() => setScreenView('MENU')}
           />
-          <p className="font-dragon text-[#fde047] text-sm font-bold">
-            Đang tải dữ liệu trò chơi... {loadPercent}%
-          </p>
-        </div>
-      )}
+        )}
 
-      {/* 1. GIAO DIỆN NGOÀI (MAIN MENU CHUẨN MANHINHDANGNHAP) */}
-      {assetsLoaded && screenView === 'MENU' && (
-        <MainMenu
-          savedCharacter={savedCharacter}
-          currentServer={currentServer}
-          onEnterGame={handleEnterGame}
-          onOpenCharacterCreate={() => setScreenView('CHAR_CREATE')}
-          onOpenLogin={() => setShowLoginModal(true)}
-          onOpenServerSelect={() => setShowServerSelect(true)}
-          onClearData={handleClearData}
-        />
-      )}
-
-      {/* 2. MÀN HÌNH TẠO NHÂN VẬT CHUẨN MANHINHCHOIMOI */}
-      {assetsLoaded && screenView === 'CHAR_CREATE' && (
-        <CharacterCreateModal
-          currentServer={currentServer}
-          onOpenServerSelect={() => setShowServerSelect(true)}
-          onSelectCharacter={handleSelectCharacter}
-          onClose={() => setScreenView('MENU')}
-        />
-      )}
-
-      {/* 3. SPLASH NGỌC RỒNG XOAY CHUYỂN CẢNH */}
-      {screenView === 'SPLASH' && (
-        <SplashScreen
-          onFinish={() => setScreenView('GAME')}
-          message="Đang vào Nhà Gôhan..."
-        />
-      )}
-
-      {/* 4. POPUP CHỌN MÁY CHỦ & ĐĂNG NHẬP */}
-      {showServerSelect && (
-        <ServerSelectModal
-          currentServer={currentServer}
-          onSelectServer={handleSelectServer}
-          onClose={() => setShowServerSelect(false)}
-        />
-      )}
-
-      {showLoginModal && (
-        <LoginModal
-          onLoginSuccess={handleLoginSuccess}
-          onClose={() => setShowLoginModal(false)}
-        />
-      )}
-
-      {/* 5. MÀN HÌNH TRONG GAME THUẦN CANVAS LIBGDX 100% */}
-      {screenView === 'GAME' && (
-        <>
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 block w-full h-full cursor-pointer z-10"
+        {/* 3. SPLASH NGỌC RỒNG XOAY CHUYỂN CẢNH */}
+        {screenView === 'SPLASH' && (
+          <SplashScreen
+            onFinish={() => setScreenView('GAME')}
+            message="Đang vào Nhà Gôhan..."
           />
+        )}
 
-          {/* Cầu nối bàn phím ẩn khi mở khungchat.png để gõ Tiếng Việt & Giftcode trên cả PC lẫn Mobile */}
-          {textInputActive && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (engineRef.current) {
-                  engineRef.current.hud.submitChatOrGiftcode(textInputVal);
-                }
-              }}
-              className="fixed top-0 left-0 opacity-0 pointer-events-none"
-            >
-              <input
-                ref={hiddenInputRef}
-                type="text"
-                value={textInputVal}
-                maxLength={64}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setTextInputVal(v);
+        {/* 4. POPUP CHỌN MÁY CHỦ & ĐĂNG NHẬP */}
+        {showServerSelect && (
+          <ServerSelectModal
+            currentServer={currentServer}
+            onSelectServer={handleSelectServer}
+            onClose={() => setShowServerSelect(false)}
+          />
+        )}
+
+        {showLoginModal && (
+          <LoginModal
+            onLoginSuccess={handleLoginSuccess}
+            onClose={() => setShowLoginModal(false)}
+          />
+        )}
+
+        {/* 5. MÀN HÌNH TRONG GAME THUẦN CANVAS LIBGDX 100% */}
+        {screenView === 'GAME' && (
+          <>
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 block w-[1020px] h-[610px] cursor-pointer z-10 touch-none"
+            />
+
+            {/* Cầu nối bàn phím ẩn khi mở khungchat.png để gõ Tiếng Việt & Giftcode trên cả PC lẫn Mobile */}
+            {textInputActive && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
                   if (engineRef.current) {
-                    engineRef.current.hud.chatInputText = v;
+                    engineRef.current.hud.submitChatOrGiftcode(textInputVal);
                   }
                 }}
-              />
-            </form>
-          )}
-        </>
-      )}
+                className="fixed top-0 left-0 opacity-0 pointer-events-none"
+              >
+                <input
+                  ref={hiddenInputRef}
+                  type="text"
+                  value={textInputVal}
+                  maxLength={64}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTextInputVal(v);
+                    if (engineRef.current) {
+                      engineRef.current.hud.chatInputText = v;
+                    }
+                  }}
+                />
+              </form>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -17,7 +17,13 @@ import {
   MAPS_CONFIG,
   formatNroNum
 } from './nroData';
-import { NroHudRenderer } from './NroHudRenderer';
+import {
+  NroHudRenderer,
+  JOYSTICK_CX,
+  JOYSTICK_CY,
+  JOYSTICK_R_NGOAI,
+  JOYSTICK_NGUONG
+} from './NroHudRenderer';
 
 // Offset chính xác từ CaiTrangOffset.java cho các bộ Cải Trang & BOSS
 const CAITRANG_EXACT_OFFSETS = {
@@ -168,9 +174,19 @@ export class GameEngine {
     // Pet đi theo sau
     this.petFollower = { x: this.player.x - 42, y: this.player.y, dir: 1 };
 
-    // Camera chuẩn QuanLyCamera.java
+    // Camera chuẩn QuanLyCamera.java (hỗ trợ kéo camera quan sát bản đồ!)
     this.camX = 510;
     this.camY = 305;
+    this.camDragPointerId = null;
+    this.camDragging = false;
+    this.camDragStartGx = 0;
+    this.camDragStartGy = 0;
+    this.camDragStartCamX = 510;
+    this.camDragStartCamY = 305;
+
+    // Theo dõi ngón tay / chuột đang giữ Joystick điều hướng ảo (chuẩn ThaoTac.java dòng 31)
+    this.joystickPointerId = null;
+    this.joystickUpHoldTime = 0;
 
     // Thực thể bản đồ hiện tại
     this.currentMapId = startMapId;
@@ -728,6 +744,16 @@ export class GameEngine {
   handlePrimaryAction() {
     if (this.hud.npcDialog || this.hud.shenronActive) return;
 
+    // Nếu đang đứng ngay trước cửa ra/vào nhà mà chưa khoá mục tiêu quái thì cho qua cửa luôn!
+    const mapCfg = MAPS_CONFIG[this.currentMapId];
+    const doorWp = mapCfg?.waypoints.find(
+      (w) => w.kind === 'door' && w.doorRangeX && this.player.x >= w.doorRangeX[0] && this.player.x <= w.doorRangeX[1]
+    );
+    if (doorWp && (!this.selectedTarget || (this.selectedTarget.targetKind === 'monster' && this.selectedTarget.dead))) {
+      this.changeMap(doorWp.targetMapId, doorWp.targetX, doorWp.targetY);
+      return;
+    }
+
     if (!this.selectedTarget || (this.selectedTarget.targetKind === 'monster' && this.selectedTarget.dead)) {
       this.selectedTarget = this.findNearestTarget();
     }
@@ -1002,7 +1028,7 @@ export class GameEngine {
       p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.08 * dt);
     }
 
-    // Điều khiển di chuyển bàn phím + Click chuột xuống đất
+    // Điều khiển di chuyển: Bàn phím + Joystick kéo thả 360 độ + Click chuột xuống đất
     const moveSpeed = p.isFlying ? 295 : 245;
     let inputX = 0;
     let inputY = 0;
@@ -1012,12 +1038,25 @@ export class GameEngine {
       if (this.keys['ArrowRight'] || this.keys['KeyD']) inputX += 1;
       if (this.keys['ArrowUp'] || this.keys['KeyW']) inputY += 1;
       if (this.keys['ArrowDown'] || this.keys['KeyS']) inputY -= 1;
+
+      // Đọc vị trí kéo nút điều hướng Joystick chuẩn ThaoTac.java dòng 511-543
+      if (this.hud.joystickActive) {
+        const jdx = this.hud.joystickDx;
+        const jdy = this.hud.joystickDy;
+        if (Math.abs(jdx) > JOYSTICK_NGUONG) {
+          inputX = Math.max(-1, Math.min(1, jdx / (JOYSTICK_R_NGOAI * 0.78)));
+        }
+        if (Math.abs(jdy) > JOYSTICK_NGUONG) {
+          inputY = Math.max(-1, Math.min(1, jdy / (JOYSTICK_R_NGOAI * 0.78)));
+        }
+      }
     }
 
     if (inputX !== 0 || inputY !== 0) {
       p.moveTargetX = null;
       p.moveTargetY = null;
       this.pendingInteractNpc = null;
+      this.pendingWaypoint = null;
     }
 
     if (inputX !== 0) {
@@ -1047,25 +1086,28 @@ export class GameEngine {
       p.vx = 0;
     }
 
-    // Nhảy & Bay lượn chuẩn NRO (Nhấn Lên trên mặt đất -> nhảy, giữ Lên khi đang trên không -> bật Bay!)
-    const groundY = this.getGroundTopAt(p.x, mapCfg);
-    if (inputY > 0) {
+    // Nhảy & Bay lượn chuẩn NRO (Kéo Joystick lên / bấm Lên trên mặt đất -> Nhảy; giữ kéo lên -> Bay 360 độ!)
+    if (inputY > 0.22) {
+      this.joystickUpHoldTime += dt;
       if (p.onGround) {
         p.vy = 430;
         p.onGround = false;
         sound.playJump();
-      } else if (p.vy < 140 && p.ki > 5) {
+      } else if ((p.vy < 150 || this.joystickUpHoldTime > 0.16) && p.ki > 5) {
         p.isFlying = true;
-        p.vy = 230;
-        p.ki = Math.max(0, p.ki - 8 * dt);
+        p.vy = inputY * 255;
+        p.ki = Math.max(0, p.ki - 7 * dt);
       }
-    } else if (p.isFlying) {
-      if (inputY < 0) {
-        p.vy = -240;
-      } else if (p.moveTargetY !== null && Math.abs(p.moveTargetY - p.y) > 12) {
-        p.vy = Math.sign(p.moveTargetY - p.y) * 210;
-      } else {
-        p.vy = 0;
+    } else {
+      this.joystickUpHoldTime = 0;
+      if (p.isFlying) {
+        if (inputY < -0.18) {
+          p.vy = inputY * 260;
+        } else if (p.moveTargetY !== null && Math.abs(p.moveTargetY - p.y) > 12) {
+          p.vy = Math.sign(p.moveTargetY - p.y) * 210;
+        } else {
+          p.vy = 0;
+        }
       }
     }
 
@@ -1299,6 +1341,11 @@ export class GameEngine {
 
   updateCamera(dt) {
     const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
+    if (this.camDragging) {
+      this.camX = Math.max(510, Math.min(mapCfg.width - 510, this.camX));
+      this.camY = Math.max(305, Math.min(mapCfg.height - 305, this.camY));
+      return;
+    }
     const targetCamX = Math.max(510, Math.min(mapCfg.width - 510, this.player.x));
     const targetCamY = Math.max(305, Math.min(mapCfg.height - 305, this.player.y + 95));
     const lerp = Math.min(1, dt * 8.5);
@@ -1339,9 +1386,15 @@ export class GameEngine {
     const ctx = this.ctx;
     if (!ctx) return;
 
+    // FitViewport(1020, 610) chuẩn QuanLyCamera.java: Canvas luôn giữ đúng tỉ lệ 1020:610 sắc nét Retina, KHÔNG BAO GIỜ méo hình!
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const targetW = Math.max(1, Math.floor(window.innerWidth * dpr));
-    const targetH = Math.max(1, Math.floor(window.innerHeight * dpr));
+    const winW = window.innerWidth || VIRTUAL_W;
+    const winH = window.innerHeight || VIRTUAL_H;
+    const landW = Math.max(winW, winH);
+    const landH = Math.min(winW, winH);
+    const fitScale = Math.min(landW / VIRTUAL_W, landH / VIRTUAL_H);
+    const targetW = Math.max(1, Math.round(VIRTUAL_W * fitScale * dpr));
+    const targetH = Math.max(1, Math.round(VIRTUAL_H * fitScale * dpr));
     if (this.canvas.width !== targetW || this.canvas.height !== targetH) {
       this.canvas.width = targetW;
       this.canvas.height = targetH;
@@ -2272,55 +2325,85 @@ export class GameEngine {
     }
   }
 
-  // ==================== BẮT SỰ KIỆN CHUỘT / CẢM ỨNG / BÀN PHÍM ====================
+  // ==================== BẮT SỰ KIỆN KÉO JOYSTICK, KÉO CAMERA, CHẠM ĐÔI & BÀN PHÍM CHUẨN ThaoTac.java ====================
   clientToVirtual(clientX, clientY) {
-    const rect = this.canvas.getBoundingClientRect();
-    const gx = ((clientX - rect.left) / Math.max(1, rect.width)) * VIRTUAL_W;
-    const gy = (1 - (clientY - rect.top) / Math.max(1, rect.height)) * VIRTUAL_H;
-    return { gx, gy };
+    // Khớp 100% với FitViewport(1020, 610) & tự động xoay ngang 90° khi màn hình dọc (Portrait Mobile)!
+    const winW = window.innerWidth || VIRTUAL_W;
+    const winH = window.innerHeight || VIRTUAL_H;
+    const isPortrait = winH > winW;
+    const landW = isPortrait ? winH : winW;
+    const landH = isPortrait ? winW : winH;
+    const fitScale = Math.max(0.1, Math.min(landW / VIRTUAL_W, landH / VIRTUAL_H));
+
+    const dx = clientX - winW / 2;
+    const dy = clientY - winH / 2;
+
+    if (isPortrait) {
+      // Đạo hàm ngược của CSS transform: translate(-50%, -50%) rotate(90deg) scale(fitScale)
+      return {
+        gx: VIRTUAL_W / 2 + dy / fitScale,
+        gy: VIRTUAL_H / 2 + dx / fitScale
+      };
+    }
+    return {
+      gx: VIRTUAL_W / 2 + dx / fitScale,
+      gy: VIRTUAL_H / 2 - dy / fitScale
+    };
   }
 
-  _bindEvents() {
-    this._onPointerDown = (e) => {
-      sound.startBGM();
-      const { gx, gy } = this.clientToVirtual(e.clientX, e.clientY);
+  _updateJoystickFromVirtual(gx, gy) {
+    let dx = gx - JOYSTICK_CX;
+    let dy = gy - JOYSTICK_CY;
+    const dist = Math.hypot(dx, dy);
+    if (dist > JOYSTICK_R_NGOAI) {
+      dx = (dx / dist) * JOYSTICK_R_NGOAI;
+      dy = (dy / dist) * JOYSTICK_R_NGOAI;
+    }
+    this.hud.joystickDx = dx;
+    this.hud.joystickDy = dy;
+  }
 
-      // 1. Ưu tiên kiểm tra click vào HUD / Cửa sổ Popup / NPC Dialog / Rồng Thần
-      if (this.hud.handlePointerDown(gx, gy)) {
+  _releaseJoystick() {
+    this.joystickPointerId = null;
+    this.hud.joystickActive = false;
+    this.hud.joystickDx = 0;
+    this.hud.joystickDy = 0;
+    this.joystickUpHoldTime = 0;
+  }
+
+  _handleWorldTap(gx, gy) {
+    const wx = gx + (this.camX - 510);
+    const wy = gy + (this.camY - 305);
+    const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
+
+    // 1. Click vào bảng tên Waypoint khi đang đứng gần cửa / rìa map
+    for (let wp of mapCfg.waypoints) {
+      const inRange = this.player.x >= wp.showRangeX[0] && this.player.x <= wp.showRangeX[1];
+      if (!inRange) continue;
+      const sr = wp.signRect;
+      if (wx >= sr.x && wx <= sr.x + sr.w && wy >= sr.y && wy <= sr.y + sr.h) {
+        if (wp.kind === 'door') {
+          if (wp.doorRangeX && (this.player.x < wp.doorRangeX[0] || this.player.x > wp.doorRangeX[1])) {
+            this.player.moveTargetX = (wp.doorRangeX[0] + wp.doorRangeX[1]) / 2;
+            this.pendingWaypoint = wp;
+          } else {
+            this.changeMap(wp.targetMapId, wp.targetX, wp.targetY);
+          }
+        } else if (wp.kind === 'left_edge') {
+          this.player.moveTargetX = -35;
+        } else if (wp.kind === 'right_edge') {
+          this.player.moveTargetX = mapCfg.width + 35;
+        }
         return;
       }
+    }
 
-      const wx = gx + (this.camX - 510);
-      const wy = gy + (this.camY - 305);
-      const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
-
-      // 2. Kiểm tra click vào bảng tên Waypoint khi đang đứng gần cửa / rìa map (chuẩn ManHinhNhaGohan dòng 490 & ManHinhLangAru dòng 464)
-      for (let wp of mapCfg.waypoints) {
-        const inRange = this.player.x >= wp.showRangeX[0] && this.player.x <= wp.showRangeX[1];
-        if (!inRange) continue;
-        const sr = wp.signRect;
-        if (wx >= sr.x && wx <= sr.x + sr.w && wy >= sr.y && wy <= sr.y + sr.h) {
-          if (wp.kind === 'door') {
-            if (wp.doorRangeX && (this.player.x < wp.doorRangeX[0] || this.player.x > wp.doorRangeX[1])) {
-              this.player.moveTargetX = (wp.doorRangeX[0] + wp.doorRangeX[1]) / 2;
-              this.pendingWaypoint = wp;
-            } else {
-              this.changeMap(wp.targetMapId, wp.targetX, wp.targetY);
-            }
-          } else if (wp.kind === 'left_edge') {
-            this.player.moveTargetX = -35;
-          } else if (wp.kind === 'right_edge') {
-            this.player.moveTargetX = mapCfg.width + 35;
-          }
-          return;
-        }
-      }
-
-      // 3. Kiểm tra click vào NPC / Tàu Vũ Trụ / Đùi Gà
-      for (let npc of this.npcs) {
-        if (npc.kind === 'meat' && npc.eaten) continue;
-        const hitHalfW = npc.kind === 'spaceship' ? 58 : 44;
-        if (Math.abs(wx - npc.x) <= hitHalfW && wy >= npc.y - 10 && wy <= npc.y + 98) {
+    // 2. Click vào NPC / Tàu Vũ Trụ / Đùi Gà (Chạm 1 khoá mục tiêu, chạm đôi hoặc đứng gần mở thoại luôn)
+    for (let npc of this.npcs) {
+      if (npc.kind === 'meat' && npc.eaten) continue;
+      const hitHalfW = npc.kind === 'spaceship' ? 58 : 44;
+      if (Math.abs(wx - npc.x) <= hitHalfW && wy >= npc.y - 10 && wy <= npc.y + 98) {
+        if (this.selectedTarget === npc || Math.abs(this.player.x - npc.x) <= 110) {
           this.selectedTarget = npc;
           if (Math.abs(this.player.x - npc.x) <= 115) {
             this.hud.openNpcDialog(npc);
@@ -2328,34 +2411,118 @@ export class GameEngine {
             this.player.moveTargetX = npc.x + (this.player.x < npc.x ? -55 : 55);
             this.pendingInteractNpc = npc;
           }
-          return;
+        } else {
+          this.selectedTarget = npc;
+          sound.playPunch();
         }
+        return;
       }
+    }
 
-      // 4. Kiểm tra click vào Quái vật / Boss
-      for (let m of this.monsters) {
-        if (!m.dead && Math.abs(wx - m.x) <= 48 && wy >= m.y - 12 && wy <= m.y + 95) {
-          this.selectedTarget = m;
+    // 3. Click vào Quái vật / Boss chuẩn Ngọc Rồng Online: Click 1 chọn mục tiêu, Click 2 (hoặc bấm nút Đánh) lao vào đánh!
+    for (let m of this.monsters) {
+      if (!m.dead && Math.abs(wx - m.x) <= 48 && wy >= m.y - 12 && wy <= m.y + 95) {
+        if (this.selectedTarget === m) {
           this.castSkillBySlot(this.player.activeSkillSlot || 0);
-          return;
+        } else {
+          this.selectedTarget = m;
+          sound.playPunch();
         }
+        return;
+      }
+    }
+
+    // 4. Click xuống mặt đất / bầu trời để di chuyển tới điểm chỉ định (click_di_chuyen)
+    let allowMinX = 28;
+    let allowMaxX = mapCfg.width - 28;
+    if (mapCfg.waypoints.some((w) => w.kind === 'left_edge')) allowMinX = -45;
+    if (mapCfg.waypoints.some((w) => w.kind === 'right_edge')) allowMaxX = mapCfg.width + 45;
+    this.player.moveTargetX = Math.max(allowMinX, Math.min(allowMaxX, wx));
+    const gTop = this.getGroundTopAt(this.player.moveTargetX, mapCfg);
+    if (wy > gTop + 65 && this.player.ki > 10) {
+      this.player.isFlying = true;
+      this.player.onGround = false;
+      this.player.moveTargetY = Math.min(mapCfg.height - 95, wy);
+    } else {
+      this.player.moveTargetY = null;
+    }
+    this.clickMarker = { x: wx, y: Math.max(gTop, wy), timer: 0 };
+  }
+
+  _bindEvents() {
+    this._onPointerDown = (e) => {
+      sound.startBGM();
+      const { gx, gy } = this.clientToVirtual(e.clientX, e.clientY);
+      if (gx < -10 || gx > VIRTUAL_W + 10 || gy < -10 || gy > VIRTUAL_H + 10) return;
+
+      // 1. Kiểm tra chạm vào vòng Joystick điều hướng ảo trước tiên (chuẩn ThaoTac.java dòng 158-178)
+      if (
+        this.hud.showVirtualControls &&
+        !this.hud.popupOpen &&
+        !this.hud.isBlockingWorldClick() &&
+        Math.hypot(gx - JOYSTICK_CX, gy - JOYSTICK_CY) <= JOYSTICK_R_NGOAI + 18
+      ) {
+        this.joystickPointerId = e.pointerId;
+        this.hud.joystickActive = true;
+        this.player.moveTargetX = null;
+        this.player.moveTargetY = null;
+        this._updateJoystickFromVirtual(gx, gy);
+        return;
       }
 
-      // 5. Click xuống mặt đất / rìa map để di chuyển (cho phép click sát mép trái/phải để chạy thẳng sang map kế!)
-      let allowMinX = 28;
-      let allowMaxX = mapCfg.width - 28;
-      if (mapCfg.waypoints.some((w) => w.kind === 'left_edge')) allowMinX = -45;
-      if (mapCfg.waypoints.some((w) => w.kind === 'right_edge')) allowMaxX = mapCfg.width + 45;
-      this.player.moveTargetX = Math.max(allowMinX, Math.min(allowMaxX, wx));
-      const gTop = this.getGroundTopAt(this.player.moveTargetX, mapCfg);
-      if (wy > gTop + 65 && this.player.ki > 10) {
-        this.player.isFlying = true;
-        this.player.onGround = false;
-        this.player.moveTargetY = Math.min(mapCfg.height - 95, wy);
-      } else {
-        this.player.moveTargetY = null;
+      // 2. Kiểm tra click vào các nút HUD / Popup / Cửa hàng / Hộp thoại NPC / Rồng Thần
+      if (this.hud.handlePointerDown(gx, gy)) {
+        return;
       }
-      this.clickMarker = { x: wx, y: Math.max(gTop, wy), timer: 0 };
+
+      // 3. Bắt đầu theo dõi Kéo Camera hoặc Chạm Di Chuyển trên bản đồ (chuẩn QuanLyCamera.java dòng 61-106)
+      if (this.camDragPointerId === null) {
+        this.camDragPointerId = e.pointerId;
+        this.camDragging = false;
+        this.camDragStartGx = gx;
+        this.camDragStartGy = gy;
+        this.camDragStartCamX = this.camX;
+        this.camDragStartCamY = this.camY;
+      }
+    };
+
+    this._onPointerMove = (e) => {
+      if (e.pointerId === this.joystickPointerId) {
+        const { gx, gy } = this.clientToVirtual(e.clientX, e.clientY);
+        this._updateJoystickFromVirtual(gx, gy);
+        return;
+      }
+
+      if (e.pointerId === this.camDragPointerId) {
+        const { gx, gy } = this.clientToVirtual(e.clientX, e.clientY);
+        const dx = gx - this.camDragStartGx;
+        const dy = gy - this.camDragStartGy;
+        if (!this.camDragging && Math.hypot(dx, dy) > 9) {
+          this.camDragging = true;
+        }
+        if (this.camDragging) {
+          const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
+          this.camX = Math.max(510, Math.min(mapCfg.width - 510, this.camDragStartCamX - dx * 1.35));
+          this.camY = Math.max(305, Math.min(mapCfg.height - 305, this.camDragStartCamY - dy * 1.35));
+        }
+      }
+    };
+
+    this._onPointerUp = (e) => {
+      if (e.pointerId === this.joystickPointerId) {
+        this._releaseJoystick();
+        return;
+      }
+
+      if (e.pointerId === this.camDragPointerId) {
+        const wasDragging = this.camDragging;
+        this.camDragPointerId = null;
+        this.camDragging = false;
+        if (!wasDragging) {
+          const { gx, gy } = this.clientToVirtual(e.clientX, e.clientY);
+          this._handleWorldTap(gx, gy);
+        }
+      }
     };
 
     this._onKeyDown = (e) => {
@@ -2415,6 +2582,9 @@ export class GameEngine {
     };
 
     this.canvas.addEventListener('pointerdown', this._onPointerDown);
+    window.addEventListener('pointermove', this._onPointerMove);
+    window.addEventListener('pointerup', this._onPointerUp);
+    window.addEventListener('pointercancel', this._onPointerUp);
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
   }
@@ -2449,6 +2619,9 @@ export class GameEngine {
     this.running = false;
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.canvas.removeEventListener('pointerdown', this._onPointerDown);
+    window.removeEventListener('pointermove', this._onPointerMove);
+    window.removeEventListener('pointerup', this._onPointerUp);
+    window.removeEventListener('pointercancel', this._onPointerUp);
     window.removeEventListener('keydown', this._onKeyDown);
     window.removeEventListener('keyup', this._onKeyUp);
   }

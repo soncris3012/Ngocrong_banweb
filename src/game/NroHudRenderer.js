@@ -17,10 +17,42 @@ import {
 import { sound } from './audio';
 import { fetchLeaderboard, saveCharacterData, sendChatMessage } from '../services/supabase';
 
+export const JOYSTICK_CX = 100;
+export const JOYSTICK_CY = 100;
+export const JOYSTICK_R_NGOAI = 65;
+export const JOYSTICK_R_TRONG = 30;
+export const JOYSTICK_NGUONG = 16;
+
+// Cụm nút góc phải dưới xếp hình tam giác chuẩn VeHUD.java dòng 115-125
+export const NUT_ATTACK_W = 90;
+export const NUT_ATTACK_H = 90;
+export const NUT_ATTACK_X = VIRTUAL_W - NUT_ATTACK_W - 15; // 915
+export const NUT_ATTACK_Y = 25;
+
+export const NUT_CHANGE_W = 55;
+export const NUT_CHANGE_H = 55;
+export const NUT_CHANGE_X = NUT_ATTACK_X + 32; // 947
+export const NUT_CHANGE_Y = NUT_ATTACK_Y + NUT_ATTACK_H + 12; // 127
+
+export const NUT_DAUTHAN_W = 55;
+export const NUT_DAUTHAN_H = 55;
+export const NUT_DAUTHAN_X = NUT_ATTACK_X - NUT_DAUTHAN_W - 12; // 848
+export const NUT_DAUTHAN_Y = NUT_ATTACK_Y - 10; // 15
+
 export class NroHudRenderer {
   constructor(engine) {
     this.engine = engine;
     this.hitRegions = [];
+
+    // Nút điều hướng ảo kéo thả (Joystick + Cụm tam giác Tấn công/Đổi mục tiêu/Đậu thần)
+    const savedCtrl = localStorage.getItem('nro_virtual_controls');
+    this.showVirtualControls = savedCtrl === null ? true : savedCtrl === 'true';
+    this.joystickActive = false;
+    this.joystickDx = 0;
+    this.joystickDy = 0;
+    this.attackClickTimer = 0;
+    this.changeClickTimer = 0;
+    this.senzuClickTimer = 0;
 
     // Trạng thái cửa sổ Popup Nhân Vật (popupnhanvat.jpg)
     this.popupOpen = false;
@@ -205,6 +237,10 @@ export class NroHudRenderer {
       this.banners[i].ttl -= dt;
       if (this.banners[i].ttl <= 0) this.banners.splice(i, 1);
     }
+
+    if (this.attackClickTimer > 0) this.attackClickTimer = Math.max(0, this.attackClickTimer - dt);
+    if (this.changeClickTimer > 0) this.changeClickTimer = Math.max(0, this.changeClickTimer - dt);
+    if (this.senzuClickTimer > 0) this.senzuClickTimer = Math.max(0, this.senzuClickTimer - dt);
 
     if (this.shenronActive) {
       this.shenronTimer += dt;
@@ -829,19 +865,24 @@ export class NroHudRenderer {
     });
   }
 
-  // 4. THANH KỸ NĂNG 5 Ô (oskill.png) & CỤM ĐẬU THẦN / ĐÁNH / ĐỔI MỤC TIÊU GÓC DƯỚI PHẢI
+  // 4. JOYSTICK KÉO THẢ + THANH KỸ NĂNG 5 Ô + CỤM TAM GIÁC TẤN CÔNG / ĐỔI MỤC TIÊU / ĐẬU THẦN CHUẨN VeHUD.java!
   renderBottomSkillAndActionBar(ctx) {
     const p = this.engine.player;
     const planetKey = PLANET_DEFS[p.planet]?.key || 'traidat';
     const allSkills = PLANET_SKILLS[planetKey] || PLANET_SKILLS.traidat;
     const loadout = p.skillLoadout || [0, 1, 2, 3, 4];
 
-    // 5 ô kỹ năng căn giữa đáy (x = 345 + i*66, y = 12, 52x52)
+    // Vị trí 5 ô kỹ năng chuẩn ThaoTac.java dòng 559: căn giữa khi bật Joystick, lệch trái x=30 khi tắt Joystick
+    const oskillW = 50;
+    const oskillH = 50;
+    const skillBaseX = this.showVirtualControls ? (VIRTUAL_W - (4 * 65 + oskillW)) / 2 : 30;
+    const skillY = 25;
+
     for (let i = 0; i < 5; i++) {
       const skIdx = loadout[i] ?? i;
       const skill = allSkills[skIdx] || allSkills[0];
-      const sx = 345 + i * 66;
-      const sy = 12;
+      const sx = skillBaseX + i * 65;
+      const sy = skillY;
       const isSelected = p.activeSkillSlot === i;
 
       this.drawTex(
@@ -849,55 +890,167 @@ export class NroHudRenderer {
         isSelected ? 'hud/giaodientrong/oskillclick.png' : 'hud/giaodientrong/oskill.png',
         sx,
         sy,
-        52,
-        52
+        oskillW,
+        oskillH
       );
 
       if (skill) {
-        this.drawTex(ctx, skill.icon, sx + 7, sy + 7, 38, 38);
+        this.drawTex(ctx, skill.icon, sx + 6, sy + 6, 38, 38);
         const cdRem = p.cooldowns[skill.id] || 0;
         if (cdRem > 0.05) {
           const ratio = Math.min(1, cdRem / Math.max(0.1, skill.cd));
-          this.fillRectGdx(ctx, sx + 6, sy + 6, 40, 40 * ratio, 'rgba(0,0,0,0.68)', null);
-          this.drawText(ctx, cdRem.toFixed(1), sx + 26, sy + 22, {
+          this.fillRectGdx(ctx, sx + 5, sy + 5, 40, 40 * ratio, 'rgba(0,0,0,0.68)', null);
+          this.drawText(ctx, cdRem.toFixed(1), sx + 25, sy + 21, {
             size: 11, color: '#fde047', align: 'center'
           });
         }
       }
 
-      // Nhãn phím 1..5
-      this.drawText(ctx, `${i + 1}`, sx + 10, sy + 40, { size: 10, color: '#fef08a' });
+      this.drawText(ctx, `${i + 1}`, sx + 9, sy + 38, { size: 9.5, color: '#fef08a' });
 
-      this.addHit(`skill_slot_${i}`, sx, sy, 52, 52, () => {
-        p.activeSkillSlot = i;
-        this.engine.castSkillBySlot(i);
+      this.addHit(`skill_slot_${i}`, sx, sy, oskillW, oskillH, () => {
+        if (p.activeSkillSlot === i) {
+          this.engine.castSkillBySlot(i);
+        } else {
+          p.activeSkillSlot = i;
+          this.engine.castSkillBySlot(i);
+        }
       });
     }
 
-    // Ô Đậu Thần (odauthan.png tại 768, 12, 58x58)
-    this.drawTex(ctx, 'hud/giaodientrong/odauthan.png', 768, 12, 58, 58);
-    this.drawTex(ctx, 'map/traidat/chung/trangtri/hatdau2.png', 782, 25, 30, 30);
-    this.drawText(ctx, `${p.senzuCount}`, 797, 17, { size: 11, color: '#86efac', align: 'center' });
-    this.drawText(ctx, '6', 776, 54, { size: 9.5, color: '#fde047' });
-    this.addHit('btn_eat_senzu', 768, 12, 58, 58, () => {
-      this.engine.eatSenzu();
-    });
+    if (this.showVirtualControls) {
+      // === A. JOYSTICK ẢO KÉO THẢ 360 ĐỘ BÊN TRÁI DƯỚI CHUẨN VeHUD.java dòng 1146-1162 ===
+      if (!this.popupOpen) {
+        const jcx = JOYSTICK_CX;
+        const jcy = VIRTUAL_H - JOYSTICK_CY;
 
-    // Nút Tấn Công / Tương Tác chính (bg_attack.png tại 842, 8, 86x86)
-    this.drawTex(ctx, 'hud/giaodientrong/bg_attack.png', 842, 8, 86, 86);
-    const activeSkill = allSkills[loadout[p.activeSkillSlot || 0]] || allSkills[0];
-    if (activeSkill) {
-      this.drawTex(ctx, activeSkill.icon, 865, 31, 40, 40);
+        ctx.save();
+        // Vòng ngoài cố định
+        ctx.beginPath();
+        ctx.arc(jcx, jcy, JOYSTICK_R_NGOAI, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.34)';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = this.joystickActive ? 'rgba(253, 224, 71, 0.85)' : 'rgba(255, 255, 255, 0.62)';
+        ctx.stroke();
+
+        // 4 dấu hướng mảnh trên vành ngoài (Lên / Xuống / Trái / Phải)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('▲', jcx, jcy - JOYSTICK_R_NGOAI + 12);
+        ctx.fillText('▼', jcx, jcy + JOYSTICK_R_NGOAI - 12);
+        ctx.fillText('◄', jcx - JOYSTICK_R_NGOAI + 12, jcy);
+        ctx.fillText('►', jcx + JOYSTICK_R_NGOAI - 12, jcy);
+
+        // Vòng trong kéo theo ngón tay / chuột (dùng cả vòng cam đỏ chuẩn VeHUD + texture nút NRO!)
+        const knobX = jcx + this.joystickDx;
+        const knobY = VIRTUAL_H - (JOYSTICK_CY + this.joystickDy);
+        ctx.beginPath();
+        ctx.arc(knobX, knobY, JOYSTICK_R_TRONG, 0, Math.PI * 2);
+        ctx.fillStyle = this.joystickActive ? 'rgba(255, 82, 5, 0.96)' : 'rgba(255, 82, 5, 0.75)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#fde047';
+        ctx.stroke();
+        ctx.restore();
+
+        const nutTex = this.joystickActive ? 'hud/giaodientrong/myTexture2dnutF.png' : 'hud/giaodientrong/myTexture2dnut.png';
+        this.drawTex(
+          ctx,
+          nutTex,
+          JOYSTICK_CX + this.joystickDx - 26,
+          JOYSTICK_CY + this.joystickDy - 26,
+          52,
+          52
+        );
+      }
+
+      // === B. CỤM TAM GIÁC GÓC PHẢI DƯỚI CHUẨN VeHUD.java dòng 1168-1185 ===
+      // 1. Ô Đậu Thần thu nhỏ (848, 15, 55x55)
+      const szScale = this.senzuClickTimer > 0 ? 1 - 0.14 * (this.senzuClickTimer / 0.2) : 1;
+      const szW = NUT_DAUTHAN_W * szScale;
+      const szH = NUT_DAUTHAN_H * szScale;
+      const szX = NUT_DAUTHAN_X + (NUT_DAUTHAN_W - szW) / 2;
+      const szY = NUT_DAUTHAN_Y + (NUT_DAUTHAN_H - szH) / 2;
+      this.drawTex(
+        ctx,
+        this.senzuClickTimer > 0 ? 'hud/giaodientrong/odauthanclick.png' : 'hud/giaodientrong/odauthan.png',
+        szX,
+        szY,
+        szW,
+        szH
+      );
+      this.drawTex(ctx, 'map/traidat/chung/trangtri/hatdau2.png', NUT_DAUTHAN_X + 14, NUT_DAUTHAN_Y + 14, 27, 27);
+      this.drawText(ctx, `${p.senzuCount}`, NUT_DAUTHAN_X + 27.5, NUT_DAUTHAN_Y + 8, {
+        size: 11, color: '#fef08a', align: 'center'
+      });
+      this.addHit('btn_eat_senzu', NUT_DAUTHAN_X, NUT_DAUTHAN_Y, NUT_DAUTHAN_W, NUT_DAUTHAN_H, () => {
+        this.senzuClickTimer = 0.2;
+        this.engine.eatSenzu();
+      });
+
+      // 2. Nút Tấn Công / Giao Tiếp chính (915, 25, 90x90) có hiệu ứng nảy chuẩn VeHUD.java
+      const atkScale = this.attackClickTimer > 0 ? 1 - 0.15 * (this.attackClickTimer / 0.2) : 1;
+      const atkW = NUT_ATTACK_W * atkScale;
+      const atkH = NUT_ATTACK_H * atkScale;
+      const atkX = NUT_ATTACK_X + (NUT_ATTACK_W - atkW) / 2;
+      const atkY = NUT_ATTACK_Y + (NUT_ATTACK_H - atkH) / 2;
+      this.drawTex(
+        ctx,
+        this.attackClickTimer > 0 ? 'hud/giaodientrong/bg_attack_click.png' : 'hud/giaodientrong/bg_attack.png',
+        atkX,
+        atkY,
+        atkW,
+        atkH
+      );
+      const activeSkill = allSkills[loadout[p.activeSkillSlot || 0]] || allSkills[0];
+      if (activeSkill) {
+        this.drawTex(ctx, activeSkill.icon, NUT_ATTACK_X + 25, NUT_ATTACK_Y + 25, 40, 40);
+      }
+      this.addHit('btn_attack_main', NUT_ATTACK_X, NUT_ATTACK_Y, NUT_ATTACK_W, NUT_ATTACK_H, () => {
+        this.attackClickTimer = 0.2;
+        this.engine.handlePrimaryAction();
+      });
+
+      // 3. Nút Đổi Mục Tiêu phía trên nút Tấn Công (947, 127, 55x55)
+      const chgScale = this.changeClickTimer > 0 ? 1 - 0.15 * (this.changeClickTimer / 0.2) : 1;
+      const chgW = NUT_CHANGE_W * chgScale;
+      const chgH = NUT_CHANGE_H * chgScale;
+      const chgX = NUT_CHANGE_X + (NUT_CHANGE_W - chgW) / 2;
+      const chgY = NUT_CHANGE_Y + (NUT_CHANGE_H - chgH) / 2;
+      this.drawTex(
+        ctx,
+        this.changeClickTimer > 0 ? 'hud/giaodientrong/change_click.png' : 'hud/giaodientrong/change.png',
+        chgX,
+        chgY,
+        chgW,
+        chgH
+      );
+      this.addHit('btn_change_target', NUT_CHANGE_X, NUT_CHANGE_Y, NUT_CHANGE_W, NUT_CHANGE_H, () => {
+        this.changeClickTimer = 0.2;
+        this.engine.cycleTarget();
+      });
+    } else {
+      // Chế độ PC truyền thống (tắt nút ảo): Ô Đậu Thần lớn 75x75 góc phải dưới chuẩn VeHUD.java dòng 1125-1128
+      const odX = VIRTUAL_W - 85;
+      const odY = 10;
+      this.drawTex(
+        ctx,
+        this.senzuClickTimer > 0 ? 'hud/giaodientrong/odauthanclick.png' : 'hud/giaodientrong/odauthan.png',
+        odX,
+        odY,
+        75,
+        75
+      );
+      this.drawTex(ctx, 'map/traidat/chung/trangtri/hatdau2.png', odX + 20, odY + 22, 35, 35);
+      this.drawText(ctx, `${p.senzuCount}`, odX + 37.5, odY + 12, { size: 12, color: '#fef08a', align: 'center' });
+      this.addHit('btn_eat_senzu_pc', odX, odY, 75, 75, () => {
+        this.senzuClickTimer = 0.2;
+        this.engine.eatSenzu();
+      });
     }
-    this.addHit('btn_attack_main', 842, 8, 86, 86, () => {
-      this.engine.handlePrimaryAction();
-    });
-
-    // Nút Đổi Mục Tiêu (change.png tại 942, 16, 58x58)
-    this.drawTex(ctx, 'hud/giaodientrong/change.png', 942, 16, 58, 58);
-    this.addHit('btn_change_target', 942, 16, 58, 58, () => {
-      this.engine.cycleTarget();
-    });
   }
 
   // 5. CỬA SỔ NHÂN VẬT 5 TAB BÊN TRÁI (popupnhanvat.jpg + nutchucnang.png + ttluc.jpg)
@@ -1390,45 +1543,52 @@ export class NroHudRenderer {
       });
     }
 
-    // Các nút hệ thống bên dưới
+    // Các nút hệ thống bên dưới (Có công tắc Bật/Tắt Nút Điều Hướng Ảo chuẩn VeHUD.java dòng 95!)
     const sysBtns = [
       {
-        label: 'Bảng Xếp Hạng Server',
+        label: `Nút Ảo: ${this.showVirtualControls ? 'ĐANG BẬT' : 'ĐANG TẮT'}`,
+        onClick: () => {
+          this.showVirtualControls = !this.showVirtualControls;
+          localStorage.setItem('nro_virtual_controls', String(this.showVirtualControls));
+          this.pushBanner(
+            `Nút điều hướng kéo thả: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}!`,
+            '#fde047'
+          );
+        }
+      },
+      {
+        label: 'Toàn Màn Hình',
+        onClick: () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen?.().catch(() => {});
+            window.screen?.orientation?.lock?.('landscape').catch(() => {});
+          } else {
+            document.exitFullscreen?.().catch(() => {});
+          }
+        }
+      },
+      {
+        label: 'Bảng Xếp Hạng',
         onClick: () => {
           this.popupOpen = false;
           this.openLeaderboard();
         }
       },
       {
-        label: `Đổi Khu Vực (Khu ${this.engine.zoneId || 1})`,
+        label: `Đổi Khu (Khu ${this.engine.zoneId || 1})`,
         onClick: () => {
           this.engine.zoneId = ((this.engine.zoneId || 1) % 5) + 1;
           this.pushBanner(`Đã chuyển sang Khu ${this.engine.zoneId}!`, '#86efac');
         }
       },
       {
-        label: `Âm Thanh: ${sound.isMuted ? 'ĐANG TẮT' : 'ĐANG BẬT'}`,
+        label: `Âm Thanh: ${sound.isMuted ? 'TẮT' : 'BẬT'}`,
         onClick: () => {
           sound.toggleMute();
         }
       },
       {
-        label: 'Lưu Nhân Vật Cloud',
-        onClick: () => {
-          saveCharacterData(p).then(() => {
-            this.pushBanner('Đã đồng bộ dữ liệu nhân vật lên Supabase Cloud!', '#86efac');
-          });
-        }
-      },
-      {
-        label: 'Nhập Giftcode',
-        onClick: () => {
-          this.popupOpen = false;
-          this.openChatBox('GIFTCODE');
-        }
-      },
-      {
-        label: 'Đổi Tài Khoản / Ra Menu',
+        label: 'Đổi Tài Khoản',
         onClick: () => {
           saveCharacterData(p);
           if (this.engine.onReturnToMenu) this.engine.onReturnToMenu();
