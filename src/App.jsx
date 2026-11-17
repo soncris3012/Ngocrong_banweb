@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameEngine } from './game/GameEngine';
-import { HUD } from './components/HUD';
-import { NPCModal } from './components/NPCModal';
-import { ShopModal } from './components/ShopModal';
-import { InventoryModal } from './components/InventoryModal';
-import { LeaderboardModal } from './components/LeaderboardModal';
-import { SupabaseModal } from './components/SupabaseModal';
-import { ShenronModal } from './components/ShenronModal';
 import { MainMenu } from './components/desktop_ui/MainMenu';
 import { ServerSelectModal } from './components/desktop_ui/ServerSelectModal';
 import { LoginModal } from './components/desktop_ui/LoginModal';
@@ -18,15 +11,14 @@ import { assets } from './game/assetLoader';
 export function App() {
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
+  const hiddenInputRef = useRef(null);
 
-  // Trạng thái tài nguyên & tải game
   const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [loadPercent, setLoadPercent] = useState(15);
+  const [loadPercent, setLoadPercent] = useState(12);
 
-  // Màn hình hiện tại: 'MENU' | 'CHAR_CREATE' | 'SPLASH' | 'GAME'
+  // 'MENU' | 'CHAR_CREATE' | 'SPLASH' | 'GAME'
   const [screenView, setScreenView] = useState('MENU');
 
-  // Modals mở từ Menu
   const [showServerSelect, setShowServerSelect] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentServer, setCurrentServer] = useState(() => {
@@ -34,68 +26,59 @@ export function App() {
     return saved ? (isNaN(saved) ? saved : Number(saved)) : 1;
   });
 
-  // Trạng thái nhân vật đã lưu
   const [savedCharacter, setSavedCharacter] = useState(null);
-
-  // Trạng thái người chơi hiện tại
   const [playerState, setPlayerState] = useState({
     name: 'SonGoku',
     planet: 0,
+    characterIndex: 0,
+    mapId: 0,
+    x: 325,
+    y: 175,
     hp: 1500,
     maxHp: 1500,
-    ki: 1200,
-    maxKi: 1200,
-    attack: 65,
+    ki: 1400,
+    maxKi: 1400,
+    attack: 75,
     defense: 15,
     crit: 8,
     power: 2000,
-    potential: 2000,
-    gold: 5000,
+    potential: 2500,
+    gold: 15000,
     gem: 50,
     senzuCount: 10,
     senzuLevel: 1,
     questId: 1,
-    questProgress: 0,
-    currentMapName: 'Làng Aru',
-    isSuperSaiyan: false,
-    dragonBalls: [false, false, false, false, false, false, false],
-    inventory: []
+    questProgress: 0
   });
 
-  // Trạng thái Modals trong game
-  const [activeNPC, setActiveNPC] = useState(null);
-  const [showShop, setShowShop] = useState(false);
-  const [showInventory, setShowInventory] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showSupabase, setShowSupabase] = useState(false);
-  const [showShenron, setShowShenron] = useState(false);
+  const [textInputActive, setTextInputActive] = useState(false);
+  const [textInputVal, setTextInputVal] = useState('');
 
-  // Nạp trước (Preload) toàn bộ tài nguyên game để đảm bảo 0% lỗi hình ảnh
+  // Nạp toàn bộ tài nguyên cốt lõi của repo DANG-PH/ngoc-rong-online
   useEffect(() => {
     assets.init();
     assets.onProgress((loaded, total) => {
       const pct = Math.min(100, Math.round((loaded / Math.max(1, total)) * 100));
       setLoadPercent(pct);
     });
-    assets.waitForReady(3500).then(() => {
+    assets.waitForReady(4000).then(() => {
       setLoadPercent(100);
-      setTimeout(() => {
-        setAssetsLoaded(true);
-      }, 250);
+      setTimeout(() => setAssetsLoaded(true), 200);
     });
   }, []);
 
-  // Tự động kiểm tra nhân vật đã lưu trước đó để hiển thị trên nút [ TK. username ]
+  // Tự động đọc nhân vật đã lưu trên máy hoặc Supabase
   useEffect(() => {
     const lastCharName = localStorage.getItem('nro_last_character');
     if (lastCharName) {
-      loadCharacterData(lastCharName).then(data => {
+      loadCharacterData(lastCharName).then((data) => {
         if (data) {
-          const spawnX = (!data.x || data.x < 560) ? 640 : data.x;
-          const spawnY = (!data.y || data.y > 440) ? 420 : data.y;
-          const fullData = { ...data, x: spawnX, y: spawnY };
-          setSavedCharacter(fullData);
-          setPlayerState(prev => ({ ...prev, ...fullData }));
+          const validMap = typeof data.mapId === 'number' && data.mapId >= 0 && data.mapId <= 4 ? data.mapId : 0;
+          const validY = data.y && data.y >= 100 && data.y <= 350 ? data.y : 175;
+          const validX = data.x && data.x >= 40 ? data.x : 260;
+          const normalized = { ...data, mapId: validMap, x: validX, y: validY };
+          setSavedCharacter(normalized);
+          setPlayerState((prev) => ({ ...prev, ...normalized }));
         } else {
           setSavedCharacter({ name: lastCharName, planet: 0 });
         }
@@ -103,42 +86,32 @@ export function App() {
     }
   }, []);
 
-  // Khởi tạo Canvas và GameEngine khi vào trạng thái 'GAME'
+  // Khởi chạy Engine LibGDX 60 FPS khi vào màn hình 'GAME' (KHÔNG dùng HUD HTML/Tailwind giả!)
   useEffect(() => {
     if (screenView !== 'GAME') return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      if (engineRef.current) {
-        engineRef.current.width = canvas.width;
-        engineRef.current.height = canvas.height;
+    const engine = new GameEngine(canvas, playerState, {
+      onStateSync: (syncedPlayer) => {
+        setPlayerState(syncedPlayer);
+      },
+      onReturnToMenu: () => {
+        setScreenView('MENU');
+      },
+      onTextInputToggle: (open, initialText = '') => {
+        setTextInputActive(open);
+        setTextInputVal(initialText);
+        if (open) {
+          setTimeout(() => hiddenInputRef.current?.focus(), 40);
+        }
       }
-    };
+    });
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    const engine = new GameEngine(
-      canvas,
-      (updatedState) => {
-        setPlayerState(prev => ({ ...prev, ...updatedState }));
-      },
-      (npc) => {
-        setActiveNPC(npc);
-      },
-      () => {
-        setShowShenron(true);
-      },
-      playerState
-    );
     engineRef.current = engine;
+    window.__nroEngine = engine;
     engine.start();
 
-    // Auto-save định kỳ 15s một lần
     const saveInterval = setInterval(() => {
       if (engineRef.current) {
         saveCharacterData(engineRef.current.player);
@@ -147,91 +120,73 @@ export function App() {
 
     return () => {
       clearInterval(saveInterval);
-      window.removeEventListener('resize', handleResize);
       engine.destroy();
+      engineRef.current = null;
     };
   }, [screenView]);
 
-  // Vào game từ nhân vật có sẵn
   const handleEnterGame = () => {
     setScreenView('SPLASH');
   };
 
-  // Tạo nhân vật mới thành công
   const handleSelectCharacter = (newChar) => {
-    const charData = { ...newChar, x: 620, y: 420 };
-    setPlayerState(prev => ({ ...prev, ...charData }));
-    setSavedCharacter(charData);
+    setPlayerState(newChar);
+    setSavedCharacter(newChar);
     localStorage.setItem('nro_last_character', newChar.name);
-    saveCharacterData(charData);
+    saveCharacterData(newChar);
     setScreenView('SPLASH');
   };
 
-  // Đăng nhập thành công từ LoginModal
   const handleLoginSuccess = (user) => {
-    loadCharacterData(user.name).then(data => {
-      const charData = data || { name: user.name, planet: 0, power: 2000, potential: 2000 };
+    loadCharacterData(user.name).then((data) => {
+      const charData = data || {
+        name: user.name,
+        planet: 0,
+        characterIndex: 0,
+        mapId: 0,
+        x: 260,
+        y: 175,
+        power: 2000,
+        potential: 2500
+      };
       setSavedCharacter(charData);
-      setPlayerState(prev => ({ ...prev, ...charData }));
+      setPlayerState((prev) => ({ ...prev, ...charData }));
     });
   };
 
-  // Xóa dữ liệu đã lưu
   const handleClearData = () => {
     localStorage.removeItem('nro_last_character');
     localStorage.removeItem('nro_account_user');
     setSavedCharacter(null);
   };
 
-  // Đổi server
   const handleSelectServer = (server) => {
     setCurrentServer(server);
     localStorage.setItem('nro_server', String(server));
   };
 
-  const handleUpdatePlayer = (updatedPlayer) => {
-    setPlayerState(updatedPlayer);
-    if (engineRef.current) {
-      Object.assign(engineRef.current.player, updatedPlayer);
-      saveCharacterData(updatedPlayer);
-    }
-  };
-
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-gray-950 font-sans select-none">
-      {/* 0. MÀN HÌNH TẢI TÀI NGUYÊN BAN ĐẦU */}
+    <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
+      {/* 0. MÀN HÌNH NẠP TEXTURE KHỞI ĐẦU CHUẨN NRO */}
       {!assetsLoaded && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 select-none">
-          <img 
-            src="/assets/hud/giaodienngoai/chung/chuberong.png" 
-            alt="Ngọc Rồng Online" 
-            className="w-72 sm:w-96 object-contain mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+          <img
+            src="/assets/hud/giaodienngoai/chung/chuberong.png"
+            alt="Ngọc Rồng Online"
+            className="w-64 sm:w-80 object-contain mb-6"
           />
-
-          <div className="w-full max-w-md bg-gray-950 border-2 border-yellow-500/80 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
-            <div className="flex justify-between items-center text-xs font-dragon">
-              <span className="text-yellow-300 font-bold flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-ping" />
-                Đang nạp đồ hoạ Sprite & Bản đồ...
-              </span>
-              <span className="text-yellow-400 font-bold text-sm">{loadPercent}%</span>
-            </div>
-
-            <div className="w-full bg-gray-900 rounded-xl h-4 p-0.5 border border-yellow-600/40 overflow-hidden relative">
-              <div 
-                className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 rounded-lg transition-all duration-150 shadow-[0_0_12px_rgba(250,204,21,0.8)]"
-                style={{ width: `${loadPercent}%` }}
-              />
-            </div>
-
-            <p className="text-[11px] text-gray-400 text-center font-dragon mt-1">
-              Khởi động hệ thống Web Edition 60 FPS chuẩn LibGDX...
-            </p>
-          </div>
+          <img
+            src="/assets/vatpham/vatphamgame/ngocrong/nr5s.png"
+            alt=""
+            className="w-10 h-10 object-contain animate-spin mb-3"
+          />
+          <p className="font-dragon text-[#fde047] text-sm font-bold">
+            Đang tải dữ liệu trò chơi... {loadPercent}%
+          </p>
         </div>
       )}
 
-      {/* 1. MÀN HÌNH CHÍNH (MAIN MENU) CHUẨN LIBGDX DESKTOP */}
+      {/* 1. GIAO DIỆN NGOÀI (MAIN MENU CHUẨN MANHINHDANGNHAP) */}
       {assetsLoaded && screenView === 'MENU' && (
         <MainMenu
           savedCharacter={savedCharacter}
@@ -244,7 +199,7 @@ export function App() {
         />
       )}
 
-      {/* 2. MÀN HÌNH CHỌN HÀNH TINH & TẠO NHÂN VẬT CHUẨN MANHINHCHOIMOI */}
+      {/* 2. MÀN HÌNH TẠO NHÂN VẬT CHUẨN MANHINHCHOIMOI */}
       {assetsLoaded && screenView === 'CHAR_CREATE' && (
         <CharacterCreateModal
           currentServer={currentServer}
@@ -254,15 +209,15 @@ export function App() {
         />
       )}
 
-      {/* 3. MÀN HÌNH SPLASH CHUYỂN CẢNH (MANHINHSPLASH) */}
+      {/* 3. SPLASH NGỌC RỒNG XOAY CHUYỂN CẢNH */}
       {screenView === 'SPLASH' && (
         <SplashScreen
           onFinish={() => setScreenView('GAME')}
-          message="Đang tiến vào thế giới Ngọc Rồng..."
+          message="Đang vào Nhà Gôhan..."
         />
       )}
 
-      {/* 4. MODALS MỞ TỪ NGOÀI GIAO DIỆN */}
+      {/* 4. POPUP CHỌN MÁY CHỦ & ĐĂNG NHẬP */}
       {showServerSelect && (
         <ServerSelectModal
           currentServer={currentServer}
@@ -278,69 +233,39 @@ export function App() {
         />
       )}
 
-      {/* 5. GIAO DIỆN TRONG GAME (GAME ENGINE & HUD) */}
+      {/* 5. MÀN HÌNH TRONG GAME THUẦN CANVAS LIBGDX 100% */}
       {screenView === 'GAME' && (
         <>
-          <canvas 
-            ref={canvasRef} 
-            className="absolute inset-0 block w-full h-full cursor-crosshair z-0"
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 block w-full h-full cursor-pointer z-10"
           />
 
-          <div className="z-20 relative w-full h-full pointer-events-none">
-            <HUD 
-              player={playerState}
-              engineRef={engineRef}
-              onOpenInventory={() => setShowInventory(true)}
-              onOpenShop={() => setShowShop(true)}
-              onOpenLeaderboard={() => setShowLeaderboard(true)}
-              onOpenSupabase={() => setShowSupabase(true)}
-              onOpenShenron={() => setShowShenron(true)}
-              onReturnToMenu={() => setScreenView('MENU')}
-            />
-          </div>
-
-          {activeNPC && (
-            <NPCModal 
-              npc={activeNPC} 
-              player={playerState} 
-              onClose={() => setActiveNPC(null)} 
-              onUpdatePlayer={handleUpdatePlayer}
-            />
-          )}
-
-          {showShop && (
-            <ShopModal 
-              player={playerState} 
-              onClose={() => setShowShop(false)} 
-              onUpdatePlayer={handleUpdatePlayer}
-            />
-          )}
-
-          {showInventory && (
-            <InventoryModal 
-              player={playerState} 
-              onClose={() => setShowInventory(false)} 
-            />
-          )}
-
-          {showLeaderboard && (
-            <LeaderboardModal 
-              onClose={() => setShowLeaderboard(false)} 
-            />
-          )}
-
-          {showSupabase && (
-            <SupabaseModal 
-              onClose={() => setShowSupabase(false)} 
-            />
-          )}
-
-          {showShenron && (
-            <ShenronModal 
-              player={playerState} 
-              onClose={() => setShowShenron(false)} 
-              onGrantWish={handleUpdatePlayer}
-            />
+          {/* Cầu nối bàn phím ẩn khi mở khungchat.png để gõ Tiếng Việt & Giftcode trên cả PC lẫn Mobile */}
+          {textInputActive && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (engineRef.current) {
+                  engineRef.current.hud.submitChatOrGiftcode(textInputVal);
+                }
+              }}
+              className="fixed top-0 left-0 opacity-0 pointer-events-none"
+            >
+              <input
+                ref={hiddenInputRef}
+                type="text"
+                value={textInputVal}
+                maxLength={64}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setTextInputVal(v);
+                  if (engineRef.current) {
+                    engineRef.current.hud.chatInputText = v;
+                  }
+                }}
+              />
+            </form>
           )}
         </>
       )}

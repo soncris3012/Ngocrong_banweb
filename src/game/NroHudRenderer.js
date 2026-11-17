@@ -1,0 +1,1914 @@
+// Trình kết xuất HUD & Toàn bộ Cửa sổ Giao Diện Trong Game chuẩn LibGDX (VeHUD + HUDPopupRenderer + HUDRongThan)
+// KHÔNG sử dụng thẻ HTML/Tailwind giả — 100% vẽ bằng Texture thật từ /assets/hud/giaodientrong/ & /assets/
+
+import { assets } from './assetLoader';
+import {
+  VIRTUAL_W,
+  VIRTUAL_H,
+  PLANET_DEFS,
+  PLANET_SKILLS,
+  ITEM_CATALOG,
+  SHOP_TABS,
+  STORY_QUESTS,
+  MAPS_CONFIG,
+  GIFTCODES,
+  formatNroNum
+} from './nroData';
+import { sound } from './audio';
+import { fetchLeaderboard, saveCharacterData, sendChatMessage } from '../services/supabase';
+
+export class NroHudRenderer {
+  constructor(engine) {
+    this.engine = engine;
+    this.hitRegions = [];
+
+    // Trạng thái cửa sổ Popup Nhân Vật (popupnhanvat.jpg)
+    this.popupOpen = false;
+    this.popupTab = 1; // 0: Nhiệm vụ, 1: Hành trang, 2: Kỹ năng, 3: Đệ tử, 4: Chức năng
+    this.selectedBagIdx = -1;
+    this.selectedEquipSlot = null;
+    this.selectedSkillIdx = 0;
+
+    // Trạng thái Cửa Hàng / Rương Đồ / Pha Lê / Gacha / Bảng Xếp Hạng
+    this.activePanel = null; // null | 'SHOP' | 'CHEST' | 'CRYSTAL' | 'GACHA' | 'LEADERBOARD'
+    this.shopTabIdx = 0;
+    this.selectedShopItemId = null;
+    this.crystalEquipSlot = null;
+    this.crystalItemIdx = -1;
+
+    // Vòng quay Hải Đăng
+    this.gachaSpinning = false;
+    this.gachaTimer = 0;
+    this.gachaFrame = 1;
+    this.gachaResult = null;
+
+    // Trạng thái Hộp thoại NPC chuẩn NPC_KHUNG_CHUNG
+    this.npcDialog = null; // { npc, text, buttons: [{ label, action }] }
+
+    // Trạng thái Khung Chat / Nhập Giftcode (khungchat.png)
+    this.chatOpen = false;
+    this.chatMode = 'CHAT'; // 'CHAT' | 'GIFTCODE'
+    this.chatInputText = '';
+
+    // Trạng thái Rồng Thần 9 khúc (HUDRongThan)
+    this.shenronActive = false;
+    this.shenronTimer = 0;
+
+    // Bảng xếp hạng từ Supabase
+    this.leaderboardRows = [];
+    this.leaderboardLoading = false;
+
+    // Thông báo nổi kiểu NRO (giữa trên màn hình)
+    this.banners = [];
+  }
+
+  pushBanner(text, color = '#fef08a') {
+    this.banners.push({ text, color, ttl: 3.2 });
+    if (this.banners.length > 4) this.banners.shift();
+  }
+
+  closeAllModals() {
+    this.popupOpen = false;
+    this.activePanel = null;
+    this.npcDialog = null;
+    this.chatOpen = false;
+    this.shenronActive = false;
+    this.selectedBagIdx = -1;
+    this.selectedEquipSlot = null;
+    if (this.engine.onTextInputToggle) {
+      this.engine.onTextInputToggle(false, '');
+    }
+  }
+
+  isBlockingWorldClick() {
+    return Boolean(this.npcDialog || this.shenronActive || this.chatOpen || this.activePanel === 'GACHA' || this.activePanel === 'LEADERBOARD');
+  }
+
+  // ==================== TIỆN ÍCH VẼ TOẠ ĐỘ LIBGDX (GỐC DƯỚI-TRÁI) ====================
+  gyToCy(gy, gh = 0) {
+    return VIRTUAL_H - gy - gh;
+  }
+
+  drawTex(ctx, relPath, gx, gy, gw, gh) {
+    const img = assets.tex(relPath);
+    if (!img) return false;
+    ctx.drawImage(img, gx, VIRTUAL_H - gy - gh, gw, gh);
+    return true;
+  }
+
+  drawTexCropX(ctx, relPath, gx, gy, fullW, gh, ratio) {
+    const r = Math.max(0, Math.min(1, ratio));
+    if (r <= 0.002) return;
+    const img = assets.tex(relPath);
+    if (!img) return;
+    const sw = Math.max(1, Math.floor(img.naturalWidth * r));
+    const dw = Math.max(1, fullW * r);
+    ctx.drawImage(img, 0, 0, sw, img.naturalHeight, gx, VIRTUAL_H - gy - gh, dw, gh);
+  }
+
+  fillRectGdx(ctx, gx, gy, gw, gh, fillStyle, strokeStyle = null, lineWidth = 2) {
+    const cy = VIRTUAL_H - gy - gh;
+    if (fillStyle) {
+      ctx.fillStyle = fillStyle;
+      ctx.fillRect(gx, cy, gw, gh);
+    }
+    if (strokeStyle) {
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.strokeRect(gx, cy, gw, gh);
+    }
+  }
+
+  drawText(ctx, text, gx, gy, opts = {}) {
+    const {
+      size = 13,
+      color = '#ffffff',
+      stroke = '#000000',
+      strokeWidth = 2.5,
+      align = 'left',
+      bold = true,
+      font = 'DragonBoy, sans-serif'
+    } = opts;
+    const cy = VIRTUAL_H - gy;
+    ctx.save();
+    ctx.font = `${bold ? 'bold ' : ''}${size}px ${font}`;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'alphabetic';
+    if (stroke && strokeWidth > 0) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = strokeWidth;
+      ctx.lineJoin = 'round';
+      ctx.strokeText(String(text), gx, cy);
+    }
+    ctx.fillStyle = color;
+    ctx.fillText(String(text), gx, cy);
+    ctx.restore();
+  }
+
+  drawWrappedText(ctx, text, gx, gyTop, maxWidth, lineHeight = 18, opts = {}) {
+    const words = String(text || '').split(' ');
+    let line = '';
+    let curY = gyTop;
+    const size = opts.size || 13;
+    const font = opts.font || 'DragonBoy, sans-serif';
+    ctx.save();
+    ctx.font = `${opts.bold !== false ? 'bold ' : ''}${size}px ${font}`;
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line ? `${line} ${words[i]}` : words[i];
+      if (ctx.measureText(testLine).width > maxWidth && line) {
+        this.drawText(ctx, line, gx, curY, opts);
+        line = words[i];
+        curY -= lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) {
+      this.drawText(ctx, line, gx, curY, opts);
+      curY -= lineHeight;
+    }
+    ctx.restore();
+    return curY;
+  }
+
+  addHit(id, gx, gy, gw, gh, onClick) {
+    this.hitRegions.push({ id, x: gx, y: gy, w: gw, h: gh, onClick });
+  }
+
+  handlePointerDown(gx, gy) {
+    // Duyệt từ trên xuống dưới (phần tử vẽ sau ưu tiên nhận click trước)
+    for (let i = this.hitRegions.length - 1; i >= 0; i--) {
+      const r = this.hitRegions[i];
+      if (gx >= r.x && gx <= r.x + r.w && gy >= r.y && gy <= r.y + r.h) {
+        sound.playPunch();
+        r.onClick();
+        return true;
+      }
+    }
+    // Nếu đang mở popup bên trái và click vào vùng nền popup thì chặn click xuống đất
+    if (this.popupOpen && gx <= (this.isDualPanel() ? 710 : 355)) {
+      return true;
+    }
+    if (this.isBlockingWorldClick()) {
+      return true;
+    }
+    return false;
+  }
+
+  isDualPanel() {
+    return this.activePanel === 'SHOP' || this.activePanel === 'CHEST' || this.activePanel === 'CRYSTAL';
+  }
+
+  // ==================== CẬP NHẬT LOGIC HUD ====================
+  update(dt) {
+    for (let i = this.banners.length - 1; i >= 0; i--) {
+      this.banners[i].ttl -= dt;
+      if (this.banners[i].ttl <= 0) this.banners.splice(i, 1);
+    }
+
+    if (this.shenronActive) {
+      this.shenronTimer += dt;
+    }
+
+    if (this.gachaSpinning) {
+      this.gachaTimer += dt;
+      this.gachaFrame = (Math.floor(this.gachaTimer * 24) % 17) + 1;
+      if (this.gachaTimer >= 2.1) {
+        this.gachaSpinning = false;
+        this.finishGachaSpin();
+      }
+    }
+  }
+
+  // ==================== TƯƠNG TÁC NPC CHUẨN CỐT TRUYỆN ====================
+  openNpcDialog(npc) {
+    const p = this.engine.player;
+    const quest = STORY_QUESTS.find((q) => q.id === p.questId);
+
+    if (npc.id === 'ruong_do') {
+      this.popupOpen = true;
+      this.popupTab = 1;
+      this.activePanel = 'CHEST';
+      return;
+    }
+
+    if (npc.id === 'dui_ga') {
+      p.hp = p.maxHp;
+      p.ki = p.maxKi;
+      sound.playHeal();
+      this.pushBanner('Bạn vừa thưởng thức Đùi Gà Nướng thơm phức! Hồi 100% HP & KI!', '#86efac');
+      return;
+    }
+
+    if (npc.id === 'dau_traidat') {
+      this.npcDialog = {
+        npc,
+        avt: `nhanvat/npc/dau_traidat/caydau${Math.min(10, Math.max(1, p.senzuCount || 5))}.png`,
+        text: `Cây Đậu Thần Cấp ${p.senzuLevel || 1}\nHiện có: ${p.senzuCount}/10 hạt Đậu Thần trong túi.\nĐậu thần giúp hồi phục tức thì sinh lực và nội khí khi chiến đấu!`,
+        buttons: [
+          {
+            label: 'Thu Hoạch',
+            action: () => {
+              p.senzuCount = 10 + (p.senzuLevel - 1) * 2;
+              sound.playHeal();
+              this.pushBanner(`Đã thu hoạch đầy ${p.senzuCount} Đậu Thần Karin!`, '#86efac');
+              this.npcDialog = null;
+            }
+          },
+          {
+            label: `Nâng Cấp (${(p.senzuLevel || 1) * 15000} Vàng)`,
+            action: () => {
+              const cost = (p.senzuLevel || 1) * 15000;
+              if (p.gold < cost) {
+                this.pushBanner('Không đủ Vàng để nâng cấp Cây Đậu Thần!', '#fca5a5');
+                return;
+              }
+              p.gold -= cost;
+              p.senzuLevel = (p.senzuLevel || 1) + 1;
+              p.senzuCount = 10 + (p.senzuLevel - 1) * 2;
+              sound.playHeal();
+              this.pushBanner(`Cây Đậu Thần đã lên Cấp ${p.senzuLevel}!`, '#fde047');
+              this.npcDialog = null;
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+      return;
+    }
+
+    if (npc.id === 'ong_gohan') {
+      let msg = `Chào cháu ${p.name}! Hãy chăm chỉ luyện tập võ công để bảo vệ Trái Đất nhé!`;
+      const btns = [];
+
+      if (quest && quest.id === 1) {
+        msg = `Chào cháu ${p.name}! Ông đã chuẩn bị sẵn Áo Võ Phục và ít lộ phí cho cháu.\nHãy nhận lấy rồi sang Làng Aru rèn luyện bản lĩnh nhé!`;
+        btns.push({
+          label: 'Nhận Nhiệm Vụ',
+          action: () => {
+            this.engine.completeCurrentQuest();
+            this.npcDialog = null;
+          }
+        });
+      } else if (quest && quest.progress >= quest.count) {
+        msg = `Khá lắm ${p.name}! Cháu đã hoàn thành xuất sắc "${quest.title}". Hãy nhận phần thưởng xứng đáng!`;
+        btns.push({
+          label: 'Trả Nhiệm Vụ',
+          action: () => {
+            this.engine.completeCurrentQuest();
+            this.npcDialog = null;
+          }
+        });
+      } else if (quest) {
+        msg = `Nhiệm vụ hiện tại: ${quest.title} (${ p.questProgress }/${ quest.count })\n${quest.desc}`;
+      }
+
+      btns.push({
+        label: 'Hồi Phục',
+        action: () => {
+          p.hp = p.maxHp;
+          p.ki = p.maxKi;
+          sound.playHeal();
+          this.pushBanner('Ông Gôhan đã truyền khí hồi 100% HP & KI cho bạn!', '#86efac');
+          this.npcDialog = null;
+        }
+      });
+      btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
+
+      this.npcDialog = { npc, avt: 'nhanvat/npc/ong_gohan/dau.png', text: msg, buttons: btns };
+      return;
+    }
+
+    if (npc.id === 'admin_dungle') {
+      this.npcDialog = {
+        npc,
+        avt: 'nhanvat/npc/admin_dungle/avt.png',
+        text: `Xin chào chiến binh ${p.name}!\nTa là Admin Dũng Lê. Các mã Giftcode miễn phí đang mở:\nTANTHU | NROWEB | DRAGONBOY | NGOCRONG`,
+        buttons: [
+          {
+            label: 'Nhập Giftcode',
+            action: () => {
+              this.npcDialog = null;
+              this.openChatBox('GIFTCODE');
+            }
+          },
+          {
+            label: 'Quà Tân Thủ',
+            action: () => {
+              if (p.claimedStarterGift) {
+                this.pushBanner('Bạn đã nhận Quà Tân Thủ rồi! Hãy thử nhập Giftcode nhé!', '#fde047');
+              } else {
+                p.claimedStarterGift = true;
+                p.gold += 50000;
+                p.gem += 80;
+                this.engine.addItemToBag('vb_candauvan');
+                this.engine.addItemToBag('trung_de_tu');
+                sound.playCoin();
+                this.pushBanner('Nhận Quà Tân Thủ: +50K Vàng, +80 Ngọc, Cân Đẩu Vân & Trứng Đệ Tử!', '#86efac');
+              }
+              this.npcDialog = null;
+            }
+          },
+          {
+            label: 'BXH Cao Thủ',
+            action: () => {
+              this.npcDialog = null;
+              this.openLeaderboard();
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+      return;
+    }
+
+    if (npc.id === 'admin_thanhle') {
+      this.npcDialog = {
+        npc,
+        avt: 'nhanvat/npc/admin_thanhle/avt.png',
+        text: `Chào mừng ${p.name} ghé thăm Tiệm Tạp Hóa Thành Lê tại Làng Aru!\nTại đây có đầy đủ Trang bị Thần Linh, Cải trang, Cân Đẩu Vân, Bông tai Porata và Ngọc Rồng!`,
+        buttons: [
+          {
+            label: 'Cửa Hàng',
+            action: () => {
+              this.npcDialog = null;
+              this.popupOpen = true;
+              this.popupTab = 1;
+              this.activePanel = 'SHOP';
+              this.shopTabIdx = 0;
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+      return;
+    }
+
+    if (npc.id === 'admin_haidang') {
+      this.npcDialog = {
+        npc,
+        avt: 'nhanvat/npc/admin_haidang/avt.png',
+        text: `Chào ${p.name}! Vòng Quay Thượng Đế Hải Đăng chứa Cải Trang Broly, Black Goku Rosé, Phượng Hoàng Lửa và Ngọc Rồng 1-3 Sao!\nMỗi lượt quay tốn 1 Vé Quay hoặc 10 Ngọc Xanh.`,
+        buttons: [
+          {
+            label: 'Vòng Quay',
+            action: () => {
+              this.npcDialog = null;
+              this.popupOpen = false;
+              this.activePanel = 'GACHA';
+              this.gachaResult = null;
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+      return;
+    }
+
+    if (npc.id === 'thay_hieu') {
+      this.npcDialog = {
+        npc,
+        avt: 'nhanvat/npc/thay_hieu/avt.png',
+        text: `Ta là Thầy Hiếu dưới chân Tháp Karin!\nTa có thể giúp con Pha Lê Hóa đục lỗ Sao Đen và Ép Đá Pha Lê gia tăng cực đại sức mạnh cho Trang Bị!`,
+        buttons: [
+          {
+            label: 'Ép Sao Pha Lê',
+            action: () => {
+              this.npcDialog = null;
+              this.popupOpen = true;
+              this.popupTab = 1;
+              this.activePanel = 'CRYSTAL';
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+      return;
+    }
+
+    if (npc.id === 'admin_huykhoi') {
+      this.npcDialog = {
+        npc,
+        avt: 'nhanvat/npc/admin_huykhoi/avt.png',
+        text: `Phía Đông là Thung Lũng Namếc nơi Black Goku Rosé trú ngụ, phía Tây Làng Aru là Vách Núi Kakarot của Siêu Xayda Broly!\nCon muốn dịch chuyển tức thời tới đâu?`,
+        buttons: [
+          {
+            label: 'Tới Vách Núi Xayda',
+            action: () => {
+              this.npcDialog = null;
+              this.engine.changeMap(3, 1740, 175);
+            }
+          },
+          {
+            label: 'Tới Thung Lũng Namếc',
+            action: () => {
+              this.npcDialog = null;
+              this.engine.changeMap(4, 110, 175);
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+    }
+  }
+
+  openChatBox(mode = 'CHAT') {
+    this.chatMode = mode;
+    this.chatOpen = true;
+    this.chatInputText = '';
+    if (this.engine.onTextInputToggle) {
+      this.engine.onTextInputToggle(true, '');
+    }
+  }
+
+  submitChatOrGiftcode(rawText) {
+    const text = String(rawText || this.chatInputText || '').trim();
+    this.chatOpen = false;
+    if (this.engine.onTextInputToggle) {
+      this.engine.onTextInputToggle(false, '');
+    }
+    if (!text) return;
+
+    const p = this.engine.player;
+    const upper = text.toUpperCase();
+
+    // Kiểm tra Giftcode (dù gõ trong khung Chat hay khung Giftcode đều nhận tiện lợi!)
+    if (GIFTCODES[upper]) {
+      if (!p.redeemedCodes) p.redeemedCodes = [];
+      if (p.redeemedCodes.includes(upper)) {
+        this.pushBanner(`Mã Giftcode ${upper} đã được sử dụng trước đó!`, '#fca5a5');
+        return;
+      }
+      const reward = GIFTCODES[upper];
+      p.redeemedCodes.push(upper);
+      p.gold += reward.gold || 0;
+      p.gem += reward.gem || 0;
+      (reward.items || []).forEach((id) => this.engine.addItemToBag(id));
+      sound.playCoin();
+      this.pushBanner(reward.msg, '#86efac');
+      this.engine.recalcStats();
+      return;
+    }
+
+    if (this.chatMode === 'GIFTCODE') {
+      this.pushBanner('Mã Giftcode không hợp lệ! Thử: TANTHU, NROWEB, DRAGONBOY, NGOCRONG', '#fca5a5');
+      return;
+    }
+
+    // Chat nhân vật trên đầu + đồng bộ Supabase
+    p.chatBubble = { text: text.slice(0, 48), ttl: 4.5 };
+    sendChatMessage(p.name, p.planet, text.slice(0, 80));
+  }
+
+  openLeaderboard() {
+    this.activePanel = 'LEADERBOARD';
+    this.leaderboardLoading = true;
+    fetchLeaderboard().then((rows) => {
+      this.leaderboardRows = rows || [];
+      this.leaderboardLoading = false;
+    });
+  }
+
+  // ==================== VÒNG QUAY HẢI ĐĂNG ====================
+  startGachaSpin() {
+    if (this.gachaSpinning) return;
+    const p = this.engine.player;
+    const ticketIdx = p.bag.findIndex((it) => it && it.id === 've_quay');
+    if (ticketIdx >= 0) {
+      p.bag.splice(ticketIdx, 1);
+    } else if (p.gem >= 10) {
+      p.gem -= 10;
+    } else {
+      this.pushBanner('Cần 1 Vé Quay Thượng Đế hoặc 10 Ngọc Xanh để quay!', '#fca5a5');
+      return;
+    }
+    sound.playAuraCharge();
+    this.gachaSpinning = true;
+    this.gachaTimer = 0;
+    this.gachaResult = null;
+  }
+
+  finishGachaSpin() {
+    const pool = [
+      'ct_broly_lssj',
+      'ct_black_rose',
+      'ct_xiao',
+      'vb_phuonghoang',
+      'pet_ky_lan',
+      'dl_canh_thien_than',
+      'aura_rong',
+      'nr_1s',
+      'nr_2s',
+      'nr_3s',
+      'bong_tai_c2'
+    ];
+    const pickedId = pool[Math.floor(Math.random() * pool.length)];
+    this.engine.addItemToBag(pickedId);
+    const def = ITEM_CATALOG[pickedId];
+    this.gachaResult = def;
+    sound.playCoin();
+    this.pushBanner(`Chúc mừng! Bạn quay trúng [${def.name}]!`, '#fde047');
+  }
+
+  // ==================== GỌI RỒNG THẦN 9 KHÚC (HUDRongThan.java) ====================
+  trySummonShenron() {
+    const p = this.engine.player;
+    const missing = [];
+    for (let s = 1; s <= 7; s++) {
+      const has = p.bag.some((it) => it && it.id === `nr_${s}s`);
+      if (!has) missing.push(`${s} Sao`);
+    }
+    if (missing.length > 0) {
+      this.pushBanner(`Chưa đủ 7 Viên Ngọc Rồng! Còn thiếu: ${missing.join(', ')}`, '#fca5a5');
+      return false;
+    }
+    // Trừ 7 viên Ngọc Rồng
+    for (let s = 1; s <= 7; s++) {
+      const idx = p.bag.findIndex((it) => it && it.id === `nr_${s}s`);
+      if (idx >= 0) p.bag.splice(idx, 1);
+    }
+    this.popupOpen = false;
+    this.activePanel = null;
+    this.shenronActive = true;
+    this.shenronTimer = 0;
+    sound.playSuperSaiyan();
+    return true;
+  }
+
+  grantShenronWish(wishIdx) {
+    const p = this.engine.player;
+    if (wishIdx === 0) {
+      p.power += 500000;
+      p.potential += 500000;
+      p.baseAttack += 350;
+      p.baseMaxHp += 5000;
+      this.pushBanner('Rồng Thần ban ước: +500.000 Sức Mạnh & Tiềm Năng, +350 Sức Đánh, +5000 HP!', '#fde047');
+    } else if (wishIdx === 1) {
+      p.gold += 2000000;
+      p.gem += 500;
+      this.pushBanner('Rồng Thần ban ước: +2.000.000 Vàng & +500 Ngọc Xanh!', '#fde047');
+    } else if (wishIdx === 2) {
+      this.engine.addItemToBag('ao_huy_diet');
+      this.engine.addItemToBag('quan_huy_diet');
+      this.engine.addItemToBag('gang_huy_diet');
+      this.pushBanner('Rồng Thần ban ước: Trọn bộ Trang Bị Thần Hủy Diệt Beerus!', '#fde047');
+    } else if (wishIdx === 3) {
+      this.engine.addItemToBag('ct_black_rose');
+      this.engine.addItemToBag('vb_phuonghoang');
+      this.pushBanner('Rồng Thần ban ước: Cải Trang Black Goku Rosé & Phượng Hoàng Lửa!', '#fde047');
+    } else if (wishIdx === 4) {
+      this.engine.unlockDetu(true);
+      this.engine.addItemToBag('bong_tai_c2');
+      this.pushBanner('Rồng Thần ban ước: Đệ Tử Thần Cấp & Bông Tai Porata Cấp 2!', '#fde047');
+    }
+    this.engine.recalcStats();
+    p.hp = p.maxHp;
+    p.ki = p.maxKi;
+    if (p.questId === 8) {
+      this.engine.completeCurrentQuest();
+    }
+    sound.playHeal();
+    this.shenronActive = false;
+  }
+
+  // ==================== VẼ TOÀN BỘ GIAO DIỆN HUD ====================
+  render(ctx) {
+    this.hitRegions = [];
+
+    // Nếu đang gọi Rồng Thần thì ưu tiên vẽ màn hình Rồng Thần huyền thoại
+    if (this.shenronActive) {
+      this.renderShenron(ctx);
+      this.renderBanners(ctx);
+      return;
+    }
+
+    this.renderTopLeftScouter(ctx);
+    this.renderTargetBar(ctx);
+    this.renderTopRightZoneAndChat(ctx);
+    this.renderBottomSkillAndActionBar(ctx);
+
+    if (!this.popupOpen) {
+      // Nút mở Popup Nhân Vật (nutpopup.png ở mép trái chuẩn VeHUD.java)
+      this.drawTex(ctx, 'hud/giaodientrong/nutpopup.png', 0, 452, 26, 42);
+      this.addHit('btn_open_popup', 0, 448, 34, 50, () => {
+        this.popupOpen = true;
+        this.activePanel = null;
+      });
+    } else {
+      this.renderCharacterPopup(ctx);
+      if (this.isDualPanel()) {
+        this.renderRightDualPanel(ctx);
+      }
+    }
+
+    if (this.activePanel === 'GACHA') {
+      this.renderGachaModal(ctx);
+    } else if (this.activePanel === 'LEADERBOARD') {
+      this.renderLeaderboardModal(ctx);
+    }
+
+    if (this.npcDialog) {
+      this.renderNpcDialog(ctx);
+    }
+
+    if (this.chatOpen) {
+      this.renderChatBox(ctx);
+    }
+
+    this.renderBanners(ctx);
+  }
+
+  // 1. THANH MÁU / KI / SCOUTER GÓC TRÊN TRÁI (thanhhp1.png, thanhhp.png, thanhki.png)
+  renderTopLeftScouter(ctx) {
+    const p = this.engine.player;
+    this.drawTex(ctx, 'hud/giaodientrong/thanhhp1.png', 0, 530, 308, 80);
+
+    // Avatar nhân vật trong khung tròn Scouter
+    const avtPath = this.engine.getPlayerAvatarPath();
+    this.drawTex(ctx, avtPath, 14, 542, 44, 48);
+    this.addHit('scouter_open_popup', 0, 530, 160, 80, () => {
+      this.popupOpen = !this.popupOpen;
+      if (!this.popupOpen) this.activePanel = null;
+    });
+
+    // Tên nhân vật & Sức mạnh bên trong màn hình xanh lá Scouter [62..155]
+    this.drawText(ctx, p.name, 62, 574, { size: 12, color: '#fef08a', stroke: '#052e16', strokeWidth: 2.5 });
+    this.drawText(ctx, `SM: ${formatNroNum(p.power)}`, 62, 555, { size: 10.5, color: '#86efac', stroke: '#052e16', strokeWidth: 2 });
+
+    // Thanh HP (thanhhp.png: 132x20 tại 165, 580)
+    const hpRatio = p.maxHp > 0 ? p.hp / p.maxHp : 0;
+    this.drawTexCropX(ctx, 'hud/giaodientrong/thanhhp.png', 165, 580, 132, 20, hpRatio);
+    this.drawText(ctx, `${formatNroNum(p.hp)}/${formatNroNum(p.maxHp)}`, 231, 585, {
+      size: 10, color: '#ffffff', stroke: '#000000', strokeWidth: 2.2, align: 'center'
+    });
+
+    // Thanh KI (thanhki.png: 119x12 tại 165, 560)
+    const kiRatio = p.maxKi > 0 ? p.ki / p.maxKi : 0;
+    this.drawTexCropX(ctx, 'hud/giaodientrong/thanhki.png', 165, 560, 119, 12, kiRatio);
+    this.drawText(ctx, `${formatNroNum(p.ki)}/${formatNroNum(p.maxKi)}`, 224, 562, {
+      size: 9, color: '#e0f2fe', stroke: '#000000', strokeWidth: 2, align: 'center'
+    });
+
+    // Vàng & Ngọc hiển thị gọn ngay dưới thanh KI của Scouter
+    this.drawTex(ctx, 'hud/giaodientrong/vang.png', 165, 538, 16, 16);
+    this.drawText(ctx, formatNroNum(p.gold), 184, 541, { size: 10, color: '#fde047' });
+    this.drawTex(ctx, 'hud/giaodientrong/ngoc.png', 242, 538, 15, 15);
+    this.drawText(ctx, formatNroNum(p.gem), 260, 541, { size: 10, color: '#67e8f9' });
+
+    // Hàng biểu tượng Buff đang kích hoạt
+    let bx = 8;
+    if (p.buffs.atk > 0) {
+      this.drawTex(ctx, 'vatpham/vatphamgame/phu_tro/cuong_no.png', bx, 504, 22, 22);
+      bx += 26;
+    }
+    if (p.buffs.hp > 0) {
+      this.drawTex(ctx, 'vatpham/vatphamgame/phu_tro/bo_huyet.png', bx, 504, 22, 22);
+      bx += 26;
+    }
+    if (p.buffs.ki > 0) {
+      this.drawTex(ctx, 'vatpham/vatphamgame/phu_tro/bo_khi.png', bx, 504, 22, 22);
+      bx += 26;
+    }
+    if (p.shieldTimer > 0) {
+      this.drawTex(ctx, 'kynang/iconkynang/traidat/skill7_traidat.png', bx, 504, 22, 22);
+      bx += 26;
+    }
+    if (p.isFused) {
+      this.drawTex(ctx, 'vatpham/vatphamgame/bongtai/bongtaic1.png', bx, 504, 22, 22);
+    }
+  }
+
+  // 2. KHUNG MỤC TIÊU ĐANG KHOÁ Ở GIỮA TRÊN MÀN HÌNH
+  renderTargetBar(ctx) {
+    const t = this.engine.selectedTarget;
+    if (!t) return;
+    if (t.targetKind === 'monster' && t.dead) return;
+
+    const bw = 216;
+    const bh = 38;
+    const bx = (VIRTUAL_W - bw) / 2;
+    const by = 564;
+
+    this.fillRectGdx(ctx, bx, by, bw, bh, 'rgba(69, 26, 3, 0.85)', '#f59e0b', 2);
+    this.drawText(ctx, t.name, bx + bw / 2, by + 23, {
+      size: 11.5,
+      color: t.isBoss ? '#fca5a5' : '#fde047',
+      align: 'center'
+    });
+
+    if (t.targetKind === 'monster') {
+      const ratio = t.maxHp > 0 ? Math.max(0, t.hp / t.maxHp) : 0;
+      this.fillRectGdx(ctx, bx + 14, by + 6, bw - 28, 11, '#1f2937', '#000000', 1);
+      this.fillRectGdx(ctx, bx + 15, by + 7, (bw - 30) * ratio, 9, '#dc2626', null);
+      this.drawText(ctx, `${formatNroNum(t.hp)} / ${formatNroNum(t.maxHp)}`, bx + bw / 2, by + 8, {
+        size: 9.5,
+        color: '#ffffff',
+        align: 'center'
+      });
+    } else {
+      this.drawText(ctx, 'Nhấn [Space] hoặc Click để giao tiếp', bx + bw / 2, by + 8, {
+        size: 9.5,
+        color: '#bbf7d0',
+        align: 'center'
+      });
+    }
+  }
+
+  // 3. TÊN BẢN ĐỒ, KHU VỰC, NHIỆM VỤ GỌN & NÚT CHAT GÓC TRÊN PHẢI (ochat.png)
+  renderTopRightZoneAndChat(ctx) {
+    const p = this.engine.player;
+    const mapCfg = MAPS_CONFIG[this.engine.currentMapId] || MAPS_CONFIG[0];
+
+    // Tên bản đồ & Khu vực kiểu NRO cổ điển (chữ viền đen sắc nét, không khung đen giả)
+    this.drawText(ctx, `${mapCfg.name} - Khu ${this.engine.zoneId || 1}`, 938, 584, {
+      size: 13,
+      color: '#fef08a',
+      align: 'right'
+    });
+
+    const quest = STORY_QUESTS.find((q) => q.id === p.questId);
+    if (quest) {
+      const qStr = `NV: ${quest.title} (${Math.min(p.questProgress, quest.count)}/${quest.count})`;
+      this.drawText(ctx, qStr, 938, 565, {
+        size: 10.5,
+        color: p.questProgress >= quest.count ? '#4ade80' : '#ffffff',
+        align: 'right'
+      });
+    }
+
+    // Nút Chat chuẩn ochat.png (948, 542, 56, 56)
+    this.drawTex(ctx, 'hud/giaodientrong/ochat.png', 948, 542, 56, 56);
+    this.addHit('btn_chat', 948, 542, 56, 56, () => {
+      this.openChatBox('CHAT');
+    });
+  }
+
+  // 4. THANH KỸ NĂNG 5 Ô (oskill.png) & CỤM ĐẬU THẦN / ĐÁNH / ĐỔI MỤC TIÊU GÓC DƯỚI PHẢI
+  renderBottomSkillAndActionBar(ctx) {
+    const p = this.engine.player;
+    const planetKey = PLANET_DEFS[p.planet]?.key || 'traidat';
+    const allSkills = PLANET_SKILLS[planetKey] || PLANET_SKILLS.traidat;
+    const loadout = p.skillLoadout || [0, 1, 2, 3, 4];
+
+    // 5 ô kỹ năng căn giữa đáy (x = 345 + i*66, y = 12, 52x52)
+    for (let i = 0; i < 5; i++) {
+      const skIdx = loadout[i] ?? i;
+      const skill = allSkills[skIdx] || allSkills[0];
+      const sx = 345 + i * 66;
+      const sy = 12;
+      const isSelected = p.activeSkillSlot === i;
+
+      this.drawTex(
+        ctx,
+        isSelected ? 'hud/giaodientrong/oskillclick.png' : 'hud/giaodientrong/oskill.png',
+        sx,
+        sy,
+        52,
+        52
+      );
+
+      if (skill) {
+        this.drawTex(ctx, skill.icon, sx + 7, sy + 7, 38, 38);
+        const cdRem = p.cooldowns[skill.id] || 0;
+        if (cdRem > 0.05) {
+          const ratio = Math.min(1, cdRem / Math.max(0.1, skill.cd));
+          this.fillRectGdx(ctx, sx + 6, sy + 6, 40, 40 * ratio, 'rgba(0,0,0,0.68)', null);
+          this.drawText(ctx, cdRem.toFixed(1), sx + 26, sy + 22, {
+            size: 11, color: '#fde047', align: 'center'
+          });
+        }
+      }
+
+      // Nhãn phím 1..5
+      this.drawText(ctx, `${i + 1}`, sx + 10, sy + 40, { size: 10, color: '#fef08a' });
+
+      this.addHit(`skill_slot_${i}`, sx, sy, 52, 52, () => {
+        p.activeSkillSlot = i;
+        this.engine.castSkillBySlot(i);
+      });
+    }
+
+    // Ô Đậu Thần (odauthan.png tại 768, 12, 58x58)
+    this.drawTex(ctx, 'hud/giaodientrong/odauthan.png', 768, 12, 58, 58);
+    this.drawTex(ctx, 'map/traidat/chung/trangtri/hatdau2.png', 782, 25, 30, 30);
+    this.drawText(ctx, `${p.senzuCount}`, 797, 17, { size: 11, color: '#86efac', align: 'center' });
+    this.drawText(ctx, '6', 776, 54, { size: 9.5, color: '#fde047' });
+    this.addHit('btn_eat_senzu', 768, 12, 58, 58, () => {
+      this.engine.eatSenzu();
+    });
+
+    // Nút Tấn Công / Tương Tác chính (bg_attack.png tại 842, 8, 86x86)
+    this.drawTex(ctx, 'hud/giaodientrong/bg_attack.png', 842, 8, 86, 86);
+    const activeSkill = allSkills[loadout[p.activeSkillSlot || 0]] || allSkills[0];
+    if (activeSkill) {
+      this.drawTex(ctx, activeSkill.icon, 865, 31, 40, 40);
+    }
+    this.addHit('btn_attack_main', 842, 8, 86, 86, () => {
+      this.engine.handlePrimaryAction();
+    });
+
+    // Nút Đổi Mục Tiêu (change.png tại 942, 16, 58x58)
+    this.drawTex(ctx, 'hud/giaodientrong/change.png', 942, 16, 58, 58);
+    this.addHit('btn_change_target', 942, 16, 58, 58, () => {
+      this.engine.cycleTarget();
+    });
+  }
+
+  // 5. CỬA SỔ NHÂN VẬT 5 TAB BÊN TRÁI (popupnhanvat.jpg + nutchucnang.png + ttluc.jpg)
+  renderCharacterPopup(ctx) {
+    const p = this.engine.player;
+    const planetDef = PLANET_DEFS[p.planet] || PLANET_DEFS[0];
+
+    this.drawTex(ctx, 'hud/giaodientrong/popupnhanvat.jpg', 0, 0, 355, 610);
+
+    // Nút Đóng nutX.png
+    this.drawTex(ctx, 'hud/giaodientrong/nutX.png', 316, 572, 28, 28);
+    this.addHit('btn_close_popup', 310, 566, 38, 38, () => {
+      this.popupOpen = false;
+      this.activePanel = null;
+      this.selectedBagIdx = -1;
+      this.selectedEquipSlot = null;
+    });
+
+    // Thông tin đầu trang trên nền gỗ popupnhanvat.jpg
+    this.drawTex(ctx, this.engine.getPlayerAvatarPath(), 18, 516, 48, 52);
+    this.drawText(ctx, `${p.name} (${planetDef.name})`, 74, 554, { size: 13, color: '#fde047' });
+    this.drawText(ctx, `Sức mạnh: ${formatNroNum(p.power)}`, 74, 536, { size: 11, color: '#ffffff' });
+    this.drawText(ctx, `Tiềm năng: ${formatNroNum(p.potential)}`, 74, 519, { size: 11, color: '#86efac' });
+
+    this.drawTex(ctx, 'hud/giaodientrong/vang.png', 20, 494, 16, 16);
+    this.drawText(ctx, formatNroNum(p.gold), 40, 497, { size: 11, color: '#fde047' });
+    this.drawTex(ctx, 'hud/giaodientrong/ngoc.png', 180, 494, 16, 16);
+    this.drawText(ctx, formatNroNum(p.gem), 200, 497, { size: 11, color: '#67e8f9' });
+
+    // 5 Tab nutchucnang.png
+    const tabs = ['Nhiệm Vụ', 'Hành Trang', 'Kỹ Năng', 'Đệ Tử', 'Chức Năng'];
+    for (let i = 0; i < tabs.length; i++) {
+      const tx = 10 + i * 67;
+      const ty = 456;
+      const active = this.popupTab === i;
+      this.drawTex(
+        ctx,
+        active ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+        tx,
+        ty,
+        65,
+        30
+      );
+      this.drawText(ctx, tabs[i], tx + 32.5, ty + 11, {
+        size: 9.5,
+        color: active ? '#fef08a' : '#ffffff',
+        align: 'center'
+      });
+      this.addHit(`popup_tab_${i}`, tx, ty, 65, 30, () => {
+        this.popupTab = i;
+        this.selectedBagIdx = -1;
+        this.selectedEquipSlot = null;
+      });
+    }
+
+    // Nền giấy da trong khung: ttluc.jpg (12, 12, 331, 438)
+    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', 12, 12, 331, 438);
+
+    if (this.popupTab === 0) this.renderTabQuest(ctx);
+    else if (this.popupTab === 1) this.renderTabBagAndStats(ctx);
+    else if (this.popupTab === 2) this.renderTabSkills(ctx);
+    else if (this.popupTab === 3) this.renderTabDeTu(ctx);
+    else if (this.popupTab === 4) this.renderTabFunctions(ctx);
+  }
+
+  // --- TAB 0: NHIỆM VỤ CỐT TRUYỆN ---
+  renderTabQuest(ctx) {
+    const p = this.engine.player;
+    const quest = STORY_QUESTS.find((q) => q.id === p.questId);
+
+    this.drawText(ctx, 'NHIỆM VỤ CHÍNH TUYẾN', 177, 424, {
+      size: 13.5, color: '#7c2d12', stroke: '#fef3c7', strokeWidth: 2, align: 'center'
+    });
+
+    if (!quest) {
+      this.drawWrappedText(
+        ctx,
+        'Xin chúc mừng! Bạn đã hoàn thành toàn bộ cốt truyện Ngọc Rồng Online! Hãy tiếp tục săn Boss Broly, Black Goku Rosé và thu thập Ngọc Rồng gọi Rồng Thần bất cứ lúc nào!',
+        26,
+        390,
+        302,
+        20,
+        { size: 12, color: '#1e293b', stroke: null, strokeWidth: 0 }
+      );
+      return;
+    }
+
+    this.fillRectGdx(ctx, 22, 235, 311, 176, 'rgba(255,251,235,0.88)', '#92400e', 1.5);
+    this.drawText(ctx, `Chương ${quest.id}: ${quest.title}`, 32, 390, {
+      size: 12.5, color: '#b45309', stroke: null, strokeWidth: 0
+    });
+
+    this.drawWrappedText(ctx, quest.desc, 32, 366, 290, 18, {
+      size: 11.5, color: '#1f2937', stroke: null, strokeWidth: 0, bold: false
+    });
+
+    const progRatio = Math.min(1, p.questProgress / Math.max(1, quest.count));
+    this.fillRectGdx(ctx, 32, 276, 290, 18, '#374151', '#000000', 1);
+    this.fillRectGdx(ctx, 33, 277, 288 * progRatio, 16, '#16a34a', null);
+    this.drawText(ctx, `Tiến độ: ${Math.min(p.questProgress, quest.count)} / ${quest.count}`, 177, 281, {
+      size: 10.5, color: '#ffffff', align: 'center'
+    });
+
+    this.drawWrappedText(ctx, `Chỉ dẫn: ${quest.hint}`, 26, 215, 302, 17, {
+      size: 11, color: '#7c2d12', stroke: null, strokeWidth: 0
+    });
+
+    // Phần thưởng
+    this.fillRectGdx(ctx, 22, 85, 311, 88, 'rgba(254,243,199,0.9)', '#b45309', 1.5);
+    this.drawText(ctx, 'Phần Thưởng Hoàn Thành:', 32, 154, {
+      size: 11.5, color: '#92400e', stroke: null, strokeWidth: 0
+    });
+    const itemReward = quest.reward.item ? ITEM_CATALOG[quest.reward.item]?.name : '';
+    this.drawText(ctx, `+ ${formatNroNum(quest.reward.gold)} Vàng   + ${quest.reward.gem} Ngọc Xanh`, 32, 132, {
+      size: 11, color: '#15803d', stroke: null, strokeWidth: 0
+    });
+    this.drawText(ctx, `+ ${formatNroNum(quest.reward.power)} Sức mạnh ${itemReward ? `& [${itemReward}]` : ''}`, 32, 110, {
+      size: 11, color: '#1d4ed8', stroke: null, strokeWidth: 0
+    });
+
+    if (p.questProgress >= quest.count) {
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 97, 30, 160, 38);
+      this.drawText(ctx, 'NHẬN THƯỞNG NGAY', 177, 45, { size: 11.5, color: '#fef08a', align: 'center' });
+      this.addHit('btn_claim_quest', 97, 30, 160, 38, () => {
+        this.engine.completeCurrentQuest();
+      });
+    }
+  }
+
+  // --- TAB 1: HÀNH TRANG + TRANG BỊ ĐANG MẶC + CỘNG TIỀM NĂNG ---
+  renderTabBagAndStats(ctx) {
+    const p = this.engine.player;
+
+    // 1. Nâng chỉ số nhanh bằng Tiềm Năng (ochiso.png)
+    const statRows = [
+      { key: 'hp', label: `HP Gốc: ${formatNroNum(p.maxHp)}`, cost: 200, gain: '+120 HP' },
+      { key: 'ki', label: `KI Gốc: ${formatNroNum(p.maxKi)}`, cost: 200, gain: '+120 KI' },
+      { key: 'atk', label: `Sức Đánh: ${formatNroNum(p.attack)}`, cost: 350, gain: '+12 SĐ' },
+      { key: 'def', label: `Giáp: ${p.defense} | Chí mạng: ${p.crit}%`, cost: 400, gain: '+4 Giáp' }
+    ];
+
+    for (let i = 0; i < statRows.length; i++) {
+      const row = statRows[i];
+      const ry = 418 - i * 26;
+      this.drawTex(ctx, 'hud/giaodientrong/ochiso.png', 20, ry, 232, 23);
+      this.drawText(ctx, row.label, 28, ry + 7, { size: 10.5, color: '#fef08a' });
+
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', 258, ry, 76, 23);
+      this.drawText(ctx, row.gain, 296, ry + 7, { size: 9.5, color: '#86efac', align: 'center' });
+      this.addHit(`upg_stat_${row.key}`, 258, ry, 76, 23, () => {
+        this.engine.upgradeBaseStat(row.key, row.cost);
+      });
+    }
+
+    // 2. Hàng Trang Bị Đang Mặc (10 ô dùng ohanhtrangdangmac.jpg)
+    const equipSlots = [
+      { key: 'ao', label: 'Áo' },
+      { key: 'quan', label: 'Quần' },
+      { key: 'gang', label: 'Găng' },
+      { key: 'giay', label: 'Giày' },
+      { key: 'rada', label: 'Rađa' },
+      { key: 'caitrang', label: 'C.Trang' },
+      { key: 'vanbay', label: 'V.Bay' },
+      { key: 'deolung', label: 'Đ.Lưng' },
+      { key: 'pet', label: 'Pet' },
+      { key: 'aura', label: 'Aura' }
+    ];
+
+    this.drawText(ctx, 'Trang bị đang mặc:', 22, 326, { size: 10.5, color: '#7c2d12', stroke: null, strokeWidth: 0 });
+    for (let i = 0; i < equipSlots.length; i++) {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const ex = 22 + col * 62;
+      const ey = 282 - row * 44;
+      const slotInfo = equipSlots[i];
+      const eqItem = p.equipped[slotInfo.key];
+      const isSel = this.selectedEquipSlot === slotInfo.key;
+
+      this.drawTex(
+        ctx,
+        isSel ? 'hud/giaodientrong/ohanhtrangdangmacclick.jpg' : 'hud/giaodientrong/ohanhtrangdangmac.jpg',
+        ex,
+        ey,
+        54,
+        40
+      );
+
+      if (eqItem) {
+        const def = ITEM_CATALOG[eqItem.id];
+        if (def) this.drawTex(ctx, def.icon, ex + 11, ey + 5, 32, 30);
+        if (eqItem.stars > 0) {
+          this.drawText(ctx, `${eqItem.stars}★`, ex + 4, ey + 5, { size: 8.5, color: '#67e8f9' });
+        }
+      } else {
+        this.drawText(ctx, slotInfo.label, ex + 27, ey + 15, {
+          size: 8.5, color: '#78350f', stroke: null, strokeWidth: 0, align: 'center'
+        });
+      }
+
+      this.addHit(`equip_slot_${slotInfo.key}`, ex, ey, 54, 40, () => {
+        this.selectedBagIdx = -1;
+        this.selectedEquipSlot = slotInfo.key;
+        if (this.activePanel === 'CRYSTAL' && eqItem) {
+          this.crystalEquipSlot = slotInfo.key;
+        }
+      });
+    }
+
+    // 3. Lưới Hành Trang 20 ô (5 cột x 4 hàng dùng ohanhtrang.jpg)
+    this.drawText(ctx, `Túi hành trang (${p.bag.length}/20):`, 22, 224, {
+      size: 10.5, color: '#7c2d12', stroke: null, strokeWidth: 0
+    });
+
+    for (let idx = 0; idx < 20; idx++) {
+      const col = idx % 5;
+      const row = Math.floor(idx / 5);
+      const bx = 22 + col * 62;
+      const by = 180 - row * 42;
+      const item = p.bag[idx];
+      const isSel = this.selectedBagIdx === idx;
+
+      this.drawTex(
+        ctx,
+        isSel ? 'hud/giaodientrong/ohanhtrangclick.jpg' : 'hud/giaodientrong/ohanhtrang.jpg',
+        bx,
+        by,
+        54,
+        38
+      );
+
+      if (item) {
+        const def = ITEM_CATALOG[item.id];
+        if (def) {
+          this.drawTex(ctx, def.icon, bx + 11, by + 4, 32, 30);
+          if (item.qty && item.qty > 1) {
+            this.drawText(ctx, `x${item.qty}`, bx + 50, by + 5, { size: 8.5, color: '#fde047', align: 'right' });
+          }
+          if (item.stars > 0) {
+            this.drawText(ctx, `${item.stars}★`, bx + 4, by + 5, { size: 8.5, color: '#67e8f9' });
+          }
+        }
+      }
+
+      this.addHit(`bag_slot_${idx}`, bx, by, 54, 38, () => {
+        if (!item) {
+          this.selectedBagIdx = -1;
+          return;
+        }
+        this.selectedEquipSlot = null;
+        this.selectedBagIdx = idx;
+      });
+    }
+
+    // 4. Thanh thao tác vật phẩm đang chọn ở cuối bảng Hành trang
+    if (this.selectedBagIdx >= 0 && p.bag[this.selectedBagIdx]) {
+      const bagItem = p.bag[this.selectedBagIdx];
+      const def = ITEM_CATALOG[bagItem.id];
+      if (def) {
+        this.fillRectGdx(ctx, 18, 16, 319, 36, 'rgba(30, 41, 59, 0.95)', '#f59e0b', 1.5);
+        this.drawText(ctx, def.name, 26, 37, { size: 10, color: '#fde047' });
+        this.drawText(ctx, def.desc.slice(0, 42), 26, 22, { size: 8.5, color: '#e2e8f0', bold: false });
+
+        const actionLabel = def.slot === 'dragonball'
+          ? 'Gọi Rồng'
+          : (this.activePanel === 'CHEST' ? 'Cất Rương' : 'Sử Dụng');
+
+        this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 252, 20, 80, 28);
+        this.drawText(ctx, actionLabel, 292, 30, { size: 9.5, color: '#fef08a', align: 'center' });
+        this.addHit('btn_use_bag_item', 252, 20, 80, 28, () => {
+          if (this.activePanel === 'CHEST') {
+            p.chest.push(bagItem);
+            p.bag.splice(this.selectedBagIdx, 1);
+            this.selectedBagIdx = -1;
+            this.pushBanner(`Đã cất [${def.name}] vào Rương Đồ!`, '#86efac');
+          } else if (def.slot === 'dragonball') {
+            this.trySummonShenron();
+          } else {
+            this.engine.useOrEquipBagItem(this.selectedBagIdx);
+            this.selectedBagIdx = -1;
+          }
+        });
+      }
+    } else if (this.selectedEquipSlot && p.equipped[this.selectedEquipSlot]) {
+      const eqItem = p.equipped[this.selectedEquipSlot];
+      const def = ITEM_CATALOG[eqItem.id];
+      if (def) {
+        this.fillRectGdx(ctx, 18, 16, 319, 36, 'rgba(30, 41, 59, 0.95)', '#38bdf8', 1.5);
+        this.drawText(ctx, `${def.name} (+${eqItem.stars || 0} Sao)`, 26, 36, { size: 10, color: '#67e8f9' });
+        this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', 252, 20, 80, 28);
+        this.drawText(ctx, 'Tháo Ra', 292, 30, { size: 9.5, color: '#ffffff', align: 'center' });
+        this.addHit('btn_unequip_slot', 252, 20, 80, 28, () => {
+          this.engine.unequipSlot(this.selectedEquipSlot);
+          this.selectedEquipSlot = null;
+        });
+      }
+    }
+  }
+
+  // --- TAB 2: KỸ NĂNG HÀNH TINH (Gán phím 1..5 & Nâng cấp) ---
+  renderTabSkills(ctx) {
+    const p = this.engine.player;
+    const planetKey = PLANET_DEFS[p.planet]?.key || 'traidat';
+    const skills = PLANET_SKILLS[planetKey] || PLANET_SKILLS.traidat;
+
+    this.drawText(ctx, 'BÍ KÍP VÕ CÔNG HÀNH TINH', 177, 426, {
+      size: 12.5, color: '#7c2d12', stroke: null, strokeWidth: 0, align: 'center'
+    });
+
+    for (let i = 0; i < skills.length; i++) {
+      const sk = skills[i];
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const sx = 24 + col * 104;
+      const sy = 362 - row * 68;
+      const isSel = this.selectedSkillIdx === i;
+      const lvl = p.skillLevels?.[sk.id] || 1;
+
+      this.fillRectGdx(
+        ctx,
+        sx,
+        sy,
+        96,
+        58,
+        isSel ? 'rgba(254, 240, 138, 0.92)' : 'rgba(255, 251, 235, 0.82)',
+        isSel ? '#d97706' : '#92400e',
+        1.5
+      );
+      this.drawTex(ctx, sk.icon, sx + 6, sy + 12, 34, 34);
+      this.drawText(ctx, `Lv.${lvl}`, sx + 46, sy + 36, { size: 9.5, color: '#b45309', stroke: null, strokeWidth: 0 });
+      this.drawText(ctx, sk.name.slice(0, 10), sx + 6, sy + 4, { size: 8.5, color: '#1e293b', stroke: null, strokeWidth: 0 });
+
+      this.addHit(`sel_skill_${i}`, sx, sy, 96, 58, () => {
+        this.selectedSkillIdx = i;
+      });
+    }
+
+    const selSkill = skills[this.selectedSkillIdx] || skills[0];
+    if (selSkill) {
+      const lvl = p.skillLevels?.[selSkill.id] || 1;
+      const upgCost = lvl * 1500;
+      this.fillRectGdx(ctx, 22, 22, 311, 186, 'rgba(30, 41, 59, 0.94)', '#f59e0b', 1.5);
+      this.drawText(ctx, `${selSkill.name} (Cấp ${lvl}/7)`, 34, 186, { size: 12, color: '#fde047' });
+      this.drawWrappedText(ctx, selSkill.desc, 34, 166, 286, 16, { size: 10, color: '#e2e8f0', bold: false });
+      this.drawText(ctx, `Hồi chiêu: ${selSkill.cd}s   |   Tiêu hao: ${selSkill.kiCost} KI`, 34, 126, {
+        size: 10, color: '#67e8f9'
+      });
+
+      // Nút Nâng cấp kỹ năng
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 34, 82, 145, 32);
+      this.drawText(ctx, `Nâng Cấp (${formatNroNum(upgCost)} TN)`, 106, 94, { size: 9.5, color: '#fef08a', align: 'center' });
+      this.addHit('btn_upg_skill', 34, 82, 145, 32, () => {
+        if (lvl >= 7) {
+          this.pushBanner('Kỹ năng đã đạt cấp tối đa (Lv.7)!', '#fde047');
+          return;
+        }
+        if (p.potential < upgCost) {
+          this.pushBanner(`Cần ${formatNroNum(upgCost)} Tiềm năng để nâng cấp!`, '#fca5a5');
+          return;
+        }
+        p.potential -= upgCost;
+        p.skillLevels[selSkill.id] = lvl + 1;
+        sound.playHeal();
+        this.pushBanner(`Đã nâng [${selSkill.name}] lên Cấp ${lvl + 1}! (+15% Uy lực)`, '#86efac');
+      });
+
+      // Gán vào ô phím 1..5
+      this.drawText(ctx, 'Gán vào ô phím tắt:', 34, 62, { size: 10, color: '#cbd5e1' });
+      for (let slot = 0; slot < 5; slot++) {
+        const bx = 34 + slot * 56;
+        const by = 28;
+        this.drawTex(ctx, 'hud/giaodientrong/oskill.png', bx, by, 44, 28);
+        this.drawText(ctx, `Ô ${slot + 1}`, bx + 22, by + 9, { size: 9.5, color: '#fde047', align: 'center' });
+        this.addHit(`assign_skill_slot_${slot}`, bx, by, 44, 28, () => {
+          p.skillLoadout[slot] = this.selectedSkillIdx;
+          this.pushBanner(`Đã gán [${selSkill.name}] vào phím số [${slot + 1}]!`, '#86efac');
+        });
+      }
+    }
+  }
+
+  // --- TAB 3: ĐỆ TỬ (AI SÁT CÁNH & HỢP THỂ PORATA) ---
+  renderTabDeTu(ctx) {
+    const p = this.engine.player;
+    const detu = p.detu;
+
+    this.drawText(ctx, 'ĐỆ TỬ ĐỒNG HÀNH', 177, 424, {
+      size: 13.5, color: '#7c2d12', stroke: null, strokeWidth: 0, align: 'center'
+    });
+
+    if (!detu) {
+      this.drawTex(ctx, 'vatpham/vatphamgame/phu_tro/trung_de_tu.png', 145, 320, 64, 72);
+      this.drawWrappedText(
+        ctx,
+        'Bạn chưa có Đệ Tử! Hãy nhận Quà Tân Thủ từ Admin Dũng Lê (Nhà Gôhan) hoặc mua Quả Trứng Đệ Tử tại Tiệm Thành Lê (Làng Aru) để ấp nở Đệ Tử chiến đấu tự động!',
+        28,
+        290,
+        298,
+        19,
+        { size: 11.5, color: '#1e293b', stroke: null, strokeWidth: 0, bold: false }
+      );
+      return;
+    }
+
+    const detuPlanet = PLANET_DEFS[detu.planet || 0] || PLANET_DEFS[0];
+    this.fillRectGdx(ctx, 22, 230, 311, 180, 'rgba(255,251,235,0.9)', '#92400e', 1.5);
+    this.drawTex(ctx, `nhanvat/detu/${detuPlanet.key}/avtlon.png`, 34, 330, 56, 64);
+
+    this.drawText(ctx, `${detu.name} (${detuPlanet.name})`, 104, 382, { size: 12.5, color: '#b45309', stroke: null, strokeWidth: 0 });
+    this.drawText(ctx, `Sức mạnh: ${formatNroNum(detu.power)}`, 104, 360, { size: 11, color: '#1e293b', stroke: null, strokeWidth: 0 });
+    this.drawText(ctx, `HP: ${formatNroNum(detu.hp)} / ${formatNroNum(detu.maxHp)}`, 104, 340, { size: 11, color: '#dc2626', stroke: null, strokeWidth: 0 });
+    this.drawText(ctx, `Sức đánh: ${formatNroNum(detu.attack)}`, 104, 320, { size: 11, color: '#1d4ed8', stroke: null, strokeWidth: 0 });
+    this.drawText(ctx, `Trạng thái: ${p.isFused ? 'ĐANG HỢP THỂ' : detu.modeLabel}`, 34, 250, {
+      size: 11.5, color: '#15803d', stroke: null, strokeWidth: 0
+    });
+
+    const modes = [
+      { key: 'attack', label: 'Tấn Công' },
+      { key: 'protect', label: 'Bảo Vệ' },
+      { key: 'follow', label: 'Đi Theo' },
+      { key: 'home', label: 'Về Nhà' }
+    ];
+    for (let i = 0; i < modes.length; i++) {
+      const m = modes[i];
+      const mx = 22 + (i % 2) * 158;
+      const my = 170 - Math.floor(i / 2) * 44;
+      const active = detu.mode === m.key;
+      this.drawTex(
+        ctx,
+        active ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+        mx,
+        my,
+        150,
+        36
+      );
+      this.drawText(ctx, m.label, mx + 75, my + 13, { size: 11, color: '#fef08a', align: 'center' });
+      this.addHit(`detu_mode_${m.key}`, mx, my, 150, 36, () => {
+        detu.mode = m.key;
+        detu.modeLabel = m.label;
+        this.pushBanner(`Đệ tử chuyển sang chế độ: ${m.label}!`, '#86efac');
+      });
+    }
+
+    // Nút Hợp Thể nhanh
+    this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 52, 52, 250, 44);
+    this.drawText(ctx, p.isFused ? 'TÁCH HỢP THỂ' : 'HỢP THỂ PORATA', 177, 69, {
+      size: 12.5, color: '#fef08a', align: 'center'
+    });
+    this.addHit('btn_toggle_fusion', 52, 52, 250, 44, () => {
+      this.engine.toggleFusion(1);
+    });
+  }
+
+  // --- TAB 4: CHỨC NĂNG (CAPSULE BẢN ĐỒ NHANH, BẢNG XẾP HẠNG, KHU VỰC, LƯU CLOUD, THOÁT MENU) ---
+  renderTabFunctions(ctx) {
+    const p = this.engine.player;
+
+    this.drawText(ctx, 'CAPSULE DỊCH CHUYỂN NHANH', 177, 424, {
+      size: 12.5, color: '#7c2d12', stroke: null, strokeWidth: 0, align: 'center'
+    });
+
+    for (let i = 0; i < MAPS_CONFIG.length; i++) {
+      const m = MAPS_CONFIG[i];
+      const my = 382 - i * 38;
+      const isCur = this.engine.currentMapId === m.id;
+      this.drawTex(
+        ctx,
+        isCur ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+        32,
+        my,
+        290,
+        32
+      );
+      this.drawText(ctx, `${m.name} ${isCur ? '(Đang đứng)' : '-> Bay tới'}`, 177, my + 11, {
+        size: 11, color: isCur ? '#fde047' : '#ffffff', align: 'center'
+      });
+      this.addHit(`teleport_map_${m.id}`, 32, my, 290, 32, () => {
+        if (!isCur) {
+          this.popupOpen = false;
+          this.engine.changeMap(m.id, m.defaultSpawn.x, m.defaultSpawn.y);
+        }
+      });
+    }
+
+    // Các nút hệ thống bên dưới
+    const sysBtns = [
+      {
+        label: 'Bảng Xếp Hạng Server',
+        onClick: () => {
+          this.popupOpen = false;
+          this.openLeaderboard();
+        }
+      },
+      {
+        label: `Đổi Khu Vực (Khu ${this.engine.zoneId || 1})`,
+        onClick: () => {
+          this.engine.zoneId = ((this.engine.zoneId || 1) % 5) + 1;
+          this.pushBanner(`Đã chuyển sang Khu ${this.engine.zoneId}!`, '#86efac');
+        }
+      },
+      {
+        label: `Âm Thanh: ${sound.isMuted ? 'ĐANG TẮT' : 'ĐANG BẬT'}`,
+        onClick: () => {
+          sound.toggleMute();
+        }
+      },
+      {
+        label: 'Lưu Nhân Vật Cloud',
+        onClick: () => {
+          saveCharacterData(p).then(() => {
+            this.pushBanner('Đã đồng bộ dữ liệu nhân vật lên Supabase Cloud!', '#86efac');
+          });
+        }
+      },
+      {
+        label: 'Nhập Giftcode',
+        onClick: () => {
+          this.popupOpen = false;
+          this.openChatBox('GIFTCODE');
+        }
+      },
+      {
+        label: 'Đổi Tài Khoản / Ra Menu',
+        onClick: () => {
+          saveCharacterData(p);
+          if (this.engine.onReturnToMenu) this.engine.onReturnToMenu();
+        }
+      }
+    ];
+
+    for (let i = 0; i < sysBtns.length; i++) {
+      const b = sysBtns[i];
+      const bx = 22 + (i % 2) * 158;
+      const by = 142 - Math.floor(i / 2) * 44;
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', bx, by, 150, 36);
+      this.drawText(ctx, b.label, bx + 75, by + 13, { size: 9.5, color: '#fef08a', align: 'center' });
+      this.addHit(`sys_btn_${i}`, bx, by, 150, 36, b.onClick);
+    }
+  }
+
+  // ==================== BẢNG ĐÔI BÊN PHẢI (SHOP THÀNH LÊ / RƯƠNG ĐỒ / PHA LÊ THẦY HIẾU) ====================
+  renderRightDualPanel(ctx) {
+    const p = this.engine.player;
+    const ox = 355;
+
+    this.drawTex(ctx, 'hud/giaodientrong/popupnhanvat.jpg', ox, 0, 355, 610);
+    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', ox + 12, 12, 331, 480);
+
+    // Nút đóng bảng phải
+    this.drawTex(ctx, 'hud/giaodientrong/nutX.png', ox + 316, 572, 28, 28);
+    this.addHit('btn_close_dual', ox + 310, 566, 38, 38, () => {
+      this.activePanel = null;
+    });
+
+    if (this.activePanel === 'SHOP') {
+      this.drawTex(ctx, 'nhanvat/npc/admin_thanhle/avt.png', ox + 20, 518, 46, 50);
+      this.drawText(ctx, 'CỬA HÀNG THÀNH LÊ', ox + 78, 550, { size: 13.5, color: '#fde047' });
+      this.drawText(ctx, 'Chọn vật phẩm để xem chi tiết & mua', ox + 78, 530, { size: 10.5, color: '#ffffff' });
+
+      // 3 Tab cửa hàng
+      for (let t = 0; t < SHOP_TABS.length; t++) {
+        const tx = ox + 16 + t * 108;
+        const active = this.shopTabIdx === t;
+        this.drawTex(
+          ctx,
+          active ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+          tx,
+          496,
+          102,
+          28
+        );
+        this.drawText(ctx, SHOP_TABS[t].label, tx + 51, 506, { size: 10.5, color: '#fef08a', align: 'center' });
+        this.addHit(`shop_tab_${t}`, tx, 496, 102, 28, () => {
+          this.shopTabIdx = t;
+          this.selectedShopItemId = null;
+        });
+      }
+
+      const tabItems = SHOP_TABS[this.shopTabIdx]?.items || [];
+      for (let i = 0; i < tabItems.length; i++) {
+        const itemId = tabItems[i];
+        const def = ITEM_CATALOG[itemId];
+        if (!def) continue;
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const ix = ox + 20 + col * 160;
+        const iy = 430 - row * 54;
+        if (iy < 85) break;
+
+        const isSel = this.selectedShopItemId === itemId;
+        this.fillRectGdx(
+          ctx,
+          ix,
+          iy,
+          154,
+          48,
+          isSel ? 'rgba(254,240,138,0.95)' : 'rgba(255,251,235,0.86)',
+          isSel ? '#d97706' : '#92400e',
+          1.5
+        );
+        this.drawTex(ctx, def.icon, ix + 6, iy + 8, 32, 32);
+        this.drawText(ctx, def.name.slice(0, 15), ix + 42, iy + 30, {
+          size: 9.5, color: '#7c2d12', stroke: null, strokeWidth: 0
+        });
+        const priceStr = def.gem > 0 ? `${def.gem} Ngọc` : `${formatNroNum(def.gold)} Vàng`;
+        this.drawText(ctx, priceStr, ix + 42, iy + 12, {
+          size: 9.5, color: def.gem > 0 ? '#0284c7' : '#b45309', stroke: null, strokeWidth: 0
+        });
+
+        this.addHit(`shop_item_${itemId}`, ix, iy, 154, 48, () => {
+          this.selectedShopItemId = itemId;
+        });
+      }
+
+      if (this.selectedShopItemId && ITEM_CATALOG[this.selectedShopItemId]) {
+        const def = ITEM_CATALOG[this.selectedShopItemId];
+        this.fillRectGdx(ctx, ox + 18, 18, 319, 64, 'rgba(30,41,59,0.96)', '#f59e0b', 1.5);
+        this.drawText(ctx, def.name, ox + 28, 63, { size: 11, color: '#fde047' });
+        this.drawText(ctx, def.desc.slice(0, 44), ox + 28, 45, { size: 9, color: '#e2e8f0', bold: false });
+
+        this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', ox + 240, 26, 88, 36);
+        this.drawText(ctx, 'MUA NGAY', ox + 284, 40, { size: 10.5, color: '#fef08a', align: 'center' });
+        this.addHit('btn_buy_shop_item', ox + 240, 26, 88, 36, () => {
+          this.buyItem(def);
+        });
+      }
+    } else if (this.activePanel === 'CHEST') {
+      this.drawTex(ctx, 'nhanvat/npc/ruong_do/avt_ruong.png', ox + 20, 520, 46, 46);
+      this.drawText(ctx, 'RƯƠNG ĐỒ TẠI NHÀ', ox + 78, 548, { size: 13.5, color: '#fde047' });
+      this.drawText(ctx, 'Click vật phẩm trong Rương để lấy ra túi', ox + 78, 528, { size: 10.5, color: '#ffffff' });
+
+      for (let idx = 0; idx < 20; idx++) {
+        const col = idx % 5;
+        const row = Math.floor(idx / 5);
+        const cx = ox + 24 + col * 62;
+        const cy = 420 - row * 50;
+        const item = p.chest[idx];
+        this.drawTex(ctx, 'hud/giaodientrong/ohanhtrang.jpg', cx, cy, 54, 42);
+        if (item && ITEM_CATALOG[item.id]) {
+          this.drawTex(ctx, ITEM_CATALOG[item.id].icon, cx + 11, cy + 5, 32, 32);
+          this.addHit(`chest_take_${idx}`, cx, cy, 54, 42, () => {
+            if (p.bag.length >= 20) {
+              this.pushBanner('Túi Hành Trang đã đầy!', '#fca5a5');
+              return;
+            }
+            p.bag.push(item);
+            p.chest.splice(idx, 1);
+            this.pushBanner('Đã lấy vật phẩm từ Rương vào Hành Trang!', '#86efac');
+          });
+        }
+      }
+    } else if (this.activePanel === 'CRYSTAL') {
+      this.drawTex(ctx, 'nhanvat/npc/thay_hieu/avt.png', ox + 20, 518, 46, 50);
+      this.drawText(ctx, 'PHA LÊ HÓA & ÉP SAO', ox + 78, 548, { size: 13.5, color: '#fde047' });
+      this.drawText(ctx, 'Chọn Trang Bị đang mặc bên trái để nâng Sao', ox + 78, 528, { size: 10, color: '#ffffff' });
+
+      const slotKey = this.crystalEquipSlot || this.selectedEquipSlot || 'ao';
+      const targetEq = p.equipped[slotKey];
+
+      if (!targetEq || !ITEM_CATALOG[targetEq.id]) {
+        this.drawWrappedText(
+          ctx,
+          'Hãy mặc một món Trang Bị (Áo, Quần, Găng, Giày, Rađa hoặc Cải Trang) và click vào ô Trang Bị Đang Mặc ở khung bên trái!',
+          ox + 28,
+          440,
+          298,
+          20,
+          { size: 11.5, color: '#7c2d12', stroke: null, strokeWidth: 0 }
+        );
+      } else {
+        const def = ITEM_CATALOG[targetEq.id];
+        const sockets = targetEq.sockets || 0;
+        const stars = targetEq.stars || 0;
+
+        this.fillRectGdx(ctx, ox + 24, 290, 307, 175, 'rgba(30,41,59,0.92)', '#f59e0b', 2);
+        this.drawTex(ctx, def.icon, ox + 154, 405, 48, 48);
+        this.drawText(ctx, def.name, ox + 177, 386, { size: 12, color: '#fde047', align: 'center' });
+
+        // Vẽ 7 ngôi sao (saoxanh.png đã ép, saoden.png lỗ trống)
+        for (let s = 0; s < 7; s++) {
+          const sx = ox + 64 + s * 34;
+          if (s < stars) {
+            this.drawTex(ctx, 'hud/giaodientrong/saoxanh.png', sx, 348, 24, 24);
+          } else if (s < sockets) {
+            this.drawTex(ctx, 'hud/giaodientrong/saoden.png', sx, 348, 24, 24);
+          } else {
+            this.fillRectGdx(ctx, sx + 5, 353, 14, 14, 'rgba(255,255,255,0.15)', '#64748b', 1);
+          }
+        }
+
+        this.drawText(ctx, `Số lỗ Pha Lê: ${sockets}/7   |   Đã ép: ${stars} Sao (+${stars * 8}% Chỉ số)`, ox + 177, 315, {
+          size: 10.5, color: '#67e8f9', align: 'center'
+        });
+
+        // Nút 1: Đục lỗ Pha Lê Hóa (tốn Vàng)
+        const socketCost = (sockets + 1) * 15000;
+        this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', ox + 42, 210, 270, 44);
+        this.drawText(ctx, `PHA LÊ HÓA ĐỤC LỖ (${formatNroNum(socketCost)} Vàng)`, ox + 177, 227, {
+          size: 11, color: '#fef08a', align: 'center'
+        });
+        this.addHit('btn_drill_socket', ox + 42, 210, 270, 44, () => {
+          if (sockets >= 7) {
+            this.pushBanner('Trang bị đã đạt tối đa 7 lỗ Pha Lê!', '#fde047');
+            return;
+          }
+          if (p.gold < socketCost) {
+            this.pushBanner(`Cần ${formatNroNum(socketCost)} Vàng để Pha Lê Hóa!`, '#fca5a5');
+            return;
+          }
+          p.gold -= socketCost;
+          targetEq.sockets = sockets + 1;
+          sound.playHeal();
+          this.pushBanner(`Đục lỗ thành công! Trang bị hiện có ${targetEq.sockets} lỗ Sao Pha Lê!`, '#86efac');
+        });
+
+        // Nút 2: Ép Sao Pha Lê (dùng Đá Pha Lê hoặc 10 Ngọc Xanh)
+        this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', ox + 42, 145, 270, 44);
+        this.drawText(ctx, 'ÉP SAO CƯỜNG HÓA (1 Đá Pha Lê / 10 Ngọc)', ox + 177, 162, {
+          size: 10.5, color: '#86efac', align: 'center'
+        });
+        this.addHit('btn_inlay_star', ox + 42, 145, 270, 44, () => {
+          if ((targetEq.stars || 0) >= (targetEq.sockets || 0)) {
+            this.pushBanner('Hãy bấm [Pha Lê Hóa Đục Lỗ] trước khi ép thêm Sao!', '#fca5a5');
+            return;
+          }
+          const crystalIdx = p.bag.findIndex((it) => it && ITEM_CATALOG[it.id]?.slot === 'crystal');
+          if (crystalIdx >= 0) {
+            p.bag.splice(crystalIdx, 1);
+          } else if (p.gem >= 10) {
+            p.gem -= 10;
+          } else {
+            this.pushBanner('Cần 1 Đá Pha Lê trong túi hoặc 10 Ngọc Xanh!', '#fca5a5');
+            return;
+          }
+          targetEq.stars = (targetEq.stars || 0) + 1;
+          this.engine.recalcStats();
+          sound.playSuperSaiyan();
+          this.pushBanner(`Ép Sao thành công! [${def.name}] đạt ${targetEq.stars} Sao Pha Lê!`, '#fde047');
+        });
+      }
+    }
+  }
+
+  buyItem(def) {
+    const p = this.engine.player;
+    if (p.bag.length >= 20) {
+      this.pushBanner('Hành trang đã đầy (20/20)! Hãy cất bớt vào Rương Đồ!', '#fca5a5');
+      return;
+    }
+    if (def.gem > 0) {
+      if (p.gem < def.gem) {
+        this.pushBanner(`Không đủ Ngọc Xanh! Cần ${def.gem} Ngọc.`, '#fca5a5');
+        return;
+      }
+      p.gem -= def.gem;
+    } else {
+      if (p.gold < def.gold) {
+        this.pushBanner(`Không đủ Vàng! Cần ${formatNroNum(def.gold)} Vàng.`, '#fca5a5');
+        return;
+      }
+      p.gold -= def.gold;
+    }
+    this.engine.addItemToBag(def.id);
+    sound.playCoin();
+    this.pushBanner(`Mua thành công [${def.name}]! Mở Hành Trang để sử dụng!`, '#86efac');
+  }
+
+  // ==================== VÒNG QUAY MAY MẮN HẢI ĐĂNG (/assets/gacha/) ====================
+  renderGachaModal(ctx) {
+    this.fillRectGdx(ctx, 0, 0, VIRTUAL_W, VIRTUAL_H, 'rgba(0,0,0,0.68)', null);
+
+    const mw = 480;
+    const mh = 430;
+    const mx = (VIRTUAL_W - mw) / 2;
+    const my = (VIRTUAL_H - mh) / 2;
+
+    this.drawTex(ctx, 'hud/giaodientrong/popupnhanvat.jpg', mx, my, mw, mh);
+    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', mx + 16, my + 16, mw - 32, mh - 76);
+    this.drawTex(ctx, 'hud/giaodientrong/nutX.png', mx + mw - 38, my + mh - 38, 28, 28);
+    this.addHit('close_gacha', mx + mw - 44, my + mh - 44, 38, 38, () => {
+      if (!this.gachaSpinning) this.activePanel = null;
+    });
+
+    this.drawText(ctx, 'VÒNG QUAY THƯỢNG ĐẾ HẢI ĐĂNG', mx + mw / 2, my + mh - 34, {
+      size: 14, color: '#fde047', align: 'center'
+    });
+
+    // Vẽ Vòng quay thật từ /assets/gacha/1/vongquay (1..17).png
+    this.drawTex(ctx, `gacha/1/vongquay (${this.gachaFrame}).png`, mx + 125, my + 125, 230, 210);
+
+    // Các icon giải thưởng nổi bật xung quanh
+    this.drawTex(ctx, 'gacha/caitrang.png', mx + 42, my + 265, 52, 52);
+    this.drawTex(ctx, 'gacha/ngocrong.png', mx + 42, my + 175, 52, 52);
+    this.drawTex(ctx, 'gacha/deolung.png', mx + mw - 94, my + 265, 52, 52);
+    this.drawTex(ctx, 'gacha/aura.png', mx + mw - 94, my + 175, 52, 52);
+
+    if (this.gachaResult) {
+      this.fillRectGdx(ctx, mx + 95, my + 82, mw - 190, 44, 'rgba(20,83,45,0.95)', '#facc15', 2);
+      this.drawTex(ctx, this.gachaResult.icon, mx + 106, my + 88, 32, 32);
+      this.drawText(ctx, `Trúng: ${this.gachaResult.name}`, mx + 148, my + 100, {
+        size: 11.5, color: '#fde047'
+      });
+    }
+
+    this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', mx + 135, my + 26, 210, 44);
+    this.drawText(
+      ctx,
+      this.gachaSpinning ? 'ĐANG QUAY...' : 'QUAY NGAY (1 Vé / 10 Ngọc)',
+      mx + mw / 2,
+      my + 43,
+      { size: 11.5, color: '#fef08a', align: 'center' }
+    );
+    this.addHit('btn_spin_gacha', mx + 135, my + 26, 210, 44, () => {
+      this.startGachaSpin();
+    });
+  }
+
+  // ==================== BẢNG XẾP HẠNG SUPABASE CLOUD ====================
+  renderLeaderboardModal(ctx) {
+    this.fillRectGdx(ctx, 0, 0, VIRTUAL_W, VIRTUAL_H, 'rgba(0,0,0,0.68)', null);
+    const mw = 520;
+    const mh = 450;
+    const mx = (VIRTUAL_W - mw) / 2;
+    const my = (VIRTUAL_H - mh) / 2;
+
+    this.drawTex(ctx, 'hud/giaodientrong/popupnhanvat.jpg', mx, my, mw, mh);
+    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', mx + 16, my + 16, mw - 32, mh - 74);
+    this.drawTex(ctx, 'hud/giaodientrong/nutX.png', mx + mw - 38, my + mh - 38, 28, 28);
+    this.addHit('close_lb', mx + mw - 44, my + mh - 44, 38, 38, () => {
+      this.activePanel = null;
+    });
+
+    this.drawText(ctx, 'BẢNG XẾP HẠNG CAO THỦ SERVER', mx + mw / 2, my + mh - 34, {
+      size: 14, color: '#fde047', align: 'center'
+    });
+
+    if (this.leaderboardLoading) {
+      this.drawText(ctx, 'Đang tải dữ liệu từ Supabase Cloud...', mx + mw / 2, my + 220, {
+        size: 12.5, color: '#7c2d12', stroke: null, strokeWidth: 0, align: 'center'
+      });
+      return;
+    }
+
+    for (let i = 0; i < Math.min(8, this.leaderboardRows.length); i++) {
+      const r = this.leaderboardRows[i];
+      const ry = my + mh - 118 - i * 42;
+      const pName = PLANET_DEFS[r.planet]?.name || 'Trái Đất';
+      this.fillRectGdx(
+        ctx,
+        mx + 28,
+        ry,
+        mw - 56,
+        36,
+        i === 0 ? 'rgba(254,240,138,0.95)' : 'rgba(255,251,235,0.88)',
+        i < 3 ? '#d97706' : '#92400e',
+        1.5
+      );
+      this.drawText(ctx, `#${i + 1}  ${r.name} (${pName})`, mx + 40, ry + 13, {
+        size: 11.5, color: i === 0 ? '#b45309' : '#1e293b', stroke: null, strokeWidth: 0
+      });
+      this.drawText(ctx, `SM: ${formatNroNum(r.power)}`, mx + mw - 42, ry + 13, {
+        size: 11.5, color: '#15803d', stroke: null, strokeWidth: 0, align: 'right'
+      });
+    }
+  }
+
+  // ==================== HỘP THOẠI NPC CHUẨN NPC_KHUNG_CHUNG ====================
+  renderNpcDialog(ctx) {
+    const dlg = this.npcDialog;
+    if (!dlg) return;
+
+    this.fillRectGdx(ctx, 0, 0, VIRTUAL_W, VIRTUAL_H, 'rgba(0,0,0,0.42)', null);
+
+    // Khung trắng viền đen 2px chuẩn Dragon Boy (rộng 640, cao 135, phía trên hàng nút nutvuong)
+    const boxW = 660;
+    const boxH = 132;
+    const boxX = (VIRTUAL_W - boxW) / 2;
+    const boxY = 128;
+
+    this.fillRectGdx(ctx, boxX, boxY, boxW, boxH, '#ffffff', '#000000', 3);
+    this.fillRectGdx(ctx, boxX + 4, boxY + 4, boxW - 8, boxH - 8, '#fffbeb', '#d97706', 1.5);
+
+    // Avatar NPC nhấp nhô bên trái khung thoại
+    const bob = Math.sin(performance.now() * 0.006) * 3;
+    if (dlg.avt) {
+      this.drawTex(ctx, dlg.avt, boxX + 20, boxY + boxH - 36 + bob, 64, 72);
+    }
+
+    // Tên NPC
+    this.drawText(ctx, dlg.npc.name, boxX + 98, boxY + boxH - 22, {
+      size: 13.5, color: '#b45309', stroke: null, strokeWidth: 0
+    });
+
+    // Nội dung lời thoại (hỗ trợ xuống dòng \n)
+    const lines = String(dlg.text || '').split('\n');
+    let curY = boxY + boxH - 46;
+    for (let i = 0; i < lines.length; i++) {
+      curY = this.drawWrappedText(ctx, lines[i], boxX + 98, curY, boxW - 118, 20, {
+        size: 12, color: '#111827', stroke: null, strokeWidth: 0, bold: false
+      });
+    }
+
+    // Hàng nút vuông chuẩn nutvuong.png ở đáy màn hình (y = 14)
+    const btns = dlg.buttons || [];
+    const btnW = 124;
+    const btnH = 96;
+    const gap = 18;
+    const totalW = btns.length * btnW + Math.max(0, btns.length - 1) * gap;
+    const startX = (VIRTUAL_W - totalW) / 2;
+
+    for (let i = 0; i < btns.length; i++) {
+      const b = btns[i];
+      const bx = startX + i * (btnW + gap);
+      const by = 16;
+      this.drawTex(ctx, 'hud/giaodientrong/nutvuong.png', bx, by, btnW, btnH);
+      this.drawWrappedText(ctx, b.label, bx + btnW / 2, by + 56, btnW - 22, 16, {
+        size: 11.5, color: '#532905', stroke: '#fef3c7', strokeWidth: 2, align: 'center'
+      });
+      this.addHit(`npc_btn_${i}`, bx, by, btnW, btnH, b.action);
+    }
+  }
+
+  // ==================== KHUNG CHAT & NHẬP GIFTCODE (khungchat.png) ====================
+  renderChatBox(ctx) {
+    this.fillRectGdx(ctx, 0, 0, VIRTUAL_W, VIRTUAL_H, 'rgba(0,0,0,0.45)', null);
+    const cw = 528;
+    const ch = 152;
+    const cx = (VIRTUAL_W - cw) / 2;
+    const cy = 220;
+
+    this.drawTex(ctx, 'hud/giaodienngoai/chung/khungchat.png', cx, cy, cw, ch);
+    this.drawText(
+      ctx,
+      this.chatMode === 'GIFTCODE'
+        ? 'NHẬP MÃ GIFTCODE (VD: TANTHU, NROWEB, DRAGONBOY, NGOCRONG)'
+        : 'TRÒ CHUYỆN KÊNH THẾ GIỚI (Cũng có thể gõ trực tiếp Giftcode)',
+      cx + cw / 2,
+      cy + ch - 32,
+      { size: 11.5, color: '#532905', stroke: null, strokeWidth: 0, align: 'center' }
+    );
+
+    this.fillRectGdx(ctx, cx + 36, cy + 68, cw - 72, 36, '#ffffff', '#78350f', 2);
+    const cursor = Math.floor(performance.now() / 450) % 2 === 0 ? '|' : '';
+    this.drawText(ctx, `${this.chatInputText}${cursor}`, cx + 48, cy + 81, {
+      size: 13, color: '#111827', stroke: null, strokeWidth: 0
+    });
+
+    // Nút Gửi & Đóng
+    this.drawTex(ctx, 'hud/giaodienngoai/chung/nutdangnhap2.png', cx + 120, cy + 14, 128, 42);
+    this.drawText(ctx, 'Xác Nhận', cx + 184, cy + 30, {
+      size: 12, color: '#532905', stroke: null, strokeWidth: 0, align: 'center'
+    });
+    this.addHit('chat_submit', cx + 120, cy + 14, 128, 42, () => {
+      this.submitChatOrGiftcode(this.chatInputText);
+    });
+
+    this.drawTex(ctx, 'hud/giaodienngoai/chung/nutdangnhap2.png', cx + 280, cy + 14, 128, 42);
+    this.drawText(ctx, 'Đóng', cx + 344, cy + 30, {
+      size: 12, color: '#532905', stroke: null, strokeWidth: 0, align: 'center'
+    });
+    this.addHit('chat_cancel', cx + 280, cy + 14, 128, 42, () => {
+      this.chatOpen = false;
+      if (this.engine.onTextInputToggle) this.engine.onTextInputToggle(false, '');
+    });
+  }
+
+  // ==================== RỒNG THẦN 9 KHÚC HUYỀN THOẠI CHUẨN HUDRongThan.java ====================
+  renderShenron(ctx) {
+    // Bầu trời tối sầm sấm chớp
+    this.fillRectGdx(ctx, 0, 0, VIRTUAL_W, VIRTUAL_H, 'rgba(5, 8, 20, 0.86)', null);
+
+    const t = this.shenronTimer;
+    const lightningIdx = (Math.floor(t * 10) % 5) + 1;
+    this.drawTex(ctx, `hieuung/hieuunggame/rong_than/set_${lightningIdx}.png`, 130, 250, 210, 320);
+    this.drawTex(ctx, `hieuung/hieuunggame/rong_than/set_${((lightningIdx + 2) % 5) + 1}.png`, 690, 240, 210, 330);
+
+    // Ghép 9 khúc Rồng Thần theo ĐÚNG công thức toạ độ pixel của HUDRongThan.java (dòng 256-267)
+    const rImgs = [];
+    for (let i = 1; i <= 9; i++) {
+      rImgs.push(assets.tex(`hieuung/hieuunggame/rong_than/r${i}.png`));
+    }
+    const luaIdx = (Math.floor(t * 8) % 2) + 1;
+    const luaImg = assets.tex(`hieuung/hieuunggame/rong_than/lua_${luaIdx}.png`);
+
+    if (rImgs.every(Boolean)) {
+      const s = 1.45; // Tỉ lệ hiển thị vừa khít khung 1020x610 phía trên hộp thoại
+      const k = s / 2; // Hệ số quy đổi từ 2.0f của bản gốc
+      const daoDong = Math.sin(t * 3.2) * 2.5;
+      const w = rImgs.map((im) => im.naturalWidth * s);
+      const h = rImgs.map((im) => im.naturalHeight * s);
+
+      const baseX = VIRTUAL_W / 2 + 18;
+      const baseY = 198;
+
+      // Thứ tự vẽ chuẩn HUDRongThan.java: r8 -> r7 -> r6 -> r9 -> r3 -> r4 -> r2 -> r1 -> r5 -> lua
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r8.png', baseX, baseY, w[7], h[7]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r7.png', baseX - 75 * k, baseY + h[7] - 10 * k + daoDong, w[6], h[6]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r6.png', baseX - 78 * k, baseY + h[7] + h[6] - 18 * k, w[5], h[5]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r9.png', baseX - 5 * k, baseY + h[7] + h[6] - 18 * k + daoDong * 1.1, w[8], h[8]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r3.png', baseX - 78 * k, baseY + h[7] + h[6] + h[5] - 26 * k, w[2], h[2]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r4.png', baseX + 25 * k, baseY + h[7] + h[6] + h[5] + h[2] - 26 * k, w[3], h[3]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r2.png', baseX - 147 * k, baseY + h[7] + h[6] + h[5] - 20 * k + daoDong * 0.8, w[1], h[1]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r1.png', baseX - 75 * k, baseY + h[7] + h[6] + h[5] + h[2] - 50 * k + daoDong * 1.2, w[0], h[0]);
+      this.drawTex(ctx, 'hieuung/hieuunggame/rong_than/r5.png', baseX - 5 * k, baseY + h[7] + h[6] - 10 * k + daoDong * 0.7, w[4], h[4]);
+
+      if (luaImg) {
+        this.drawTex(ctx, `hieuung/hieuunggame/rong_than/lua_${luaIdx}.png`, baseX - 8 * k, baseY - 6, luaImg.naturalWidth * s, luaImg.naturalHeight * s);
+      }
+    }
+
+    // Khung thoại trắng viền đen chuẩn HUDRongThan.java (594 x 76 tại y = 122)
+    const boxW = 594;
+    const boxH = 74;
+    const boxX = (VIRTUAL_W - boxW) / 2;
+    const boxY = 122;
+    this.fillRectGdx(ctx, boxX, boxY, boxW, boxH, '#ffffff', '#000000', 2.5);
+    this.drawWrappedText(
+      ctx,
+      'Ta sẽ ban cho ngươi một điều ước, hãy suy nghĩ thật kỹ trước khi quyết định chọn 1 trong 5 điều ước bên dưới!',
+      VIRTUAL_W / 2,
+      boxY + 50,
+      boxW - 48,
+      20,
+      { size: 12, color: '#111827', stroke: null, strokeWidth: 0, align: 'center' }
+    );
+
+    const wishes = [
+      '+500K Sức Mạnh & Tiềm Năng',
+      'Giàu Có +2Tr Vàng & 500 Ngọc',
+      'Trọn Bộ Hủy Diệt Beerus',
+      'Cải Trang Black Rosé & Phượng Hoàng',
+      'Sở Hữu Đệ Tử & Bông Tai C2'
+    ];
+
+    // 5 nút nutvuong.png chuẩn HUDRongThan.java: (210 + i * 120, 5, 114, 114)
+    for (let i = 0; i < 5; i++) {
+      const bx = 210 + i * 120;
+      const by = 5;
+      this.drawTex(ctx, 'hud/giaodientrong/nutvuong.png', bx, by, 114, 114);
+      this.drawWrappedText(ctx, wishes[i], bx + 57, by + 68, 96, 15, {
+        size: 10.5, color: '#532905', stroke: '#fef3c7', strokeWidth: 2, align: 'center'
+      });
+      this.addHit(`wish_btn_${i}`, bx, by, 114, 114, () => {
+        this.grantShenronWish(i);
+      });
+    }
+  }
+
+  // ==================== THÔNG BÁO NỔI GIỮA TRÊN ====================
+  renderBanners(ctx) {
+    if (this.popupOpen || this.shenronActive) return;
+    for (let i = 0; i < this.banners.length; i++) {
+      const b = this.banners[i];
+      const by = 515 - i * 28;
+      this.fillRectGdx(ctx, 250, by, 520, 24, 'rgba(0,0,0,0.72)', '#f59e0b', 1);
+      this.drawText(ctx, b.text, VIRTUAL_W / 2, by + 7, {
+        size: 11, color: b.color, align: 'center'
+      });
+    }
+  }
+}

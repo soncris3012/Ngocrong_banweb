@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { sound } from '../../game/audio';
-import { PLANETS } from '../../game/constants';
+import { PLANET_DEFS } from '../../game/nroData';
 
 export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSelectCharacter, onClose }) => {
-  const [planetIndex, setPlanetIndex] = useState(0); // 0: Trái Đất, 1: Xayda, 2: Namek
+  const [planetIndex, setPlanetIndex] = useState(0); // 0: Trái Đất, 1: Xayda, 2: Namếc
   const [characterIndex, setCharacterIndex] = useState(0); // 0, 1, 2
+  const [focusGroup, setFocusGroup] = useState('char'); // 'planet' | 'char'
   const [characterName, setCharacterName] = useState('SonGoku');
   const [error, setError] = useState('');
   const [bobOffset, setBobOffset] = useState(0);
@@ -29,7 +30,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
     {
       id: 2,
       folder: 'namek',
-      name: 'Namek',
+      name: 'Namếc',
       bgColor: '#05c2a8',
       characters: ['Ốc tiêu', 'Piccolo', 'Kami'],
       defaultName: 'Piccolo'
@@ -38,7 +39,6 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
   const currentConfig = planetConfigs[planetIndex];
 
-  // Bobbing animation for Muitenvang.png
   useEffect(() => {
     let t = 0;
     const interval = setInterval(() => {
@@ -52,12 +52,14 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
     sound.playPunch();
     setPlanetIndex(index);
     setCharacterIndex(0);
+    setFocusGroup('planet');
     setCharacterName(planetConfigs[index].defaultName);
   };
 
   const handleCharacterChange = (index) => {
     sound.playPunch();
     setCharacterIndex(index);
+    setFocusGroup('char');
     setCharacterName(currentConfig.characters[index]);
   };
 
@@ -74,13 +76,24 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
     }
 
     sound.playHeal();
-    const baseStats = PLANETS[planetIndex].baseStats;
+    const baseStats = PLANET_DEFS[planetIndex].baseStats;
 
     onSelectCharacter({
       name,
       planet: planetIndex,
       characterIndex,
       headId: characterIndex + 1,
+      mapId: 0,
+      x: 325,
+      y: 175,
+      questId: 1,
+      questProgress: 0,
+      power: 2000,
+      potential: 2500,
+      gold: 15000,
+      gem: 50,
+      senzuCount: 10,
+      senzuLevel: 1,
       ...baseStats
     });
   };
@@ -88,18 +101,16 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
   const folder = currentConfig.folder;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-40 flex flex-col items-center justify-between overflow-hidden select-none transition-colors duration-300"
       style={{ backgroundColor: currentConfig.bgColor }}
     >
-      {/* 1. PARALLAX SKY & MOUNTAIN BACKGROUND DYNAMIC THEMED BY PLANET */}
+      {/* 1. PARALLAX NỀN THEO HÀNH TINH */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Sky Fill */}
         <div className="absolute inset-0" style={{ backgroundColor: currentConfig.bgColor }} />
 
-        {/* Sky layer */}
         {planetIndex === 1 ? (
-          <div 
+          <div
             className="absolute bottom-[40%] left-0 w-full h-[240px]"
             style={{
               backgroundImage: `url('/assets/hud/giaodienngoai/xayda/bautroixayda.jpg')`,
@@ -107,15 +118,14 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
               backgroundRepeat: 'repeat-x'
             }}
           >
-            {/* Full Moon for Xayda */}
-            <img 
-              src="/assets/hud/giaodienngoai/xayda/matrang.png" 
-              alt="Mặt Trăng" 
+            <img
+              src="/assets/hud/giaodienngoai/xayda/matrang.png"
+              alt="Mặt Trăng"
               className="absolute right-[18%] top-[10%] w-16 h-16 drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"
             />
           </div>
         ) : (
-          <div 
+          <div
             className="absolute bottom-[40%] left-0 w-full h-[240px]"
             style={{
               backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/sky_${folder}.png')`,
@@ -125,48 +135,47 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
           />
         )}
 
-        {/* Nuixa */}
-        <div 
-          className="absolute bottom-[35%] left-0 w-full h-[220px]"
+        <div
+          className="absolute bottom-[34%] left-0 w-full h-[180px]"
           style={{
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nuixa_${folder}.png')`,
             backgroundSize: '255px 150px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
-
-        {/* Nui */}
-        <div 
-          className="absolute bottom-[25%] left-0 w-full h-[250px]"
+        <div
+          className="absolute bottom-[25%] left-0 w-full h-[190px]"
           style={{
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nui_${folder}.png')`,
             backgroundSize: '510px 170px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
-
-        {/* Nuicay */}
-        <div 
-          className="absolute bottom-[14%] left-0 w-full h-[260px]"
+        <div
+          className="absolute bottom-[100px] left-0 w-full h-[22%]"
+          style={{ backgroundColor: planetIndex === 1 ? '#572814' : planetIndex === 2 ? '#0d6e5b' : '#175e1c' }}
+        />
+        <div
+          className="absolute bottom-[18%] left-0 w-full h-[190px]"
           style={{
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nuicay_${folder}.png')`,
             backgroundSize: '340px 170px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
-
-        {/* Nuithap */}
-        <div 
-          className="absolute bottom-[8%] left-0 w-full h-[280px]"
+        <div
+          className="absolute bottom-[100px] left-0 w-full h-[200px]"
           style={{
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nuithap_${folder}.png')`,
             backgroundSize: '340px 180px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
-
-        {/* Grass Layer */}
-        <div 
+        <div
           className="absolute bottom-[100px] left-0 w-full h-[50px] z-10"
           style={{
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/cayco1_${folder}.png')`,
@@ -174,9 +183,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
             backgroundRepeat: 'repeat-x'
           }}
         />
-
-        {/* Ground Tiles Top (matdat) */}
-        <div 
+        <div
           className="absolute bottom-[50px] left-0 w-full h-[50px] z-10"
           style={{
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/matdat_${folder}1.png')`,
@@ -184,9 +191,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
             backgroundRepeat: 'repeat-x'
           }}
         />
-
-        {/* Underground Tiles (dat) */}
-        <div 
+        <div
           className="absolute bottom-0 left-0 w-full h-[50px] z-10"
           style={{
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/dat_${folder}1.png')`,
@@ -211,7 +216,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
             alt=""
             className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
           />
-          <span className="relative z-10 font-dragon text-[#532905] text-xs font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
+          <span className="relative z-10 font-dragon text-[#532905] text-xs font-bold">
             Máy chủ ({currentServer})
           </span>
         </button>
@@ -221,8 +226,8 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         </span>
       </div>
 
-      {/* 3. CENTER CONTROLS: TÊN, HÀNH TINH, NHÂN VẬT & PREVIEW */}
-      <div className="relative z-20 flex flex-col items-center gap-2.5 w-full max-w-3xl px-4">
+      {/* 3. CENTER CONTROLS */}
+      <div className="relative z-20 flex flex-col items-center gap-3 w-full max-w-3xl px-4">
         {/* Ô NHẬP TÊN NHÂN VẬT */}
         <div className="relative w-[320px] h-[52px] flex items-center justify-center px-4 shadow-lg">
           <img
@@ -233,7 +238,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
           <input
             type="text"
             value={characterName}
-            onChange={e => {
+            onChange={(e) => {
               setCharacterName(e.target.value);
               setError('');
             }}
@@ -248,46 +253,53 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
           </span>
         )}
 
-        {/* NÚT CHỌN HÀNH TINH (3 NÚT) */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-1">
+        {/* HÀNG NÚT CHỌN HÀNH TINH */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-2">
           {planetConfigs.map((p, idx) => {
             const isSelected = planetIndex === idx;
             return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handlePlanetChange(idx)}
-                className="relative w-[120px] sm:w-[140px] h-[48px] flex items-center justify-center transition active:scale-95 shadow-md"
-              >
-                <img
-                  src={`/assets/hud/giaodienngoai/chung/${isSelected ? 'nutclick.png' : 'nutdangnhap2.png'}`}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-                />
-                <span className="relative z-10 font-dragon text-[#532905] text-xs sm:text-sm font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
-                  {p.name}
-                </span>
-              </button>
+              <div key={p.id} className="relative flex flex-col items-center">
+                {isSelected && focusGroup === 'planet' && (
+                  <img
+                    src="/assets/hud/giaodienngoai/chung/muitenvang.png"
+                    alt="Chọn"
+                    className="w-7 h-7 absolute -top-8 z-30 pointer-events-none drop-shadow"
+                    style={{ transform: `translateY(${bobOffset}px)` }}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => handlePlanetChange(idx)}
+                  className="relative w-[120px] sm:w-[140px] h-[48px] flex items-center justify-center transition active:scale-95 shadow-md"
+                >
+                  <img
+                    src={`/assets/hud/giaodienngoai/chung/${isSelected ? 'nutclick.png' : 'nutdangnhap2.png'}`}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
+                  />
+                  <span className="relative z-10 font-dragon text-[#532905] text-xs sm:text-sm font-bold">
+                    {p.name}
+                  </span>
+                </button>
+              </div>
             );
           })}
         </div>
 
-        {/* NÚT CHỌN NHÂN VẬT (3 NÚT VỚI MŨI TÊN VÀNG CHỈ XUỐNG) */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-1">
+        {/* HÀNG NÚT CHỌN NHÂN VẬT */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-2">
           {currentConfig.characters.map((charName, idx) => {
             const isSelected = characterIndex === idx;
             return (
               <div key={charName} className="relative flex flex-col items-center">
-                {/* Mũi tên vàng nhấp nhô nếu được chọn */}
-                {isSelected && (
+                {isSelected && focusGroup === 'char' && (
                   <img
                     src="/assets/hud/giaodienngoai/chung/muitenvang.png"
                     alt="Chọn"
-                    className="w-7 h-7 absolute -top-8 z-30 transition-transform pointer-events-none drop-shadow"
+                    className="w-7 h-7 absolute -top-8 z-30 pointer-events-none drop-shadow"
                     style={{ transform: `translateY(${bobOffset}px)` }}
                   />
                 )}
-
                 <button
                   type="button"
                   onClick={() => handleCharacterChange(idx)}
@@ -298,7 +310,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
                     alt=""
                     className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
                   />
-                  <span className="relative z-10 font-dragon text-[#532905] text-xs sm:text-sm font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
+                  <span className="relative z-10 font-dragon text-[#532905] text-xs sm:text-sm font-bold">
                     {charName}
                   </span>
                 </button>
@@ -307,21 +319,18 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
           })}
         </div>
 
-        {/* LIVE CHARACTER CHIBI PREVIEW TRÊN BỤC ĐẤT */}
+        {/* PREVIEW NHÂN VẬT TRÊN MẶT ĐẤT */}
         <div className="relative mt-2 w-32 h-36 flex flex-col items-center justify-center">
-          {/* Head */}
           <img
             src={`/assets/hud/giaodienngoai/${folder}/dau_${folder}_${characterIndex + 1}.png`}
             alt="Head"
             className="w-16 h-16 object-contain z-20 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
           />
-          {/* Body */}
           <img
             src={`/assets/hud/giaodienngoai/${folder}/than${folder}.png`}
             alt="Body"
             className="w-12 h-10 object-contain -mt-3.5 z-10"
           />
-          {/* Legs */}
           <img
             src={`/assets/hud/giaodienngoai/${folder}/chan${folder}.png`}
             alt="Legs"
@@ -330,7 +339,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         </div>
       </div>
 
-      {/* 4. BOTTOM BAR: [ĐÓNG] & [TẠO MỚI] */}
+      {/* 4. BOTTOM BAR */}
       <div className="relative z-20 w-full max-w-5xl flex items-center justify-between p-4 mb-2">
         <button
           type="button"
@@ -360,7 +369,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
             alt=""
             className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
           />
-          <span className="relative z-10 font-dragon text-[#532905] text-sm font-black drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
+          <span className="relative z-10 font-dragon text-[#532905] text-sm font-black">
             Tạo mới
           </span>
         </button>
