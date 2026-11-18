@@ -7,24 +7,29 @@ export const MainMenu = ({
   onEnterGame,
   onOpenCharacterCreate,
   onOpenLogin,
-  onOpenServerSelect,
-  onClearData
+  onOpenServerSelect
 }) => {
   const [scrollCay, setScrollCay] = useState(0);
   const [scrollThap, setScrollThap] = useState(0);
-  const [hoveredIdx, setHoveredIdx] = useState(null);
+  const [pressedIdx, setPressedIdx] = useState(-1);
 
-  // Parallax smooth horizontal scrolling matching LibGDX desktop
+  // Cuộn mượt 2 lớp đồi cây (-30px/s) & trụ đá cỏ (-60px/s) chuẩn ManHinhMenu.java (1020x610)
   useEffect(() => {
     let animId;
     let lastTime = performance.now();
 
     const loop = (time) => {
-      const dt = (time - lastTime) / 1000;
+      const dt = Math.min(0.05, (time - lastTime) / 1000);
       lastTime = time;
 
-      setScrollCay(prev => (prev - 25 * dt) % 340);
-      setScrollThap(prev => (prev - 50 * dt) % 340);
+      setScrollCay((prev) => {
+        const next = prev - 30 * dt;
+        return next <= -340 ? next + 340 : next;
+      });
+      setScrollThap((prev) => {
+        const next = prev - 60 * dt;
+        return next <= -340 ? next + 340 : next;
+      });
 
       animId = requestAnimationFrame(loop);
     };
@@ -35,185 +40,149 @@ export const MainMenu = ({
 
   const hasCharacter = Boolean(savedCharacter && savedCharacter.name);
 
-  return (
-    <div className="fixed inset-0 z-30 bg-[#19b0f8] flex flex-col items-center justify-between overflow-hidden select-none">
-      {/* 1. SEAMLESS PARALLAX BACKGROUND LAYERS MATCHING DESKTOP LIBGDX */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Top Sky fill: #19b0f8 (matching shapeRenderer.setColor(25/255f, 176/255f, 248/255f, 1)) */}
-        <div className="absolute inset-0 bg-[#19b0f8]" />
+  const serverLabel =
+    currentServer === 'HAIDANG1'
+      ? 'Máy chủ: HAIDANG1'
+      : typeof currentServer === 'number'
+      ? `Máy chủ: Vũ trụ ${currentServer}`
+      : `Máy chủ: ${currentServer}`;
 
-        {/* Sky with clouds */}
-        <div 
-          className="absolute bottom-[35%] left-0 w-full h-[220px]"
+  const buttons = hasCharacter
+    ? [
+        { label: `TK. ${savedCharacter.name}`, onClick: onEnterGame, bottom: 320 },
+        { label: 'Chơi mới', onClick: onOpenCharacterCreate, bottom: 255 },
+        { label: 'Đổi tài khoản', onClick: onOpenLogin, bottom: 190 },
+        { label: serverLabel, onClick: onOpenServerSelect, bottom: 125 }
+      ]
+    : [
+        { label: 'Chơi mới', onClick: onOpenCharacterCreate, bottom: 320 },
+        { label: 'Đổi tài khoản', onClick: onOpenLogin, bottom: 255 },
+        { label: serverLabel, onClick: onOpenServerSelect, bottom: 190 }
+      ];
+
+  return (
+    <div className="absolute inset-0 z-30 w-[1020px] h-[610px] overflow-hidden select-none bg-[#175e1c]">
+      {/* 1. PARALLAX 5 LỚP TỌA ĐỘ GỐC 100% TỪ ManHinhMenu.java (1020x610) — KHÔNG LỘ DẢI XANH DƯỚI ĐÁY */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Bầu trời trên cùng: rect(0, 460, 1020, 150) */}
+        <div
+          className="absolute left-0 w-[1020px]"
+          style={{ bottom: '310px', height: '300px', backgroundColor: '#19b0f8' }}
+        />
+
+        {/* Sky mây: y=310, w=255, h=150 */}
+        <div
+          className="absolute left-0 w-[1020px]"
           style={{
+            bottom: '310px',
+            height: '150px',
             backgroundImage: `url('/assets/hud/giaodienngoai/traidat/sky_traidat.png')`,
             backgroundSize: '255px 150px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
 
-        {/* Nuixa (Dãy núi xa trên nền trời) */}
-        <div 
-          className="absolute bottom-[35%] left-0 w-full h-[220px]"
+        {/* Núi xa: y=310, w=255, h=150 */}
+        <div
+          className="absolute left-0 w-[1020px]"
           style={{
+            bottom: '310px',
+            height: '150px',
             backgroundImage: `url('/assets/hud/giaodienngoai/traidat/nuixa_traidat.png')`,
             backgroundSize: '255px 150px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
 
-        {/* Nui (Dãy núi đồi xanh giữa) */}
-        <div 
-          className="absolute bottom-[22%] left-0 w-full h-[260px]"
+        {/* Dãy núi xanh giữa: y=280, w=510, h=170 */}
+        <div
+          className="absolute left-0 w-[1020px]"
           style={{
+            bottom: '280px',
+            height: '170px',
             backgroundImage: `url('/assets/hud/giaodienngoai/traidat/nui_traidat.png')`,
             backgroundSize: '510px 170px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
 
-        {/* Nuicay (Đồi cây phía trước - cuộn chậm 25px/s) */}
-        <div 
-          className="absolute bottom-[10%] left-0 w-[200%] h-[300px]"
+        {/* Đồi cây cuộn chậm: y=140, w=340, h=220 */}
+        <div
+          className="absolute left-0 w-[1700px]"
           style={{
+            bottom: '140px',
+            height: '220px',
             backgroundImage: `url('/assets/hud/giaodienngoai/traidat/nuicay_traidat.png')`,
             backgroundSize: '340px 220px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x',
-            transform: `translateX(${scrollCay}px)`
+            transform: `translate3d(${scrollCay}px, 0, 0)`
           }}
         />
 
-        {/* Nuithap (Trụ đá & thảm cỏ trước mặt - chạm đáy 0px, cuộn 50px/s) */}
-        <div 
-          className="absolute bottom-0 left-0 w-[200%] h-[340px]"
+        {/* Trụ đá & thảm cỏ chạm sát đáy y=0: w=340, h=280 */}
+        <div
+          className="absolute left-0 bottom-0 w-[1700px]"
           style={{
+            height: '280px',
             backgroundImage: `url('/assets/hud/giaodienngoai/traidat/nuithap_traidat.png')`,
             backgroundSize: '340px 280px',
+            backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x',
-            transform: `translateX(${scrollThap}px)`
+            transform: `translate3d(${scrollThap}px, 0, 0)`
           }}
         />
       </div>
 
-      {/* 2. LOGO CHÚ BÉ RỒNG Ở TRÊN GIỮA */}
-      <div className="relative z-10 pt-4 sm:pt-6 flex flex-col items-center">
-        <img
-          src="/assets/hud/giaodienngoai/chung/chuberong.png"
-          alt="Chú Bé Rồng Online"
-          className="w-[280px] sm:w-[360px] object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.85)] animate-in fade-in zoom-in-95 duration-300"
-        />
-      </div>
+      {/* 2. LOGO CHÚ BÉ RỒNG ONLINE — Tọa độ gốc batch.draw(logo, 355, 360, 320, 200) */}
+      <img
+        src="/assets/hud/giaodienngoai/chung/chuberong.png"
+        alt="Chú Bé Rồng Online"
+        className="absolute z-10 pointer-events-none object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.65)]"
+        style={{
+          left: '355px',
+          bottom: '360px',
+          width: '320px',
+          height: '200px'
+        }}
+      />
 
-      {/* 3. CENTER BUTTONS STACK (NÚT GỖ CHUẨN LIBGDX NRO) */}
-      <div className="relative z-10 flex flex-col items-center gap-3 sm:gap-3.5 my-auto w-full max-w-[330px] px-3">
-        {/* NÚT 1: VÀO GAME NẾU ĐÃ CÓ NHÂN VẬT */}
-        {hasCharacter && (
+      {/* 3. CỤM NÚT GỖ ĐĂNG NHẬP — Tọa độ gốc batch.draw(tex, 352, ys[i], 325, 50) */}
+      {buttons.map((btn, idx) => {
+        const isActive = pressedIdx === idx;
+        return (
           <button
+            key={btn.label}
             type="button"
-            onMouseEnter={() => setHoveredIdx(0)}
-            onMouseLeave={() => setHoveredIdx(null)}
+            onPointerDown={() => setPressedIdx(idx)}
+            onPointerUp={() => setPressedIdx(-1)}
+            onPointerLeave={() => setPressedIdx(-1)}
             onClick={() => {
               sound.playPunch();
-              onEnterGame();
+              btn.onClick();
             }}
-            className="relative w-full h-[52px] flex items-center justify-center transition active:scale-95 shadow-xl hover:brightness-105"
+            className="absolute z-20 flex items-center justify-center transition-transform active:scale-[0.98]"
+            style={{
+              left: '352px',
+              bottom: `${btn.bottom}px`,
+              width: '325px',
+              height: '50px'
+            }}
           >
             <img
-              src={`/assets/hud/giaodienngoai/chung/${hoveredIdx === 0 ? 'nutclick.png' : 'nutdangnhap2.png'}`}
+              src={`/assets/hud/giaodienngoai/chung/${isActive ? 'nutclick.png' : 'nutdangnhap2.png'}`}
               alt=""
-              className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
             />
-            <span className="relative z-10 font-dragon text-[#532905] text-sm sm:text-base font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
-              TK. {savedCharacter.name}
+            <span className="relative z-10 font-dragon text-[#532905] text-[15px] font-bold">
+              {btn.label}
             </span>
           </button>
-        )}
-
-        {/* NÚT: CHƠI MỚI */}
-        <button
-          type="button"
-          onMouseEnter={() => setHoveredIdx(1)}
-          onMouseLeave={() => setHoveredIdx(null)}
-          onClick={() => {
-            sound.playPunch();
-            onOpenCharacterCreate();
-          }}
-          className="relative w-full h-[52px] flex items-center justify-center transition active:scale-95 shadow-xl hover:brightness-105"
-        >
-          <img
-            src={`/assets/hud/giaodienngoai/chung/${hoveredIdx === 1 ? 'nutclick.png' : 'nutdangnhap2.png'}`}
-            alt=""
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-          />
-          <span className="relative z-10 font-dragon text-[#532905] text-sm sm:text-base font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
-            Chơi mới
-          </span>
-        </button>
-
-        {/* NÚT: ĐỔI TÀI KHOẢN */}
-        <button
-          type="button"
-          onMouseEnter={() => setHoveredIdx(2)}
-          onMouseLeave={() => setHoveredIdx(null)}
-          onClick={() => {
-            sound.playPunch();
-            onOpenLogin();
-          }}
-          className="relative w-full h-[52px] flex items-center justify-center transition active:scale-95 shadow-xl hover:brightness-105"
-        >
-          <img
-            src={`/assets/hud/giaodienngoai/chung/${hoveredIdx === 2 ? 'nutclick.png' : 'nutdangnhap2.png'}`}
-            alt=""
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-          />
-          <span className="relative z-10 font-dragon text-[#532905] text-sm sm:text-base font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
-            Đổi tài khoản
-          </span>
-        </button>
-
-        {/* NÚT: MÁY CHỦ */}
-        <button
-          type="button"
-          onMouseEnter={() => setHoveredIdx(3)}
-          onMouseLeave={() => setHoveredIdx(null)}
-          onClick={() => {
-            sound.playPunch();
-            onOpenServerSelect();
-          }}
-          className="relative w-full h-[52px] flex items-center justify-center transition active:scale-95 shadow-xl hover:brightness-105"
-        >
-          <img
-            src={`/assets/hud/giaodienngoai/chung/${hoveredIdx === 3 ? 'nutclick.png' : 'nutdangnhap2.png'}`}
-            alt=""
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-          />
-          <span className="relative z-10 font-dragon text-[#532905] text-sm sm:text-base font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
-            {typeof currentServer === 'number' ? `Máy chủ: Vũ trụ ${currentServer}` : `Máy chủ: ${currentServer}`}
-          </span>
-        </button>
-      </div>
-
-      {/* 4. FOOTER INFO & XÓA DỮ LIỆU */}
-      <div className="relative z-10 w-full flex items-center justify-between p-4 text-xs font-dragon text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
-        <div className="flex items-center gap-2">
-          <span>V0.0.0</span>
-          <span>•</span>
-          <span>ngocrong-banweb.vercel.app</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (window.confirm("Bạn có chắc chắn muốn xóa dữ liệu nhân vật đã lưu trên thiết bị?")) {
-              sound.playPunch();
-              onClearData();
-            }
-          }}
-          className="text-yellow-300 hover:text-yellow-100 hover:underline transition font-bold"
-        >
-          Xóa dữ liệu
-        </button>
-      </div>
+        );
+      })}
     </div>
   );
 };

@@ -1,5 +1,6 @@
-// Dữ liệu gốc chuẩn 100% Ngọc Rồng Online (Teamobi) & LibGDX DANG-PH/ngoc-rong-online
-// Tọa độ Virtual Viewport: 1020 x 610 (Gốc (0,0) ở góc dưới-trái chuẩn LibGDX)
+// Dữ liệu Thế Giới & Cốt Truyện Chuẩn 100% Chú Bé Rồng Online (Ngọc Rồng Online - TeaMobi)
+// Người chơi nhập vai Chiến Binh Hậu Bối của 3 chủng tộc (Trái Đất, Namếc, Xayda),
+// hành trình qua 5 Giai Đoạn Cốt Truyện Chính Tuyến & Mạng Lưới 36 Bản Đồ Liên Thông!
 
 export const VIRTUAL_W = 1020;
 export const VIRTUAL_H = 610;
@@ -10,7 +11,15 @@ export const PLANET_DEFS = [
     key: 'traidat',
     name: 'Trái Đất',
     avatars: ['Goku_base', 'Krillin_base', 'Yamcha_base'],
-    charNames: ['Goku', 'Krillin', 'Yamcha'],
+    charNames: ['Võ Sinh Aru', 'Thiếu Lâm TĐ', 'Kiếm Khách TĐ'],
+    defaultPlayerName: 'HậuBốiTĐ',
+    homeMapId: 0,
+    villageMapId: 1,
+    elderId: 'ong_gohan',
+    elderName: 'Ông Gôhan',
+    masterId: 'quy_lao_kame',
+    masterName: 'Quy Lão Kame',
+    masterMapId: 8,
     baseStats: { maxHp: 360, hp: 360, maxKi: 360, ki: 360, attack: 26, defense: 4, crit: 3 }
   },
   {
@@ -18,16 +27,31 @@ export const PLANET_DEFS = [
     key: 'xayda',
     name: 'Xayda',
     avatars: ['Cađíc_base', 'Rađíc_base', 'Kakalot_base'],
-    charNames: ['Cađíc', 'Rađíc', 'Kakalot'],
+    charNames: ['Tân Binh Xayda', 'Chiến Binh Lửa', 'Hậu Duệ Xayda'],
+    defaultPlayerName: 'HậuBốiXD',
+    homeMapId: 24,
+    villageMapId: 25,
+    elderId: 'ong_paragus',
+    elderName: 'Ông Paragus',
+    masterId: 'vua_vegeta',
+    masterName: 'Vua Vegeta',
+    masterMapId: 27,
     baseStats: { maxHp: 420, hp: 420, maxKi: 300, ki: 300, attack: 32, defense: 5, crit: 6 }
   },
   {
     id: 2,
     key: 'namek',
-    keyName: 'Namếc',
     name: 'Namếc',
     avatars: ['namek_base', 'namek_base', 'namek_base'],
-    charNames: ['Ốc tiêu', 'Piccolo', 'Kami'],
+    charNames: ['Hậu Duệ Mori', 'Chiến Binh Namếc', 'Tu Sĩ Long Tộc'],
+    defaultPlayerName: 'HậuBốiNM',
+    homeMapId: 19,
+    villageMapId: 20,
+    elderId: 'ong_moori',
+    elderName: 'Ông Moori',
+    masterId: 'truong_lao_guru',
+    masterName: 'Trưởng Lão Guru',
+    masterMapId: 22,
     baseStats: { maxHp: 440, hp: 440, maxKi: 450, ki: 450, attack: 25, defense: 6, crit: 3 }
   }
 ];
@@ -56,43 +80,38 @@ export const NPC_OFFSETS = {
   admin_huykhoi: { chanX: 0, chanY: 0, thanX: 0, thanY: -3.0, dauX: -1.2, dauY: -18.0, extraThanY: 0 }
 };
 
-// =========================================================================
-// HỆ THỐNG BÍ KÍP VÕ CÔNG CHUẨN CỐT TRUYỆN NGỌC RỒNG ONLINE
-// Mới vào game CHỈ CÓ DUY NHẤT CHIÊU 1 (Đấm cơ bản Cấp 1) ở Ô số 1!
-// Các chiêu 2..9 bắt đầu ở Cấp 0 (Chưa học) — mở khóa khi bái sư Quy Lão Kame / đủ Sức Mạnh & Tiềm Năng!
-// =========================================================================
 export const PLANET_SKILLS = {
   traidat: [
-    { id: 'td_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Dragon', type: 'melee', mult: 1.25, kiCost: 0, cd: 0.32, range: 78, icon: 'kynang/iconkynang/traidat/skill1_traidat.png', desc: 'Đòn cận chiến cơ bản của võ sinh Trái Đất.' },
-    { id: 'td_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Kamejoko', type: 'beam', mult: 2.8, kiCost: 30, cd: 1.6, range: 520, color: '#38bdf8', core: '#e0f2fe', icon: 'kynang/iconkynang/traidat/skill2_traidat.png', desc: 'Chưởng khí Kamejoko do Quy Lão Tiên Sinh truyền dạy.' },
+    { id: 'td_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Dragon', type: 'melee', mult: 1.25, kiCost: 0, cd: 0.32, range: 78, icon: 'kynang/iconkynang/traidat/skill1_traidat.png', desc: 'Đòn cận chiến cơ bản của hậu bối Trái Đất.' },
+    { id: 'td_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Kamejoko', type: 'beam', mult: 2.8, kiCost: 30, cd: 1.6, range: 520, color: '#38bdf8', core: '#e0f2fe', icon: 'kynang/iconkynang/traidat/skill2_traidat.png', desc: 'Chưởng khí Kamejoko do Quy Lão Kame truyền dạy.' },
     { id: 'td_3', slotIdx: 2, reqPower: 18000, learnCost: 6000, name: 'Thái Dương Hạ San', type: 'solar', mult: 1.8, kiCost: 55, cd: 7.5, range: 280, icon: 'kynang/iconkynang/traidat/skill3_traidat.png', desc: 'Làm chói mắt và choáng toàn bộ quái xung quanh 4 giây.' },
-    { id: 'td_4', slotIdx: 3, reqPower: 80000, learnCost: 25000, name: 'Quả Cầu Kênh Khi', type: 'spirit', mult: 5.5, kiCost: 120, cd: 10.0, range: 460, color: '#60a5fa', icon: 'kynang/iconkynang/traidat/skill4_traidat.png', desc: 'Tụ nguyên khí vạn vật hủy diệt vùng rộng.' },
-    { id: 'td_5', slotIdx: 4, reqPower: 40000, learnCost: 14000, name: 'Kaioken / Beast', type: 'transform', caitrang: 'gohan_beast', mult: 2.0, kiCost: 70, cd: 14.0, range: 0, icon: 'kynang/iconkynang/traidat/skill5_traidat.png', desc: 'Bộc phát giới hạn chiến binh (+85% Sức đánh).' },
+    { id: 'td_4', slotIdx: 3, reqPower: 80000, learnCost: 25000, name: 'Quả Cầu Kênh Khi', type: 'spirit', mult: 5.5, kiCost: 120, cd: 10.0, range: 460, color: '#60a5fa', icon: 'kynang/iconkynang/traidat/skill4_traidat.png', desc: 'Tuyệt kỹ của Thần Vũ Trụ Bắc Kaio hủy diệt vùng rộng.' },
+    { id: 'td_5', slotIdx: 4, reqPower: 40000, learnCost: 14000, name: 'Kaioken', type: 'transform', caitrang: 'gohan_beast', mult: 2.0, kiCost: 70, cd: 14.0, range: 0, icon: 'kynang/iconkynang/traidat/skill5_traidat.png', desc: 'Bộc phát giới hạn chiến binh (+90% Sức đánh).' },
     { id: 'td_6', slotIdx: 5, reqPower: 6000, learnCost: 1800, name: 'Tái Tạo Năng Lượng', type: 'charge', mult: 0, kiCost: 0, cd: 8.0, range: 0, icon: 'kynang/iconkynang/traidat/skill6_traidat.png', desc: 'Gồng khí phục hồi nhanh 55% HP và KI.' },
     { id: 'td_7', slotIdx: 6, reqPower: 150000, learnCost: 45000, name: 'Khiên Năng Lượng', type: 'shield', mult: 0, kiCost: 45, cd: 12.0, range: 0, icon: 'kynang/iconkynang/traidat/skill7_traidat.png', desc: 'Tạo lá chắn giảm 75% sát thương nhận vào trong 8 giây.' },
-    { id: 'td_8', slotIdx: 7, reqPower: 250000, learnCost: 80000, name: 'Dịch Chuyển Tức Thời', type: 'tele', mult: 2.4, kiCost: 35, cd: 4.5, range: 420, icon: 'kynang/iconkynang/traidat/skill8_traidat.png', desc: 'Dịch chuyển áp sát mục tiêu và tung đòn chí mạng.' },
+    { id: 'td_8', slotIdx: 7, reqPower: 250000, learnCost: 80000, name: 'Dịch Chuyển Tức Thời', type: 'tele', mult: 2.4, kiCost: 35, cd: 4.5, range: 420, icon: 'kynang/iconkynang/traidat/skill8_traidat.png', desc: 'Bí thuật Hành tinh Yardrat áp sát tung đòn chí mạng.' },
     { id: 'td_9', slotIdx: 8, reqPower: 500000, learnCost: 160000, name: 'Super Kamejoko', type: 'beam', mult: 4.8, kiCost: 95, cd: 6.0, range: 600, color: '#2563eb', core: '#ffffff', icon: 'kynang/iconkynang/traidat/skill9_traidat.png', desc: 'Siêu chưởng Kamejoko cực đại.' }
   ],
   xayda: [
-    { id: 'xd_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Galick', type: 'melee', mult: 1.35, kiCost: 0, cd: 0.32, range: 78, icon: 'kynang/iconkynang/xayda/skill1_xayda.png', desc: 'Cú đấm cơ bản của chiến binh Xayda.' },
-    { id: 'xd_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Antomic', type: 'beam', mult: 3.1, kiCost: 32, cd: 1.6, range: 520, color: '#c084fc', core: '#faf5ff', icon: 'kynang/iconkynang/xayda/skill2_xayda.png', desc: 'Tia chưởng tím Antomic sát thương cao.' },
+    { id: 'xd_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Galick', type: 'melee', mult: 1.35, kiCost: 0, cd: 0.32, range: 78, icon: 'kynang/iconkynang/xayda/skill1_xayda.png', desc: 'Cú đấm cơ bản của hậu bối chiến binh Xayda.' },
+    { id: 'xd_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Antomic', type: 'beam', mult: 3.1, kiCost: 32, cd: 1.6, range: 520, color: '#c084fc', core: '#faf5ff', icon: 'kynang/iconkynang/xayda/skill2_xayda.png', desc: 'Tia chưởng tím Antomic do Vua Vegeta truyền dạy.' },
     { id: 'xd_3', slotIdx: 2, reqPower: 6000, learnCost: 1800, name: 'Tái Tạo Năng Lượng', type: 'charge', mult: 0, kiCost: 0, cd: 7.5, range: 0, icon: 'kynang/iconkynang/xayda/skill3_xayda.png', desc: 'Gồng nguyên khí Xayda hồi mạnh HP & KI.' },
     { id: 'xd_4', slotIdx: 3, reqPower: 40000, learnCost: 15000, name: 'Biến Khỉ Khổng Lồ', type: 'transform', caitrang: 'khi_7', mult: 2.2, kiCost: 75, cd: 14.0, range: 0, icon: 'kynang/iconkynang/xayda/skill4_xayda.png', desc: 'Hóa Khỉ Đột Khổng Lồ (+100% Sức đánh & HP).' },
     { id: 'xd_5', slotIdx: 4, reqPower: 90000, learnCost: 30000, name: 'Tự Phát Nổ', type: 'spirit', mult: 6.2, kiCost: 135, cd: 11.0, range: 360, color: '#facc15', icon: 'kynang/iconkynang/xayda/skill5_xayda.png', desc: 'Giải phóng toàn bộ KI gây nổ diện rộng cực mạnh.' },
     { id: 'xd_6', slotIdx: 5, reqPower: 20000, learnCost: 7000, name: 'Huýt Sáo', type: 'whistle', mult: 0, kiCost: 40, cd: 15.0, range: 0, icon: 'kynang/iconkynang/xayda/skill6_xayda.png', desc: 'Tăng +50% HP tối đa cho bản thân & Đệ tử.' },
     { id: 'xd_7', slotIdx: 6, reqPower: 150000, learnCost: 45000, name: 'Khiên Năng Lượng', type: 'shield', mult: 0, kiCost: 45, cd: 12.0, range: 0, icon: 'kynang/iconkynang/xayda/skill7_xayda.png', desc: 'Tạo khiên chắn sát thương 8 giây.' },
-    { id: 'xd_8', slotIdx: 7, reqPower: 250000, learnCost: 85000, name: 'Siêu Xayda Huyền Thoại', type: 'transform', caitrang: 'broly_lssj', mult: 2.5, kiCost: 95, cd: 15.0, range: 0, icon: 'kynang/iconkynang/xayda/skill8_xayda.png', desc: 'Hóa Siêu Xayda Broly (+120% Sức đánh).' },
-    { id: 'xd_9', slotIdx: 8, reqPower: 500000, learnCost: 160000, name: 'Final Flash', type: 'beam', mult: 5.0, kiCost: 105, cd: 6.0, range: 600, color: '#eab308', core: '#fef9c3', icon: 'kynang/iconkynang/xayda/skill9_xayda.png', desc: 'Tuyệt kỹ Final Flash hoàng tử Xayda.' }
+    { id: 'xd_8', slotIdx: 7, reqPower: 250000, learnCost: 85000, name: 'Biến Siêu Xayda', type: 'transform', caitrang: 'broly_lssj', mult: 2.5, kiCost: 95, cd: 15.0, range: 0, icon: 'kynang/iconkynang/xayda/skill8_xayda.png', desc: 'Thức tỉnh huyết thống Siêu Xayda (+120% Sức đánh).' },
+    { id: 'xd_9', slotIdx: 8, reqPower: 500000, learnCost: 160000, name: 'Final Flash', type: 'beam', mult: 5.0, kiCost: 105, cd: 6.0, range: 600, color: '#eab308', core: '#fef9c3', icon: 'kynang/iconkynang/xayda/skill9_xayda.png', desc: 'Tuyệt kỹ Final Flash hoàng tộc Xayda.' }
   ],
   namek: [
-    { id: 'nm_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Demon', type: 'melee', mult: 1.25, kiCost: 0, cd: 0.32, range: 82, icon: 'kynang/iconkynang/namek/skill1_namek.png', desc: 'Đòn cận chiến cơ bản của tộc Namếc.' },
-    { id: 'nm_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Masenko', type: 'beam', mult: 2.9, kiCost: 30, cd: 1.5, range: 520, color: '#4ade80', core: '#dcfce7', icon: 'kynang/iconkynang/namek/skill2_namek.png', desc: 'Chưởng khí Masenko tốc độ cao.' },
+    { id: 'nm_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Demon', type: 'melee', mult: 1.25, kiCost: 0, cd: 0.32, range: 82, icon: 'kynang/iconkynang/namek/skill1_namek.png', desc: 'Đòn cận chiến cơ bản của hậu bối tộc Namếc.' },
+    { id: 'nm_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Masenko', type: 'beam', mult: 2.9, kiCost: 30, cd: 1.5, range: 520, color: '#4ade80', core: '#dcfce7', icon: 'kynang/iconkynang/namek/skill2_namek.png', desc: 'Chưởng khí Masenko do Trưởng Lão Guru truyền dạy.' },
     { id: 'nm_3', slotIdx: 2, reqPower: 6000, learnCost: 1800, name: 'Trị Thương Namếc', type: 'charge', mult: 0, kiCost: 25, cd: 6.5, range: 0, icon: 'kynang/iconkynang/namek/skill3_namek.png', desc: 'Năng lực hồi phục thần tốc 65% HP & KI.' },
     { id: 'nm_4', slotIdx: 3, reqPower: 80000, learnCost: 25000, name: 'Makankosappo', type: 'spirit', mult: 5.6, kiCost: 115, cd: 9.0, range: 500, color: '#22c55e', icon: 'kynang/iconkynang/namek/skill4_namek.png', desc: 'Tia sáng xoắn ốc xuyên thủng mọi lớp giáp.' },
     { id: 'nm_5', slotIdx: 4, reqPower: 45000, learnCost: 16000, name: 'Đẻ Trứng Đệ Tử', type: 'egg', mult: 0, kiCost: 100, cd: 20.0, range: 0, icon: 'kynang/iconkynang/namek/skill5_namek.png', desc: 'Triệu hồi ngay Đệ Tử Namếc sát cánh chiến đấu.' },
     { id: 'nm_6', slotIdx: 5, reqPower: 20000, learnCost: 7000, name: 'Liên Hoàn Chưởng', type: 'tele', mult: 3.4, kiCost: 55, cd: 4.5, range: 380, icon: 'kynang/iconkynang/namek/skill6_namek.png', desc: 'Áp sát tung liên hoàn chưởng lực.' },
     { id: 'nm_7', slotIdx: 6, reqPower: 150000, learnCost: 45000, name: 'Khiên Năng Lượng', type: 'shield', mult: 0, kiCost: 45, cd: 12.0, range: 0, icon: 'kynang/iconkynang/namek/skill7_namek.png', desc: 'Tạo khiên bảo hộ giảm 75% sát thương.' },
-    { id: 'nm_8', slotIdx: 7, reqPower: 250000, learnCost: 85000, name: 'Hợp Thể Thần Namếc', type: 'transform', caitrang: 'goku_black_rose', mult: 2.3, kiCost: 85, cd: 14.0, range: 0, icon: 'kynang/iconkynang/namek/skill8_namek.png', desc: 'Thức tỉnh sức mạnh Thần Hủy Diệt.' },
+    { id: 'nm_8', slotIdx: 7, reqPower: 250000, learnCost: 85000, name: 'Đồng Hóa Thần Namếc', type: 'transform', caitrang: 'goku_black_rose', mult: 2.3, kiCost: 85, cd: 14.0, range: 0, icon: 'kynang/iconkynang/namek/skill8_namek.png', desc: 'Đồng hóa chiến binh Namếc tối thượng.' },
     { id: 'nm_9', slotIdx: 8, reqPower: 500000, learnCost: 160000, name: 'Hellzone Grenade', type: 'beam', mult: 4.8, kiCost: 95, cd: 6.0, range: 580, color: '#10b981', core: '#ecfdf5', icon: 'kynang/iconkynang/namek/skill9_namek.png', desc: 'Mưa đạn khí bao vây mục tiêu.' }
   ]
 };
@@ -105,13 +124,13 @@ export function createStarterSkillLevels(planetId = 0) {
 
 export const ITEM_CATALOG = {
   ao_cam: {
-    id: 'ao_cam', name: 'Áo Võ Phục Quy Lão', slot: 'ao', setVisual: 'set_cam',
+    id: 'ao_cam', name: 'Áo Võ Phục Môn Phái', slot: 'ao', setVisual: 'set_cam',
     icon: 'vatpham/do/traidat/set_cam/ao.png',
     stats: { defense: 18, maxHp: 350 }, gold: 3500, gem: 0, maxSocket: 7,
-    desc: 'Võ phục truyền thống Quy Tiên Sinh truyền dạy.'
+    desc: 'Võ phục chính thức do Minh Sư truyền trao.'
   },
   quan_cam: {
-    id: 'quan_cam', name: 'Quần Võ Phục Quy Lão', slot: 'quan', setVisual: 'set_cam',
+    id: 'quan_cam', name: 'Quần Võ Phục Môn Phái', slot: 'quan', setVisual: 'set_cam',
     icon: 'vatpham/do/traidat/set_cam/quan.png',
     stats: { maxHp: 450, maxKi: 250 }, gold: 3200, gem: 0, maxSocket: 7,
     desc: 'Quần võ phục bền bỉ tăng sinh lực.'
@@ -119,11 +138,11 @@ export const ITEM_CATALOG = {
   gang_cam: {
     id: 'gang_cam', name: 'Găng Võ Thuật Cam', slot: 'gang',
     icon: 'vatpham/do/traidat/set_cam/gang.png',
-    stats: { attack: 42, crit: 3 }, gold: 5000, gem: 0, maxSocket: 7,
+    stats: { attack: 45, crit: 3 }, gold: 5000, gem: 0, maxSocket: 7,
     desc: 'Găng tay võ đạo gia tăng sức đấm.'
   },
   giay_cam: {
-    id: 'giay_cam', name: 'Giày Tinh Anh', slot: 'giay',
+    id: 'giay_cam', name: 'Giày Chiến Binh', slot: 'giay',
     icon: 'vatpham/do/traidat/set_cam/giay.png',
     stats: { maxKi: 550, defense: 14 }, gold: 4200, gem: 0, maxSocket: 7,
     desc: 'Giày nhẹ giúp di chuyển & bay lượn linh hoạt.'
@@ -135,64 +154,70 @@ export const ITEM_CATALOG = {
     desc: 'Rađa Bulma chế tạo, tăng tỉ lệ chí mạng.'
   },
   ao_than_linh: {
-    id: 'ao_than_linh', name: 'Áo Thần Linh Tối Thượng', slot: 'ao', setVisual: 'set_huy_diet',
+    id: 'ao_than_linh', name: 'Áo Thần Linh (Hành Tinh Cold)', slot: 'ao', setVisual: 'set_huy_diet',
     icon: 'vatpham/do/traidat/set_than_linh/ao.png',
-    stats: { defense: 160, maxHp: 4200 }, gold: 45000, gem: 25, maxSocket: 7,
-    desc: 'Chiến giáp Thần Linh phát hào quang uy nghiêm.'
+    stats: { defense: 220, maxHp: 6500, attack: 140 }, gold: 85000, gem: 35, maxSocket: 7,
+    desc: 'Thần giáp cổ đại rơi từ BOSS Cooler tại Hành tinh Cold.'
   },
   quan_than_linh: {
-    id: 'quan_than_linh', name: 'Quần Thần Linh Tối Thượng', slot: 'quan', setVisual: 'set_huy_diet',
+    id: 'quan_than_linh', name: 'Quần Thần Linh (Hành Tinh Cold)', slot: 'quan', setVisual: 'set_huy_diet',
     icon: 'vatpham/do/traidat/set_than_linh/quan.png',
-    stats: { maxHp: 5500, maxKi: 2500 }, gold: 42000, gem: 25, maxSocket: 7,
-    desc: 'Quần Thần Linh gia tăng sinh lực vượt trội.'
+    stats: { maxHp: 8500, maxKi: 4000 }, gold: 80000, gem: 35, maxSocket: 7,
+    desc: 'Quần Thần Linh săn tại Hành tinh Cold.'
   },
   gang_than_linh: {
-    id: 'gang_than_linh', name: 'Găng Thần Linh', slot: 'gang',
+    id: 'gang_than_linh', name: 'Găng Thần Linh (Hành Tinh Cold)', slot: 'gang',
     icon: 'vatpham/do/traidat/set_than_linh/gang.png',
-    stats: { attack: 420, crit: 8 }, gold: 55000, gem: 35, maxSocket: 7,
-    desc: 'Găng tay Thần Linh công phá vạn cân.'
+    stats: { attack: 580, crit: 10 }, gold: 95000, gem: 45, maxSocket: 7,
+    desc: 'Găng Thần Linh công phá vạn cân.'
   },
   ao_huy_diet: {
-    id: 'ao_huy_diet', name: 'Áo Hủy Diệt Beerus', slot: 'ao', setVisual: 'set_huy_diet',
+    id: 'ao_huy_diet', name: 'Áo Hủy Diệt Beerus (Whis)', slot: 'ao', setVisual: 'set_huy_diet',
     icon: 'vatpham/do/traidat/set_huy_diet/ao.png',
-    stats: { defense: 380, maxHp: 12000, attack: 250 }, gold: 0, gem: 120, maxSocket: 7,
-    desc: 'Thần y của Thần Hủy Diệt, uy lực tuyệt đối.'
+    stats: { defense: 480, maxHp: 18000, attack: 420 }, gold: 0, gem: 140, maxSocket: 7,
+    desc: 'Trang bị Hủy Diệt đổi từ Thiên Sứ Whis tại Hành tinh Bill.'
   },
   quan_huy_diet: {
-    id: 'quan_huy_diet', name: 'Quần Hủy Diệt Beerus', slot: 'quan', setVisual: 'set_huy_diet',
+    id: 'quan_huy_diet', name: 'Quần Hủy Diệt Beerus (Whis)', slot: 'quan', setVisual: 'set_huy_diet',
     icon: 'vatpham/do/traidat/set_huy_diet/quan.png',
-    stats: { maxHp: 16000, maxKi: 8000 }, gold: 0, gem: 110, maxSocket: 7,
-    desc: 'Quần Thần Hủy Diệt vạn kiếp bất hoại.'
+    stats: { maxHp: 24000, maxKi: 12000 }, gold: 0, gem: 130, maxSocket: 7,
+    desc: 'Quần Thần Hủy Diệt đổi tại Hành tinh Bill.'
   },
   gang_huy_diet: {
-    id: 'gang_huy_diet', name: 'Găng Hủy Diệt Beerus', slot: 'gang',
+    id: 'gang_huy_diet', name: 'Găng Thiên Sứ Tối Thượng (Whis)', slot: 'gang',
     icon: 'vatpham/do/traidat/set_huy_diet/gang.png',
-    stats: { attack: 1150, crit: 15 }, gold: 0, gem: 150, maxSocket: 7,
-    desc: 'Một đấm mang năng lượng Hakai hủy diệt.'
+    stats: { attack: 1850, crit: 22 }, gold: 0, gem: 220, maxSocket: 7,
+    desc: 'Thần khí Thiên Sứ Whis rèn tại Hành tinh Bill.'
+  },
+  nhan_thoi_khong: {
+    id: 'nhan_thoi_khong', name: 'Nhẫn Thời Không', slot: 'consumable', action: 'portal_prison',
+    icon: 'vatpham/do/rada/rada1.png',
+    gold: 0, gem: 90,
+    desc: 'Bảo vật đoạt từ Super Black Goku! Bấm Sử Dụng để xé toạc không gian tới Hành tinh Ngục Tù đánh BOSS Cumber!'
   },
   ct_gohan_beast: {
     id: 'ct_gohan_beast', name: 'Cải Trang Gohan Beast', slot: 'caitrang', caitrangKey: 'gohan_beast',
     icon: 'nhanvat/caitrang/gohan_beast/avt.png',
-    stats: { attack: 550, maxHp: 5000, maxKi: 4000, crit: 12 }, gold: 0, gem: 80, maxSocket: 7,
-    desc: 'Biến hình thành Gohan Beast tóc bạc cực ngầu.'
+    stats: { attack: 650, maxHp: 6000, maxKi: 4500, crit: 14 }, gold: 0, gem: 80, maxSocket: 7,
+    desc: 'Biến hình trạng thái Beast cực ngầu.'
   },
   ct_broly_lssj: {
     id: 'ct_broly_lssj', name: 'Cải Trang Siêu Xayda Broly', slot: 'caitrang', caitrangKey: 'broly_lssj',
     icon: 'nhanvat/caitrang/broly_lssj/avt.png',
-    stats: { attack: 720, maxHp: 8500, defense: 180 }, gold: 0, gem: 95, maxSocket: 7,
+    stats: { attack: 780, maxHp: 9500, defense: 180 }, gold: 0, gem: 95, maxSocket: 7,
     desc: 'Hóa thân Chiến Binh Siêu Xayda Huyền Thoại Broly.'
   },
   ct_black_rose: {
-    id: 'ct_black_rose', name: 'Cải Trang Black Goku Rose', slot: 'caitrang', caitrangKey: 'goku_black_rose',
+    id: 'ct_black_rose', name: 'Cải Trang Super Black Goku Rosé', slot: 'caitrang', caitrangKey: 'goku_black_rose',
     icon: 'nhanvat/caitrang/goku_black_rose/avt.png',
-    stats: { attack: 880, maxKi: 7500, crit: 18 }, gold: 0, gem: 120, maxSocket: 7,
-    desc: 'Cải trang Super Saiyan Rosé thần thái tối thượng.'
+    stats: { attack: 980, maxKi: 8500, crit: 18 }, gold: 0, gem: 120, maxSocket: 7,
+    desc: 'Cải trang Super Black Goku Rosé đoạt tại Tương Lai.'
   },
   ct_xiao: {
-    id: 'ct_xiao', name: 'Cải Trang Dạ Xoa Xiao', slot: 'caitrang', caitrangKey: 'xiao',
+    id: 'ct_xiao', name: 'Cải Trang Đặc Biệt Vòng Quay', slot: 'caitrang', caitrangKey: 'xiao',
     icon: 'nhanvat/caitrang/xiao/avt.png',
     stats: { attack: 480, crit: 15, maxKi: 3500 }, gold: 0, gem: 65, maxSocket: 7,
-    desc: 'Cải trang đặc biệt từ Vòng Quay Hải Đăng.'
+    desc: 'Cải trang hiếm từ Vòng Quay Thượng Đế.'
   },
   vb_candauvan: {
     id: 'vb_candauvan', name: 'Cân Đẩu Vân Hoàng Kim', slot: 'vanbay', vanbayKey: 'candauvan',
@@ -207,16 +232,16 @@ export const ITEM_CATALOG = {
     desc: 'Thần điểu Phượng Hoàng Lửa rực cháy khi bay.'
   },
   dl_kiem_vip: {
-    id: 'dl_kiem_vip', name: 'Kiếm Ánh Sáng Trunks', slot: 'deolung', deolungKey: 'kiem_vip', frames: 1,
+    id: 'dl_kiem_vip', name: 'Kiếm Ánh Sáng Calích (Future Trunks)', slot: 'deolung', deolungKey: 'kiem_vip', frames: 1,
     icon: 'vatpham/vatphamgame/deo_lung/kiem_vip/1.png',
-    stats: { attack: 260, crit: 8 }, gold: 25000, gem: 25,
-    desc: 'Thanh thần kiếm đeo sau lưng tăng sức chém chí mạng.'
+    stats: { attack: 320, crit: 10 }, gold: 25000, gem: 25,
+    desc: 'Thanh kiếm chém đứt Fide & Zamasu của Calích đến từ Tương Lai.'
   },
   dl_canh_thien_than: {
-    id: 'dl_canh_thien_than', name: 'Đôi Cánh Thiên Thần', slot: 'deolung', deolungKey: 'canh_thien_than', frames: 2,
+    id: 'dl_canh_thien_than', name: 'Đôi Cánh Thiên Sứ', slot: 'deolung', deolungKey: 'canh_thien_than', frames: 2,
     icon: 'vatpham/vatphamgame/deo_lung/canh_thien_than/1.png',
-    stats: { maxHp: 4000, maxKi: 4000, defense: 90 }, gold: 0, gem: 60,
-    desc: 'Đôi cánh trắng vỗ nhẹ sau lưng nhân vật.'
+    stats: { maxHp: 4500, maxKi: 4500, defense: 95 }, gold: 0, gem: 60,
+    desc: 'Đôi cánh trắng của Thần Giới.'
   },
   pet_cho_vang: {
     id: 'pet_cho_vang', name: 'Pet Cún Vàng Trung Thành', slot: 'pet', petKey: 'cho_vang',
@@ -254,7 +279,7 @@ export const ITEM_CATALOG = {
     id: 'trung_de_tu', name: 'Quả Trứng Đệ Tử Mabư', slot: 'consumable', action: 'hatch_detu',
     icon: 'vatpham/vatphamgame/phu_tro/trung_de_tu.png',
     gold: 35000, gem: 20,
-    desc: 'Ấp nở ngay 1 Đệ Tử chiến đấu tự động sát cánh bên bạn!'
+    desc: 'Thu phục từ Phi Thuyền Babidi — Ấp nở ngay Đệ Tử Mabư chiến đấu tự động!'
   },
   cuong_no: {
     id: 'cuong_no', name: 'Cuồng Nộ Siêu Cấp', slot: 'consumable', action: 'buff_atk',
@@ -278,30 +303,30 @@ export const ITEM_CATALOG = {
     id: 've_quay', name: 'Vé Quay Thượng Đế', slot: 'material',
     icon: 'vatpham/vatphamgame/ve_quay_npc_haidang/vequay.png',
     gold: 10000, gem: 5,
-    desc: 'Dùng để quay Vòng Quay May Mắn tại NPC Hải Đăng (Làng Aru).'
+    desc: 'Dùng để quay Vòng Quay May Mắn tại Thượng Đế.'
   },
   da_pha_le_dame: {
     id: 'da_pha_le_dame', name: 'Đá Pha Lê Đỏ (+Sức Đánh)', slot: 'crystal', crystalStat: 'attack', crystalVal: 45,
     icon: 'vatpham/vatphamgame/phu_tro/dame.png',
     gold: 12000, gem: 5,
-    desc: 'Đem tới Thầy Hiếu (Đảo Kamê) để ép vào Sao Pha Lê (+45 SĐ).'
+    desc: 'Đem tới Bà Hạt Mít / Thầy Hiếu (Đảo Kame) ép vào Sao Pha Lê (+45 SĐ).'
   },
   da_pha_le_hp: {
     id: 'da_pha_le_hp', name: 'Đá Pha Lê Hồng (+HP)', slot: 'crystal', crystalStat: 'maxHp', crystalVal: 550,
     icon: 'vatpham/vatphamgame/phu_tro/hp.png',
     gold: 10000, gem: 4,
-    desc: 'Đem tới Thầy Hiếu (Đảo Kamê) để ép vào Sao Pha Lê (+550 HP).'
+    desc: 'Ép vào Sao Pha Lê (+550 HP).'
   },
   da_pha_le_ki: {
     id: 'da_pha_le_ki', name: 'Đá Pha Lê Xanh (+KI)', slot: 'crystal', crystalStat: 'maxKi', crystalVal: 500,
     icon: 'vatpham/vatphamgame/phu_tro/ki.png',
     gold: 10000, gem: 4,
-    desc: 'Đem tới Thầy Hiếu (Đảo Kamê) để ép vào Sao Pha Lê (+500 KI).'
+    desc: 'Ép vào Sao Pha Lê (+500 KI).'
   },
   nr_1s: { id: 'nr_1s', name: 'Ngọc Rồng 1 Sao', slot: 'dragonball', star: 1, icon: 'vatpham/vatphamgame/ngocrong/nr1s.png', gold: 0, gem: 50, desc: 'Tụ họp đủ 1-7 Sao bấm Sử Dụng để triệu hồi Rồng Thần!' },
   nr_2s: { id: 'nr_2s', name: 'Ngọc Rồng 2 Sao', slot: 'dragonball', star: 2, icon: 'vatpham/vatphamgame/ngocrong/nr2s.png', gold: 0, gem: 40, desc: 'Viên Ngọc Rồng 2 Sao lấp lánh.' },
   nr_3s: { id: 'nr_3s', name: 'Ngọc Rồng 3 Sao', slot: 'dragonball', star: 3, icon: 'vatpham/vatphamgame/ngocrong/nr3s.png', gold: 0, gem: 35, desc: 'Viên Ngọc Rồng 3 Sao.' },
-  nr_4s: { id: 'nr_4s', name: 'Ngọc Rồng 4 Sao', slot: 'dragonball', star: 4, icon: 'vatpham/vatphamgame/ngocrong/nr4s.png', gold: 25000, gem: 0, desc: 'Viên Ngọc Rồng 4 Sao kỷ vật của Ông Nội Gôhan.' },
+  nr_4s: { id: 'nr_4s', name: 'Ngọc Rồng 4 Sao', slot: 'dragonball', star: 4, icon: 'vatpham/vatphamgame/ngocrong/nr4s.png', gold: 25000, gem: 0, desc: 'Viên Ngọc Rồng 4 Sao.' },
   nr_5s: { id: 'nr_5s', name: 'Ngọc Rồng 5 Sao', slot: 'dragonball', star: 5, icon: 'vatpham/vatphamgame/ngocrong/nr5s.png', gold: 25000, gem: 0, desc: 'Viên Ngọc Rồng 5 Sao.' },
   nr_6s: { id: 'nr_6s', name: 'Ngọc Rồng 6 Sao', slot: 'dragonball', star: 6, icon: 'vatpham/vatphamgame/ngocrong/nr6s.png', gold: 20000, gem: 0, desc: 'Viên Ngọc Rồng 6 Sao.' },
   nr_7s: { id: 'nr_7s', name: 'Ngọc Rồng 7 Sao', slot: 'dragonball', star: 7, icon: 'vatpham/vatphamgame/ngocrong/nr7s.png', gold: 20000, gem: 0, desc: 'Viên Ngọc Rồng 7 Sao.' }
@@ -321,389 +346,432 @@ export const SHOP_TABS = [
   {
     key: 'DAC_BIET',
     label: 'Đặc Biệt',
-    items: ['bong_tai_c1', 'bong_tai_c2', 'trung_de_tu', 'cuong_no', 'bo_huyet', 'bo_khi', 've_quay', 'da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s']
+    items: ['nhan_thoi_khong', 'bong_tai_c1', 'bong_tai_c2', 'trung_de_tu', 'cuong_no', 'bo_huyet', 'bo_khi', 've_quay', 'da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s']
   }
 ];
 
 // =========================================================================
-// HỆ THỐNG 8 NHIỆM VỤ CHÍNH TUYẾN CHUẨN 100% NGỌC RỒNG ONLINE (TEAMOBI)
+// CỐT TRUYỆN GỐC CHÍNH TUYẾN 5 GIAI ĐOẠN LỚN CHUẨN CHÚ BÉ RỒNG ONLINE (TEAMOBI)
+// Tự động cá nhân hóa Giai đoạn 1 theo quê nhà 3 chủng tộc (Ông Gôhan / Ông Paragus / Ông Moori)!
 // =========================================================================
 export const STORY_QUESTS = [
+  // -------------------- GIAI ĐOẠN 1: KHỞI ĐẦU TÂN THỦ --------------------
   {
     id: 1,
-    title: 'Nhiệm vụ tập luyện',
+    era: 'Giai đoạn 1: Khởi đầu Tân Thủ',
+    title: 'Bài học vỡ lòng nơi quê nhà',
     steps: [
-      { type: 'kill', targetId: 'moc_nhan', count: 5, text: 'Đánh ngã 5 mộc nhân' },
-      { type: 'talk', targetId: 'ong_gohan', count: 1, text: 'Về nhà báo cáo với Ông Gôhan', dialogReply: 'Khá lắm cháu yêu! Đòn đấm của cháu đã cứng cáp rồi. Bây giờ cháu hãy ra Làng Aru và Đồi Hoa Cúc săn Khủng Long mang 10 chiếc Đùi Gà về đây nhé!' }
+      { type: 'kill', targetId: 'moc_nhan', count: 5, text: 'Đánh ngã 5 Mộc Nhân đầu làng' },
+      { type: 'talk_elder', targetId: 'home_elder', count: 1, text: 'Về nhà báo cáo Trưởng Bối quê nhà', dialogReply: 'Khá lắm hậu bối! Đòn đấm căn bản của con đã vững. Giờ hãy ra ngoài làng săn Khủng Long nhặt 10 chiếc Đùi Gà mang về đây!' }
     ],
-    desc: 'Mộc nhân được đặt tại Làng Aru, ngay trước sân nhà ông Gohan. Hãy đi qua dốc cửa bên phải ra Làng Aru dùng chiêu Đấm cơ bản đánh ngã 5 mộc nhân, sau đó quay về nhà báo cáo ông Gohan.\nThưởng: 2.500 SM & TN.',
+    desc: 'Thức tỉnh tại quê nhà với 1 chiêu Đấm căn bản duy nhất! Hãy ra ngoài làng (Làng Aru / Làng Kakarot / Làng Mori) đánh ngã 5 Mộc Nhân rồi quay vào nhà báo cáo Ông Gôhan / Ông Paragus / Ông Moori.',
     reward: { power: 2500, gold: 3000, gem: 10 }
   },
   {
     id: 2,
+    era: 'Giai đoạn 1: Khởi đầu Tân Thủ',
     title: 'Thu thập 10 Đùi Gà',
     steps: [
       { type: 'pickup_meat', targetId: 'duiga_drop', count: 10, text: 'Đánh Khủng Long nhặt 10 Đùi Gà' },
-      { type: 'talk', targetId: 'ong_gohan', count: 1, text: 'Mang Đùi Gà về cho Ông Gôhan', dialogReply: 'Đùi gà tươi ngon lắm! Cháu nhớ thu hoạch thêm Đậu Thần trước sân nhà để hồi sức khi đi xa nhé. Hãy nhận chiếc Quần Võ Phục này!' }
+      { type: 'talk_elder', targetId: 'home_elder', count: 1, text: 'Mang 10 Đùi Gà về báo cáo Trưởng Bối', dialogReply: 'Tốt lắm! Con đã biết tự sinh tồn. Hãy tiến sâu qua các cánh rừng để tìm gặp bậc Minh Sư của tộc ta học tuyệt kỹ chưởng khí!' }
     ],
-    desc: 'Ra phía Đông Làng Aru hoặc sang Đồi Hoa Cúc đánh bại Khủng Long, nhặt đủ 10 chiếc Đùi Gà rơi trên mặt đất rồi mang về Nhà Gôhan báo cáo Ông Gôhan.\nThưởng: 5.000 SM & TN, Quần Võ Phục.',
-    reward: { power: 5000, gold: 8000, gem: 15, item: 'quan_cam' }
+    desc: 'Đánh bại bầy Khủng Long ngoài làng hoặc Đồi Hoa Cúc để nhặt đủ 10 chiếc Đùi Gà rơi trên đất, sau đó mang về nhà báo cáo Trưởng Bối.',
+    reward: { power: 5500, gold: 8000, gem: 15, item: 'quan_cam' }
   },
   {
     id: 3,
-    title: 'Thử thách Thung Lũng Tre',
+    era: 'Giai đoạn 1: Khởi đầu Tân Thủ',
+    title: 'Băng rừng bái kiến Minh Sư',
     steps: [
-      { type: 'kill', targetId: 'lon_loi', count: 8, text: 'Đánh bại 8 Lợn Lòi ở Đồi Hoa Cúc' },
-      { type: 'kill', targetId: 'khung_long_me', count: 5, text: 'Hạ 5 Khủng Long Mẹ ở Thung Lũng Tre' },
-      { type: 'talk', targetId: 'ong_gohan', count: 1, text: 'Về Nhà Gôhan báo cáo Ông Gôhan', dialogReply: 'Cháu đã đủ bản lĩnh rời làng rồi! Hãy băng qua Rừng Karin (chân Tháp Karin) để tới Đảo Kamê bái sư Quy Lão Tiên Sinh học chưởng pháp nhé!' }
+      { type: 'kill', targetId: 'lon_loi', count: 8, text: 'Hạ 8 Lợn Lòi trên đường băng rừng' },
+      { type: 'kill', targetId: 'khung_long_me', count: 5, text: 'Hạ 5 Khủng Long Mẹ trong rừng sâu' },
+      { type: 'talk_master', targetId: 'planet_master', count: 1, unlockSkill2: true, text: 'Bái sư Quy Lão Kame / Vua Vegeta / Trưởng Lão Guru', dialogReply: 'Khí chất phi phàm! Ta chính thức nhận con làm đệ tử và truyền thụ tuyệt kỹ Chưởng Khí trấn phái vào Ô Chiêu Số 2!' }
     ],
-    desc: 'Tiến sang Đồi Hoa Cúc đánh bại 8 Lợn Lòi, tiếp tục đi sang phía Đông vào Thung Lũng Tre hạ 5 Khủng Long Mẹ rồi về báo cáo Ông Gôhan.\nThưởng: 10.000 SM & TN, Ngọc Rồng 7 Sao.',
-    reward: { power: 10000, gold: 15000, gem: 20, item: 'nr_7s' }
+    desc: 'Vượt qua chuỗi bản đồ rừng (Đồi Hoa Cúc → Thung Lũng Tre → Rừng Nấm → Rừng Xương → Đảo Kame, hoặc TP. Vegeta / Đảo Guru) tiêu diệt Lợn Lòi & Khủng Long Mẹ để bái kiến Minh Sư học Chưởng Khí!',
+    reward: { power: 14000, gold: 18000, gem: 20, item: 'gang_cam' }
   },
   {
     id: 4,
-    title: 'Bái sư Quy Lão Kame',
+    era: 'Giai đoạn 1: Khởi đầu Tân Thủ',
+    title: 'Hạ Tàu Pảy Pảy & Vượt Tháp Karin',
     steps: [
-      { type: 'talk', targetId: 'quy_lao_kame', count: 1, unlockSkill2: true, text: 'Tới Đảo Kamê bái sư Quy Lão Kame', dialogReply: 'Hahaha! Cháu nội của Gôhan đó ư? Ta nhận con làm đệ tử và truyền cho con tuyệt kỹ chưởng khí trấn phái ngay vào Ô Chiêu Số 2! Hãy ra Rừng Karin thử chưởng hạ 6 Lợn Lòi Rừng xem!' },
-      { type: 'kill', targetId: 'lon_loi_rung', count: 6, text: 'Dùng chưởng mới hạ 6 Lợn Lòi Rừng (Rừng Karin)' },
-      { type: 'talk', targetId: 'quy_lao_kame', count: 1, text: 'Quay lại Đảo Kamê báo cáo Quy Lão', dialogReply: 'Tuyệt lắm! Giờ con đã có thể mở Tab Kỹ Năng để dùng Tiềm Năng học thêm Tái Tạo Năng Lượng, Thái Dương Hạ San và nhiều bí kíp khác!' }
+      { type: 'talk', targetId: 'bo_mong', count: 1, text: 'Từ Đảo Kame qua Đông Karin tới Rừng Karin gặp Bò Mộng', dialogReply: 'Sát thủ Tàu Pảy Pảy đang hoành hành dưới chân tháp! Hãy leo lên Tháp Karin ngay giữa khu rừng này tỷ thí với Thần Mèo Karin trước!' },
+      { type: 'kill', targetId: 'boss_than_meo', count: 1, text: 'Leo lên Tháp Karin thách đấu thắng Thần Mèo Karin' },
+      { type: 'kill', targetId: 'tau_pay_pay', count: 1, text: 'Xuống Rừng Karin đánh bại Sát Thủ Tàu Pảy Pảy' },
+      { type: 'talk', targetId: 'quy_lao_kame', count: 1, text: 'Về Đảo Kame báo tin cho Quy Lão Kame', dialogReply: 'Hạ gục Tàu Pảy Pảy và vượt qua Tháp Karin rồi ư! Quân đoàn Fide đang xâm lược Namếc và Xayda — hãy ra Trạm Tàu Vũ Trụ hội quân ngay!' }
     ],
-    desc: 'Từ Thung Lũng Tre đi sang Đông qua Rừng Karin (nơi có Tháp Karin sừng sững ở giữa) để tới Đảo Kamê gặp Quy Lão Kame nhận Áo Võ Phục & học tuyệt kỹ Chưởng Khí (Ô số 2)!\nThưởng: Mở khóa Chưởng Khí + 25.000 SM & TN.',
-    reward: { power: 25000, gold: 25000, gem: 25, item: 'gang_cam' }
+    desc: 'Từ Đảo Kame rẽ nhánh Bắc qua Đông Karin → Rừng Karin gặp Bò Mộng, leo Cột Tháp Karin lên đỉnh đánh thắng Thần Mèo Karin rồi xuống chân tháp hạ Sát Thủ Tàu Pảy Pảy!',
+    reward: { power: 45000, gold: 45000, gem: 35, item: 'vb_candauvan' }
   },
+
+  // -------------------- GIAI ĐOẠN 2: ĐẠI CHIẾN QUÂN ĐOÀN FIDE --------------------
   {
     id: 5,
-    title: 'Tháp Karin & Tàu Pảy Pảy',
+    era: 'Giai đoạn 2: Đại chiến Quân đoàn Fide',
+    title: 'Truy quét Kuku, Mập Đầu Đinh, Rambo',
     steps: [
-      { type: 'talk', targetId: 'bo_mong', count: 1, text: 'Gặp Bò Mộng dưới chân Tháp Karin (Rừng Karin)', dialogReply: 'Sát thủ Tàu Pảy Pảy cực kỳ nguy hiểm đang lảng vảng quanh Rừng Karin! Cậu hãy leo lên Đỉnh Tháp Karin ngay giữa khu rừng này để cầu kiến Thần Mèo Karin trước đã!' },
-      { type: 'kill', targetId: 'boss_than_meo', count: 1, text: 'Lên Đỉnh Tháp Karin thách đấu thắng Thần Mèo' },
-      { type: 'kill', targetId: 'tau_pay_pay', count: 1, text: 'Xuống Rừng Karin đánh bại Sát Thủ Tàu Pảy Pảy' },
-      { type: 'talk', targetId: 'quy_lao_kame', count: 1, text: 'Báo tin chiến thắng cho Quy Lão Kame', dialogReply: 'Đánh thắng cả Thần Mèo Karin lẫn Tàu Pảy Pảy ư?! Ta tặng con Cân Đẩu Vân Hoàng Kim để tự do bay lượn khắp bầu trời!' }
+      { type: 'kill', targetId: 'boss_kuku', count: 1, text: 'Bay sang Đảo Guru (Namếc) tiêu diệt Kuku' },
+      { type: 'kill', targetId: 'boss_map_dau_dinh', count: 1, text: 'Bay sang TP. Vegeta (Xayda) hạ Mập Đầu Đinh' },
+      { type: 'kill', targetId: 'boss_rambo', count: 1, text: 'Tiêu diệt Rambo tại TP. Vegeta (Xayda)' }
     ],
-    desc: 'Tới giữa Rừng Karin gặp Bò Mộng, sau đó leo thẳng lên Đỉnh Tháp Karin bấm "Thách Đấu" đánh thắng Thần Mèo Karin, rồi quay xuống chân tháp hạ gục Sát Thủ Tàu Pảy Pảy!\nThưởng: 65.000 SM & TN, Cân Đẩu Vân Hoàng Kim.',
-    reward: { power: 65000, gold: 60000, gem: 40, item: 'vb_candauvan' }
+    desc: 'Liên minh 3 hành tinh! Hãy tới Trạm Tàu Vũ Trụ đáp phi thuyền qua lại giữa Hành tinh Namếc và Hành tinh Xayda để tiêu diệt bộ ba tay sai Kuku, Mập Đầu Đinh và Rambo!',
+    reward: { power: 85000, gold: 75000, gem: 45, item: 'rada_cap1' }
   },
   {
     id: 6,
-    title: 'Tiêu diệt Xên Con',
+    era: 'Giai đoạn 2: Đại chiến Quân đoàn Fide',
+    title: 'Đánh bại 5 Tiểu Đội Sát Thủ',
     steps: [
-      { type: 'kill', targetId: 'xen_con', count: 8, text: 'Tiêu diệt 8 Xên Con tại bờ biển Đảo Kamê' },
-      { type: 'talk', targetId: 'quy_lao_kame', count: 1, text: 'Báo cáo Quy Lão Kame tại Đảo Kamê', dialogReply: 'Lũ Xên Con đã bị quét sạch! Hãy nhận Quả Trứng Đệ Tử này và tới Trạm Tàu Vũ Trụ ở Làng Aru / Vách Núi Aru để tiến ra ngoài vũ trụ!' }
+      { type: 'kill', targetId: 'tdst_so4', count: 1, text: 'Hạ Số 4 Guldo tại Vực Maima (Namếc)' },
+      { type: 'kill', targetId: 'tdst_so3', count: 1, text: 'Hạ Số 3 Recoome tại Vực Maima' },
+      { type: 'kill', targetId: 'tdst_so2_so1', count: 2, text: 'Hạ cặp đôi Burter & Jeice (Số 2 & Số 1)' },
+      { type: 'kill', targetId: 'tdst_ginyu', count: 1, text: 'Đánh bại Đội Trưởng Ginyu' }
     ],
-    desc: 'Lũ Xên Con hung hãn vừa đổ bộ lên bờ biển phía Đông Đảo Kamê! Hãy tiêu diệt 8 Xên Con rồi quay lại báo cáo Quy Lão Kame.\nThưởng: 140.000 SM & TN, Quả Trứng Đệ Tử.',
-    reward: { power: 140000, gold: 95000, gem: 60, item: 'trung_de_tu' }
+    desc: 'Tiểu Đội Sát Thủ Ginyu gồm 5 thành viên tinh nhuệ của Fide vừa đáp xuống Vực Maima (đi sang phải từ Đảo Guru - Namếc). Hãy đánh bại toàn bộ 5 thành viên của chúng!',
+    reward: { power: 150000, gold: 110000, gem: 60 }
   },
   {
     id: 7,
-    title: 'Du hành Hành Tinh Xayda',
+    era: 'Giai đoạn 2: Đại chiến Quân đoàn Fide',
+    title: 'Tiêu diệt Fide Đại Đế (3 Cấp)',
     steps: [
-      { type: 'kill', targetId: 'boss_broly', count: 1, text: 'Đáp Tàu Vũ Trụ sang Xayda hạ BOSS Broly' },
-      { type: 'talk', targetId: 'quy_lao_kame', count: 1, text: 'Bay về Đảo Kamê báo cáo Quy Lão Kame', dialogReply: 'Sức mạnh Siêu Xayda Huyền Thoại cũng khuất phục trước con! Hãy giữ lấy Bông Tai Porata tối mật của Thần Giới!' }
+      { type: 'kill', targetId: 'fide_cap_1', count: 1, text: 'Đánh bại Fide Đại Đế Cấp 1 (Vực Maima)' },
+      { type: 'kill', targetId: 'fide_cap_2', count: 1, text: 'Đánh bại Fide Đại Đế Cấp 2' },
+      { type: 'kill', targetId: 'fide_cap_3', count: 1, text: 'Tiêu diệt Fide Đại Đế Hoàn Thiện (Cấp 3)' },
+      { type: 'talk', targetId: 'truong_lao_guru', count: 1, text: 'Báo tin bình định Namếc cho Trưởng Lão Guru', dialogReply: 'Ác đế Fide đã bị tiêu diệt! Nhưng tại Trái Đất, hiểm họa Robot Sát Thủ của Tiến sĩ Kôrê đang trỗi dậy ở phía Nam Đảo Kame!' }
     ],
-    desc: 'Tới Trạm Tàu Vũ Trụ (phía Tây Làng Aru hoặc Vách Núi Aru), đáp Tàu Vũ Trụ bay sang Vách Núi Kakarot (Xayda) và đánh bại BOSS Siêu Xayda Huyền Thoại Broly!\nThưởng: 350.000 SM & TN, Bông Tai Porata.',
-    reward: { power: 350000, gold: 180000, gem: 120, item: 'bong_tai_c1' }
+    desc: 'Quyết chiến sinh tử với Fide Đại Đế qua 3 cấp biến hình liên tiếp ngay tại Vực Maima (Hành tinh Namếc), sau đó báo tin chiến thắng cho Trưởng Lão Guru!',
+    reward: { power: 260000, gold: 160000, gem: 80, item: 'nr_3s' }
   },
+
+  // -------------------- GIAI ĐOẠN 3: HIỂM HỌA ROBOT VÀ XÊN BỌ HÙNG --------------------
   {
     id: 8,
-    title: 'Huyền thoại Rồng Thần',
+    era: 'Giai đoạn 3: Hiểm họa Robot & Xên Bọ Hùng',
+    title: 'Chặn đứng Android 19 & Dr. Kôrê',
     steps: [
-      { type: 'kill', targetId: 'boss_black_rose', count: 1, text: 'Bay tới Hành Tinh Namếc hạ Black Goku Rosé' },
-      { type: 'shenron', targetId: 'shenron', count: 1, text: 'Thu thập 7 Viên Ngọc Rồng & Gọi Rồng Thần' }
+      { type: 'kill', targetId: 'android_19', count: 1, text: 'Qua Nam Kame tới TP. Phía Đông hạ Android 19' },
+      { type: 'kill', targetId: 'dr_kore', count: 1, text: 'Tiêu diệt Tiến sĩ Kôrê (Android 20)' }
     ],
-    desc: 'Đáp Tàu Vũ Trụ bay tới Thung Lũng Namếc tiêu diệt BOSS Black Goku Rosé, sau đó tập hợp đủ 7 Viên Ngọc Rồng (1-7 Sao) mở Hành Trang bấm Sử Dụng để triệu hồi Rồng Thần!\nThưởng: 1.000.000 SM & TN, Cải Trang Gohan Beast.',
-    reward: { power: 1000000, gold: 500000, gem: 300, item: 'ct_gohan_beast' }
+    desc: 'Từ Đảo Kame đi sang nhánh phải qua Nam Kame → TP. Phía Đông & Thị Trấn Ginder để chặn đứng hai cỗ máy hút năng lượng Android 19 và Dr. Kôrê!',
+    reward: { power: 360000, gold: 200000, gem: 90 }
+  },
+  {
+    id: 9,
+    era: 'Giai đoạn 3: Hiểm họa Robot & Xên Bọ Hùng',
+    title: 'Bảo vệ Sân Sau Siêu Thị (Android 13-14-15)',
+    steps: [
+      { type: 'kill', targetId: 'android_15_14', count: 2, text: 'Bay tới Siêu Thị → Sân Sau hạ Android 15 & 14' },
+      { type: 'kill', targetId: 'android_13', count: 1, text: 'Đánh bại Super Android 13' }
+    ],
+    desc: 'Từ Trạm Tàu Vũ Trụ bất kỳ, bay tới Siêu Thị Liên Hành Tinh rồi đi qua cổng phải sang Sân Sau Siêu Thị tiêu diệt bộ ba sát thủ Android 15, Android 14 và Super Android 13!',
+    reward: { power: 480000, gold: 250000, gem: 100 }
+  },
+  {
+    id: 10,
+    era: 'Giai đoạn 3: Hiểm họa Robot & Xên Bọ Hùng',
+    title: 'Quyết đấu Võ Đài Xên Bọ Hùng',
+    steps: [
+      { type: 'kill', targetId: 'pic_poc_kk', count: 3, text: 'Quét sạch nhóm Pic, Poc, King Kong (Thị Trấn Ginder)' },
+      { type: 'kill', targetId: 'xen_con', count: 5, text: 'Tiêu diệt 5 Xên Con tại Võ Đài Xên' },
+      { type: 'kill', targetId: 'xen_hoan_thien', count: 1, text: 'Đánh bại Xên Hoàn Thiện' },
+      { type: 'kill', targetId: 'sieu_bo_hung', count: 1, text: 'Hủy diệt Siêu Bọ Hùng tại Võ Đài Xên!' }
+    ],
+    desc: 'Tiến qua Thị Trấn Ginder đánh bại nhóm Pic - Poc - King Kong, sau đó bước vào Võ Đài Xên Bọ Hùng quyết chiến với đàn Xên Con, Xên Hoàn Thiện và Siêu Bọ Hùng!',
+    reward: { power: 750000, gold: 380000, gem: 140, item: 'bong_tai_c1' }
+  },
+
+  // -------------------- GIAI ĐOẠN 4: GIẢI CỨU TƯƠNG LAI --------------------
+  {
+    id: 11,
+    era: 'Giai đoạn 4: Giải cứu Tương Lai',
+    title: 'Cỗ Máy Thời Gian & Nhẫn Thời Không',
+    steps: [
+      { type: 'talk', targetId: 'calich', count: 1, text: 'Gặp Calích ở Vách Núi (Aru/Moori/Kakarot) sang Tương Lai', dialogReply: 'Thế giới Tương Lai của tôi đang bị Black Goku tàn phá! Hãy bước lên Cỗ Máy Thời Gian cùng tôi tiêu diệt hắn và đoạt lấy Nhẫn Thời Không!' },
+      { type: 'kill', targetId: 'black_goku', count: 1, text: 'Đánh bại Black Goku tại Thế Giới Tương Lai' },
+      { type: 'kill', targetId: 'super_black_goku', count: 1, text: 'Tiêu diệt Super Black Goku Rosé đoạt Nhẫn Thời Không!' }
+    ],
+    desc: 'Tìm gặp NPC Calích (Future Trunks) tại Vách Núi Aru / Vách Núi Moori / Vách Núi Kakarot để đi Cỗ Máy Thời Gian tới Tương Lai, hạ Black Goku & Super Black Goku đoạt Nhẫn Thời Không!',
+    reward: { power: 1200000, gold: 550000, gem: 180, item: 'nhan_thoi_khong' }
+  },
+
+  // -------------------- GIAI ĐOẠN 5: KỶ NGUYÊN THẦN HỦY DIỆT & ĐA VŨ TRỤ --------------------
+  {
+    id: 12,
+    era: 'Giai đoạn 5: Thần Hủy Diệt & Đa Vũ Trụ',
+    title: 'Phi Thuyền Babidi & Hành Tinh Cold',
+    steps: [
+      { type: 'kill', targetId: 'boss_mabu', count: 1, text: 'Qua Nam Kame vào Đại Hội / Phi Thuyền Babidi thu phục Mabư' },
+      { type: 'kill', targetId: 'boss_cooler', count: 1, text: 'Đáp Tàu Vũ Trụ tới Hành Tinh Cold chinh phạt BOSS Cooler' }
+    ],
+    desc: 'Từ Nam Kame vào Đại Hội Võ Thuật gặp Osin xuống Phi Thuyền Babidi thu phục Ma Nhân Mabư (nhận Trứng Đệ Tử!), sau đó đi Tàu Vũ Trụ tới Hành Tinh Cold hạ BOSS Cooler săn đồ Thần Linh!',
+    reward: { power: 2000000, gold: 800000, gem: 250, item: 'trung_de_tu' }
+  },
+  {
+    id: 13,
+    era: 'Giai đoạn 5: Thần Hủy Diệt & Đa Vũ Trụ',
+    title: 'Hành Tinh Bill & Ác Thần Cumber',
+    steps: [
+      { type: 'talk', targetId: 'whis', count: 1, text: 'Lên Tháp Karin → Thần Điện gặp Whis tới Hành Tinh Bill', dialogReply: 'Hoan nghênh chiến binh phàm trần đặt chân tới Hành tinh của Ngài Beerus! Hãy dùng Nhẫn Thời Không trong Hành Trang để trấn áp tên Xayda cổ đại Cumber ở Hành Tinh Ngục Tù!' },
+      { type: 'kill', targetId: 'boss_cumber', count: 1, text: 'Dùng Nhẫn Thời Không tới Hành Tinh Ngục Tù hạ BOSS Cumber' },
+      { type: 'shenron', targetId: 'shenron', count: 1, text: 'Tập hợp 7 Viên Ngọc Rồng & Triệu hồi Rồng Thần' }
+    ],
+    desc: 'Từ Tháp Karin bay lên Thần Điện gặp Thiên Sứ Whis tới Hành Tinh Bill tu luyện, mở Hành Trang bấm Sử Dụng [Nhẫn Thời Không] sang Hành Tinh Ngục Tù đánh bại Cumber và gọi Rồng Thần!',
+    reward: { power: 5000000, gold: 2000000, gem: 500, item: 'ao_huy_diet' }
   }
 ];
 
 // =========================================================================
-// MẪU QUÁI VẬT & BOSS CHUẨN CỐT TRUYỆN NGỌC RỒNG ONLINE
+// MẪU QUÁI VẬT & BOSS XUYÊN SUỐT 5 GIAI ĐOẠN (CÓ BIẾN HÌNH LIÊN TIẾP TRÊN CHIẾN TRƯỜNG!)
 // =========================================================================
 export const MONSTER_TEMPLATES = {
+  // --- Quái Giai đoạn 1 ---
   moc_nhan: {
-    id: 'moc_nhan',
-    name: 'Mộc Nhân',
-    renderType: 'dummy',
-    idleTex: 'nhanvat/quai/moc_nhan_1.png',
-    hitTex: 'nhanvat/quai/moc_nhan_2.png',
-    scale: 0.56,
-    hp: 120,
-    attack: 0,
-    exp: 65,
-    gold: 80,
-    speed: 0,
-    respawnSec: 3.0
+    id: 'moc_nhan', name: 'Mộc Nhân', renderType: 'dummy',
+    idleTex: 'nhanvat/quai/moc_nhan_1.png', hitTex: 'nhanvat/quai/moc_nhan_2.png',
+    scale: 0.56, hp: 120, attack: 0, exp: 65, gold: 80, speed: 0, respawnSec: 3.0
   },
   khung_long: {
-    id: 'khung_long',
-    name: 'Khủng Long',
-    renderType: 'frames',
+    id: 'khung_long', name: 'Khủng Long', renderType: 'frames',
     frames: ['nhanvat/quai/khung_long_1.png', 'nhanvat/quai/khung_long_2.png'],
-    nativeLeft: false,
-    scale: 0.54,
-    hp: 240,
-    attack: 10,
-    exp: 140,
-    gold: 160,
-    dropsMeat: true,
-    speed: 42
+    nativeLeft: false, scale: 0.54, hp: 240, attack: 10, exp: 140, gold: 160, dropsMeat: true, speed: 42
   },
   lon_loi: {
-    id: 'lon_loi',
-    name: 'Lợn Lòi',
-    renderType: 'frames',
+    id: 'lon_loi', name: 'Lợn Lòi', renderType: 'frames',
     frames: ['nhanvat/quai/lon_loi_1.png', 'nhanvat/quai/lon_loi_2.png'],
-    nativeLeft: false,
-    scale: 0.56,
-    hp: 560,
-    attack: 22,
-    exp: 320,
-    gold: 350,
-    speed: 48
+    nativeLeft: false, scale: 0.56, hp: 560, attack: 22, exp: 320, gold: 350, speed: 48
   },
   khung_long_me: {
-    id: 'khung_long_me',
-    name: 'Khủng Long Mẹ',
-    renderType: 'frames',
+    id: 'khung_long_me', name: 'Khủng Long Mẹ', renderType: 'frames',
     frames: ['nhanvat/quai/khung_long_1.png', 'nhanvat/quai/khung_long_2.png'],
-    nativeLeft: false,
-    scale: 0.74,
-    hp: 1100,
-    attack: 38,
-    exp: 620,
-    gold: 640,
-    dropsMeat: true,
-    speed: 46
+    nativeLeft: false, scale: 0.74, hp: 1100, attack: 38, exp: 620, gold: 640, dropsMeat: true, speed: 46
   },
-  lon_loi_rung: {
-    id: 'lon_loi_rung',
-    name: 'Lợn Lòi Rừng',
-    renderType: 'frames',
+  than_lan_xanh: {
+    id: 'than_lan_xanh', name: 'Nấm Độc Rừng Sâu', renderType: 'sheet_vertical',
+    sheet: 'vatpham/vanbay/rua/mount_9_0.png', nativeLeft: true, frameCount: 4, drawW: 66, drawH: 66,
+    hp: 1550, attack: 48, exp: 820, gold: 760, speed: 46
+  },
+  quy_xuong: {
+    id: 'quy_xuong', name: 'Khủng Long Xương', renderType: 'frames',
     frames: ['nhanvat/quai/lon_loi_1.png', 'nhanvat/quai/lon_loi_2.png'],
-    nativeLeft: false,
-    scale: 0.7,
-    hp: 1900,
-    attack: 58,
-    exp: 980,
-    gold: 880,
-    speed: 54
+    nativeLeft: false, scale: 0.68, hp: 1950, attack: 58, exp: 980, gold: 880, speed: 54
   },
   khung_long_bay: {
-    id: 'khung_long_bay',
-    name: 'Thằn Lằn Bay',
-    renderType: 'sheet_vertical',
-    sheet: 'vatpham/vanbay/khunglong/myTexture2drong.png',
-    nativeLeft: true,
-    frameCount: 3,
-    drawW: 58,
-    drawH: 58,
-    flyOffset: 26,
-    hp: 1500,
-    attack: 48,
-    exp: 720,
-    gold: 680,
-    speed: 58
+    id: 'khung_long_bay', name: 'Thằn Lằn Bay', renderType: 'sheet_vertical',
+    sheet: 'vatpham/vanbay/khunglong/myTexture2drong.png', nativeLeft: true, frameCount: 3, drawW: 58, drawH: 58, flyOffset: 26,
+    hp: 1500, attack: 48, exp: 720, gold: 680, speed: 58
   },
   boss_than_meo: {
-    id: 'boss_than_meo',
-    name: 'Thần Mèo Karin (Thách Đấu)',
-    renderType: 'frames',
-    frames: ['nhanvat/npc/than_meo_karin.png'],
-    nativeLeft: true,
-    isBoss: true,
-    scale: 0.54,
-    hp: 5200,
-    attack: 95,
-    exp: 3800,
-    gold: 6000,
-    speed: 78,
-    noAutoRespawn: true,
-    respawnSec: 9999
+    id: 'boss_than_meo', name: 'Thần Mèo Karin (Thách Đấu)', renderType: 'frames',
+    frames: ['nhanvat/npc/than_meo_karin.png'], nativeLeft: true, isBoss: true, scale: 0.54,
+    hp: 5200, attack: 95, exp: 3800, gold: 6000, speed: 78, noAutoRespawn: true, respawnSec: 9999
   },
   tau_pay_pay: {
-    id: 'tau_pay_pay',
-    name: 'Sát Thủ Tàu Pảy Pảy',
-    renderType: 'frames',
-    frames: ['nhanvat/quai/tau_pay_pay.png'],
-    nativeLeft: true,
-    isBoss: true,
-    scale: 0.56,
-    hp: 7800,
-    attack: 135,
-    exp: 5200,
-    gold: 9500,
-    speed: 72,
-    respawnSec: 12
+    id: 'tau_pay_pay', name: 'Sát Thủ Tàu Pảy Pảy', renderType: 'frames',
+    frames: ['nhanvat/quai/tau_pay_pay.png'], nativeLeft: true, isBoss: true, scale: 0.56,
+    hp: 7800, attack: 135, exp: 5200, gold: 9500, speed: 72, respawnSec: 12
   },
-  tuan_loc: {
-    id: 'tuan_loc',
-    name: 'Lộc Thần Rừng',
-    renderType: 'frames',
-    frames: [
-      'vatpham/vatphamgame/pet/tuan_loc/6680.png',
-      'vatpham/vatphamgame/pet/tuan_loc/6681.png',
-      'vatpham/vatphamgame/pet/tuan_loc/6682.png',
-      'vatpham/vatphamgame/pet/tuan_loc/6683.png',
-      'vatpham/vatphamgame/pet/tuan_loc/6684.png',
-      'vatpham/vatphamgame/pet/tuan_loc/6685.png',
-      'vatpham/vatphamgame/pet/tuan_loc/6686.png'
-    ],
-    nativeLeft: false,
-    scale: 0.72,
-    hp: 3200,
-    attack: 78,
-    exp: 1100,
-    gold: 980,
-    speed: 50
+
+  // --- Giai đoạn 2: Quân Đoàn Fide ---
+  boss_kuku: {
+    id: 'boss_kuku', name: 'BOSS Kuku', renderType: 'caitrang', caitrangKey: 'xiao', isBoss: true, scale: 0.58,
+    hp: 14000, attack: 195, exp: 8500, gold: 12000, speed: 66, respawnSec: 12
+  },
+  boss_map_dau_dinh: {
+    id: 'boss_map_dau_dinh', name: 'BOSS Mập Đầu Đinh', renderType: 'caitrang', caitrangKey: 'khi_2', isBoss: true, scale: 0.56,
+    hp: 16500, attack: 220, exp: 9500, gold: 13500, speed: 58, respawnSec: 12
+  },
+  boss_rambo: {
+    id: 'boss_rambo', name: 'BOSS Rambo', renderType: 'caitrang', caitrangKey: 'hop_the_thuong_xayda', isBoss: true, scale: 0.58,
+    hp: 19000, attack: 250, exp: 11000, gold: 15000, speed: 68, respawnSec: 12
+  },
+  tdst_so4: {
+    id: 'tdst_so4', name: 'Số 4 Guldo (TDST)', renderType: 'sheet_vertical',
+    sheet: 'vatpham/vanbay/rua/mount_9_0.png', nativeLeft: true, frameCount: 4, drawW: 78, drawH: 78, isBoss: true,
+    hp: 22000, attack: 270, exp: 12500, gold: 16000, speed: 60, respawnSec: 14
+  },
+  tdst_so3: {
+    id: 'tdst_so3', name: 'Số 3 Recoome (TDST)', renderType: 'caitrang', caitrangKey: 'hop_the_thuong_traidat', isBoss: true, scale: 0.62,
+    hp: 26000, attack: 310, exp: 14500, gold: 18000, speed: 62, respawnSec: 14
+  },
+  tdst_so2_so1: {
+    id: 'tdst_so2_so1', name: 'Burter & Jeice (TDST)', renderType: 'caitrang', caitrangKey: 'bong_tai_1_namek', isBoss: true, scale: 0.6,
+    hp: 30000, attack: 345, exp: 16500, gold: 20000, speed: 78, respawnSec: 14
+  },
+  tdst_ginyu: {
+    id: 'tdst_ginyu', name: 'Đội Trưởng Ginyu (TDST)', renderType: 'caitrang', caitrangKey: 'bong_tai_2_xayda', isBoss: true, auraColor: 'tim', scale: 0.64,
+    hp: 38000, attack: 390, exp: 22000, gold: 28000, speed: 72, respawnSec: 15
+  },
+  fide_cap_1: {
+    id: 'fide_cap_1', name: 'Fide Đại Đế (Cấp 1)', renderType: 'frames',
+    frames: ['nhanvat/quai/fide_dai_de.png'], nativeLeft: true, isBoss: true, scale: 0.50,
+    hp: 45000, attack: 430, exp: 26000, gold: 32000, speed: 70,
+    nextForm: 'fide_cap_2', respawnSec: 18
+  },
+  fide_cap_2: {
+    id: 'fide_cap_2', name: 'Fide Đại Đế (Cấp 2)', renderType: 'frames',
+    frames: ['nhanvat/quai/fide_dai_de.png'], nativeLeft: true, isBoss: true, scale: 0.58,
+    hp: 62000, attack: 510, exp: 35000, gold: 42000, speed: 74,
+    nextForm: 'fide_cap_3', respawnSec: 18
+  },
+  fide_cap_3: {
+    id: 'fide_cap_3', name: 'Fide Đại Đế Hoàn Thiện (Cấp 3)', renderType: 'frames',
+    frames: ['nhanvat/quai/fide_dai_de.png'], nativeLeft: true, isBoss: true, auraColor: 'tim', scale: 0.64,
+    hp: 85000, attack: 620, exp: 52000, gold: 65000, speed: 80,
+    resetForm: 'fide_cap_1', respawnSec: 18
+  },
+
+  // --- Giai đoạn 3: Robot Sát Thủ & Xên Bọ Hùng ---
+  android_19: {
+    id: 'android_19', name: 'BOSS Android 19', renderType: 'caitrang', caitrangKey: 'bong_tai_1_traidat', isBoss: true, scale: 0.58,
+    hp: 68000, attack: 540, exp: 38000, gold: 45000, speed: 66, respawnSec: 14
+  },
+  dr_kore: {
+    id: 'dr_kore', name: 'BOSS Tiến Sĩ Kôrê (Android 20)', renderType: 'caitrang', caitrangKey: 'bong_tai_2_traidat', isBoss: true, scale: 0.6,
+    hp: 78000, attack: 590, exp: 44000, gold: 52000, speed: 68, respawnSec: 14
+  },
+  android_15_14: {
+    id: 'android_15_14', name: 'Android 14 & 15', renderType: 'caitrang', caitrangKey: 'bong_tai_1_xayda', isBoss: true, scale: 0.6,
+    hp: 88000, attack: 640, exp: 48000, gold: 55000, speed: 72, respawnSec: 14
+  },
+  android_13: {
+    id: 'android_13', name: 'BOSS Super Android 13', renderType: 'caitrang', caitrangKey: 'broly_lssj', isBoss: true, auraColor: 'xanh', scale: 0.65,
+    hp: 115000, attack: 740, exp: 65000, gold: 75000, speed: 76, respawnSec: 16
+  },
+  pic_poc_kk: {
+    id: 'pic_poc_kk', name: 'Sát Thủ Pic - Poc - King Kong', renderType: 'sheet_vertical',
+    sheet: 'vatpham/vanbay/xenvang/mount_17_0.png', nativeLeft: true, frameCount: 4, drawW: 88, drawH: 88, flyOffset: 10, isBoss: true,
+    hp: 95000, attack: 690, exp: 52000, gold: 58000, speed: 70, respawnSec: 13
   },
   xen_con: {
-    id: 'xen_con',
-    name: 'Xên Con',
-    renderType: 'sheet_vertical',
-    sheet: 'vatpham/vanbay/xenxanh/mount_16_0.png',
-    nativeLeft: true,
-    frameCount: 4,
-    drawW: 84,
-    drawH: 80,
-    flyOffset: 10,
-    hp: 5800,
-    attack: 125,
-    exp: 2200,
-    gold: 1850,
-    speed: 56
+    id: 'xen_con', name: 'Xên Con', renderType: 'sheet_vertical',
+    sheet: 'vatpham/vanbay/xenxanh/mount_16_0.png', nativeLeft: true, frameCount: 4, drawW: 82, drawH: 78, flyOffset: 10,
+    hp: 55000, attack: 480, exp: 28000, gold: 25000, speed: 62
   },
-  zinba: {
-    id: 'zinba',
-    name: 'Sói Lửa Héc Quyn',
-    renderType: 'frames',
-    frames: [
-      'vatpham/vatphamgame/pet/zinba/25200.png',
-      'vatpham/vatphamgame/pet/zinba/25201.png',
-      'vatpham/vatphamgame/pet/zinba/25202.png',
-      'vatpham/vatphamgame/pet/zinba/25203.png',
-      'vatpham/vatphamgame/pet/zinba/25204.png',
-      'vatpham/vatphamgame/pet/zinba/25205.png',
-      'vatpham/vatphamgame/pet/zinba/25206.png',
-      'vatpham/vatphamgame/pet/zinba/25207.png'
-    ],
-    nativeLeft: false,
-    scale: 0.72,
-    hp: 12000,
-    attack: 220,
-    exp: 4200,
-    gold: 3800,
-    speed: 62
+  xen_hoan_thien: {
+    id: 'xen_hoan_thien', name: 'Xên Hoàn Thiện', renderType: 'frames',
+    frames: ['nhanvat/quai/xen_hoan_thien.png'], nativeLeft: true, isBoss: true, scale: 0.58,
+    hp: 135000, attack: 850, exp: 80000, gold: 95000, speed: 76,
+    nextForm: 'sieu_bo_hung', respawnSec: 18
+  },
+  sieu_bo_hung: {
+    id: 'sieu_bo_hung', name: 'BOSS Siêu Bọ Hùng', renderType: 'frames',
+    frames: ['nhanvat/quai/xen_hoan_thien.png'], nativeLeft: true, isBoss: true, auraColor: 'xanh', scale: 0.66,
+    hp: 185000, attack: 1050, exp: 125000, gold: 150000, speed: 82,
+    resetForm: 'xen_hoan_thien', respawnSec: 18
+  },
+
+  // --- Giai đoạn 4: Giải cứu Tương Lai ---
+  black_goku: {
+    id: 'black_goku', name: 'BOSS Black Goku', renderType: 'caitrang', caitrangKey: 'goku_black', isBoss: true, scale: 0.62,
+    hp: 220000, attack: 1250, exp: 160000, gold: 180000, speed: 80,
+    nextForm: 'super_black_goku', respawnSec: 18
+  },
+  super_black_goku: {
+    id: 'super_black_goku', name: 'BOSS Super Black Goku Rosé', renderType: 'caitrang', caitrangKey: 'goku_black_rose', isBoss: true, auraColor: 'tim', scale: 0.66,
+    hp: 310000, attack: 1580, exp: 240000, gold: 280000, speed: 86,
+    guaranteedDrop: 'nhan_thoi_khong', resetForm: 'black_goku', respawnSec: 18
+  },
+
+  // --- Giai đoạn 5 & Phó Bản Cày Cấp ---
+  boss_mabu: {
+    id: 'boss_mabu', name: 'BOSS Ma Nhân Mabư (Phi Thuyền Babidi)', renderType: 'caitrang', caitrangKey: 'bong_tai_3_namek', isBoss: true, auraColor: 'tim', scale: 0.66,
+    hp: 360000, attack: 1750, exp: 290000, gold: 320000, speed: 78,
+    guaranteedDrop: 'trung_de_tu', respawnSec: 18
+  },
+  boss_cooler: {
+    id: 'boss_cooler', name: 'BOSS Cooler Hoàn Thiện (Cold)', renderType: 'frames',
+    frames: ['nhanvat/quai/cooler_boss.png'], nativeLeft: true, isBoss: true, auraColor: 'tim', scale: 0.64,
+    hp: 450000, attack: 2100, exp: 380000, gold: 450000, speed: 82,
+    guaranteedDrop: 'ao_than_linh', respawnSec: 18
+  },
+  boss_cumber: {
+    id: 'boss_cumber', name: 'ÁC THẦN XAYDA CUMBER', renderType: 'frames',
+    frames: ['nhanvat/quai/cumber_boss.png'], nativeLeft: true, isBoss: true, auraColor: 'tim', scale: 0.70,
+    hp: 680000, attack: 2850, exp: 650000, gold: 800000, speed: 88,
+    guaranteedDrop: 'nr_1s', respawnSec: 20
   },
   khi_dot: {
-    id: 'khi_dot',
-    name: 'Khỉ Đột Vách Núi',
-    renderType: 'caitrang',
-    caitrangKey: 'khi_7',
-    scale: 0.62,
-    hp: 19000,
-    attack: 295,
-    exp: 6400,
-    gold: 5400,
-    speed: 52
+    id: 'khi_dot', name: 'Khỉ Đột Núi Khỉ', renderType: 'caitrang', caitrangKey: 'khi_7', scale: 0.62,
+    hp: 35000, attack: 360, exp: 18000, gold: 16000, speed: 54
   },
   boss_broly: {
-    id: 'boss_broly',
-    name: 'BOSS Siêu Xayda Broly',
-    renderType: 'caitrang',
-    caitrangKey: 'broly_lssj',
-    isBoss: true,
-    auraColor: 'xanh',
-    scale: 0.68,
-    hp: 52000,
-    attack: 480,
-    exp: 32000,
-    gold: 42000,
-    speed: 75,
-    respawnSec: 16
+    id: 'boss_broly', name: 'Siêu Xayda Huyền Thoại Broly', renderType: 'caitrang', caitrangKey: 'broly_lssj', isBoss: true, auraColor: 'xanh', scale: 0.68,
+    hp: 250000, attack: 1380, exp: 190000, gold: 220000, speed: 80, respawnSec: 18
   },
-  rua_co_dai: {
-    id: 'rua_co_dai',
-    name: 'Rùa Cổ Đại Namếc',
-    renderType: 'sheet_vertical',
-    sheet: 'vatpham/vanbay/rua/mount_9_0.png',
-    nativeLeft: true,
-    frameCount: 4,
-    drawW: 84,
-    drawH: 84,
-    flyOffset: 0,
-    hp: 17500,
-    attack: 265,
-    exp: 5800,
-    gold: 4800,
-    speed: 42
+  zinba: {
+    id: 'zinba', name: 'Quái Thú Băng Tuyết Cold', renderType: 'frames',
+    frames: ['vatpham/vatphamgame/pet/zinba/25200.png', 'vatpham/vatphamgame/pet/zinba/25201.png', 'vatpham/vatphamgame/pet/zinba/25202.png', 'vatpham/vatphamgame/pet/zinba/25203.png'],
+    nativeLeft: false, scale: 0.76, hp: 140000, attack: 880, exp: 75000, gold: 65000, speed: 64
   },
-  xen_hoang_kim: {
-    id: 'xen_hoang_kim',
-    name: 'Xên Hoàng Kim',
-    renderType: 'sheet_vertical',
-    sheet: 'vatpham/vanbay/xenvang/mount_17_0.png',
-    nativeLeft: true,
-    frameCount: 4,
-    drawW: 92,
-    drawH: 92,
-    flyOffset: 14,
-    hp: 28000,
-    attack: 390,
-    exp: 9200,
-    gold: 7800,
-    speed: 64
+  tuan_loc: {
+    id: 'tuan_loc', name: 'Thần Thú Thực Vật', renderType: 'frames',
+    frames: ['vatpham/vatphamgame/pet/tuan_loc/6680.png', 'vatpham/vatphamgame/pet/tuan_loc/6681.png', 'vatpham/vatphamgame/pet/tuan_loc/6682.png'],
+    nativeLeft: false, scale: 0.78, hp: 180000, attack: 960, exp: 95000, gold: 82000, speed: 58
   },
-  boss_black_rose: {
-    id: 'boss_black_rose',
-    name: 'BOSS Black Goku Rosé',
-    renderType: 'caitrang',
-    caitrangKey: 'goku_black_rose',
-    isBoss: true,
-    auraColor: 'tim',
-    scale: 0.68,
-    hp: 95000,
-    attack: 760,
-    exp: 60000,
-    gold: 75000,
-    speed: 82,
-    respawnSec: 18
+  doc_nhan_tuong: {
+    id: 'doc_nhan_tuong', name: 'Độc Nhãn Đại Tướng (Phó Bản)', renderType: 'caitrang', caitrangKey: 'bong_tai_3_traidat', isBoss: true, scale: 0.64,
+    hp: 120000, attack: 720, exp: 110000, gold: 130000, speed: 70, respawnSec: 14
+  },
+  tuong_xanh_lo: {
+    id: 'tuong_xanh_lo', name: 'Tướng Hải Tặc Xanh Lơ (Kho Báu)', renderType: 'caitrang', caitrangKey: 'bong_tai_3_xayda', isBoss: true, scale: 0.64,
+    hp: 160000, attack: 890, exp: 155000, gold: 195000, speed: 72, respawnSec: 14
+  },
+  hatchiyack: {
+    id: 'hatchiyack', name: 'Cỗ Máy Hủy Diệt Hatchiyack (Khí Gas)', renderType: 'caitrang', caitrangKey: 'broly_lssj', isBoss: true, auraColor: 'tim', scale: 0.7,
+    hp: 420000, attack: 1950, exp: 390000, gold: 420000, speed: 80, respawnSec: 16
   }
 };
 
+// Helper tạo nhanh Waypoint rìa trái / rìa phải / cửa giữa chuẩn NRO
+function wpLeft(id, label, targetMapId, targetX = 1820, targetY = 175) {
+  return {
+    id, label, kind: 'left_edge',
+    signRect: { x: 10, y: 300, w: 230, h: 60 },
+    showRangeX: [-120, 310],
+    edgeTriggerX: [-200, 12],
+    groundGlowX: 16,
+    targetMapId, targetX, targetY
+  };
+}
+
+function wpRight(id, label, mapWidth, targetMapId, targetX = 65, targetY = 175) {
+  return {
+    id, label, kind: 'right_edge',
+    signRect: { x: mapWidth - 240, y: 300, w: 230, h: 60 },
+    showRangeX: [mapWidth - 380, mapWidth + 160],
+    edgeTriggerX: [mapWidth - 12, mapWidth + 180],
+    groundGlowX: mapWidth - 16,
+    targetMapId, targetX, targetY
+  };
+}
+
+function wpDoor(id, label, centerX, signY, targetMapId, targetX, targetY) {
+  return {
+    id, label, kind: 'door',
+    signRect: { x: centerX - 115, y: signY, w: 230, h: 60 },
+    showRangeX: [centerX - 180, centerX + 180],
+    doorRangeX: [centerX - 110, centerX + 110],
+    groundGlowX: centerX,
+    targetMapId, targetX, targetY
+  };
+}
+
 // =========================================================================
-// HỆ THỐNG 10 BẢN ĐỒ LIÊN THÔNG ĐÚNG ĐỊA LÝ NGỌC RỒNG ONLINE GỐC
-// Vách Núi Aru <-> Làng Aru (cửa Nhà Gôhan) <-> Đồi Hoa Cúc <-> Thung Lũng Tre
-//              <-> Rừng Karin (leo Cột Tháp chính giữa <-> Đỉnh Tháp Karin) <-> Đảo Kamê
-// Tàu Vũ Trụ   <-> Vách Núi Kakarot (Xayda) & Thung Lũng Namếc
+// MẠNG LƯỚI 36 BẢN ĐỒ CHUẨN SƠ ĐỒ NGỌC RỒNG ONLINE (ID 0 .. 35)
 // =========================================================================
 export const MAPS_CONFIG = [
-  // ================= MAP 0: NHÀ GÔHAN =================
+  // [0] Nhà Gôhan
   {
-    id: 0,
-    key: 'nha_gohan',
-    name: 'Nhà Gôhan',
-    planetTheme: 'traidat',
-    width: 1420,
-    height: 760,
-    defaultSpawn: { x: 325, y: 175 },
+    id: 0, key: 'nha_gohan', name: 'Nhà Gôhan', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'home_earth',
+    width: 1420, height: 760, defaultSpawn: { x: 325, y: 175 },
     hitboxes: [{ x: -100, y: 0, w: 1620, h: 175 }],
     waypoints: [
-      {
-        id: 'wp_nhagohan_to_aru',
-        label: 'Làng Aru',
-        kind: 'door',
-        signRect: { x: 760, y: 300, w: 230, h: 60 },
-        showRangeX: [610, 1060],
-        doorRangeX: [740, 1010],
-        edgeTriggerX: [1395, 1500],
-        groundGlowX: 875,
-        targetMapId: 1,
-        targetX: 675,
-        targetY: 175
-      }
+      { ...wpDoor('wp_0_1', 'Làng Aru', 875, 300, 1, 675, 175), edgeTriggerX: [1395, 1500] }
     ],
     npcs: [
       { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 105, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
-      { id: 'admin_dungle', name: 'Admin Dũng Lê', kind: 'modular', folder: 'admin_dungle', x: 205, y: 175 },
+      { id: 'admin_dungle', name: 'Sứ Giả Hỗ Trợ', kind: 'modular', folder: 'admin_dungle', x: 210, y: 175 },
       { id: 'ong_gohan', name: 'Ông Gôhan', kind: 'modular', folder: 'ong_gohan', x: 445, y: 175 },
       { id: 'dau_traidat', name: 'Cây Đậu Thần', kind: 'senzu_tree', x: 615, y: 175 },
       { id: 'dui_ga', name: 'Đùi Gà Nướng', kind: 'meat', x: 1178, y: 205, tex: 'nhanvat/npc/dui_ga/1.png' }
@@ -711,108 +779,73 @@ export const MAPS_CONFIG = [
     monsters: []
   },
 
-  // ================= MAP 1: LÀNG ARU =================
+  // [1] Làng Aru
   {
-    id: 1,
-    key: 'lang_aru',
-    name: 'Làng Aru',
-    planetTheme: 'traidat',
-    width: 2400,
-    height: 1000,
-    defaultSpawn: { x: 675, y: 175 },
+    id: 1, key: 'lang_aru', name: 'Làng Aru', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'lang_aru',
+    width: 2400, height: 1000, defaultSpawn: { x: 675, y: 175 },
     hitboxes: [{ x: -220, y: -38, w: 2840, h: 213 }],
     waypoints: [
-      {
-        id: 'wp_aru_to_vachnui',
-        label: 'Vách núi Aru',
-        kind: 'left_edge',
-        signRect: { x: 10, y: 300, w: 230, h: 60 },
-        showRangeX: [-120, 310],
-        edgeTriggerX: [-200, 12],
-        groundGlowX: 16,
-        targetMapId: 3,
-        targetX: 1815,
-        targetY: 175
-      },
-      {
-        id: 'wp_aru_to_nhagohan',
-        label: 'Nhà Gôhan',
-        kind: 'door',
-        signRect: { x: 560, y: 300, w: 230, h: 60 },
-        showRangeX: [410, 860],
-        doorRangeX: [560, 790],
-        targetMapId: 0,
-        targetX: 875,
-        targetY: 175
-      },
-      {
-        id: 'wp_aru_to_doihoacuc',
-        label: 'Đồi hoa cúc',
-        kind: 'right_edge',
-        signRect: { x: 2160, y: 300, w: 230, h: 60 },
-        showRangeX: [2010, 2550],
-        edgeTriggerX: [2388, 2600],
-        groundGlowX: 2384,
-        targetMapId: 2,
-        targetX: 65,
-        targetY: 175
-      }
+      wpLeft('wp_1_2', 'Vách núi Aru', 2, 1815, 175),
+      wpDoor('wp_1_3', 'Trạm Tàu Vũ Trụ', 205, 300, 3, 950, 175),
+      wpDoor('wp_1_0', 'Nhà Gôhan', 675, 300, 0, 875, 175),
+      wpRight('wp_1_4', 'Đồi hoa cúc', 2400, 4, 65, 175)
     ],
     npcs: [
-      { id: 'admin_thanhle', name: 'Chủ Tiệm Thành Lê', kind: 'modular', folder: 'admin_thanhle', x: 365, y: 175 },
-      { id: 'admin_haidang', name: 'Thượng Đế Hải Đăng', kind: 'modular', folder: 'admin_haidang', x: 1380, y: 175 }
+      { id: 'admin_thanhle', name: 'Bunma (Cửa Hàng)', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 },
+      { id: 'admin_haidang', name: 'Vòng Quay May Mắn', kind: 'modular', folder: 'admin_haidang', x: 1380, y: 175 }
     ],
     monsters: [
       { template: 'moc_nhan', x: 850, minX: 850, maxX: 850 },
       { template: 'moc_nhan', x: 960, minX: 960, maxX: 960 },
       { template: 'moc_nhan', x: 1070, minX: 1070, maxX: 1070 },
       { template: 'moc_nhan', x: 1190, minX: 1190, maxX: 1190 },
-      { template: 'khung_long', x: 1560, minX: 1460, maxX: 1690 },
-      { template: 'khung_long', x: 1780, minX: 1660, maxX: 1900 },
-      { template: 'khung_long', x: 1990, minX: 1860, maxX: 2120 },
-      { template: 'khung_long', x: 2180, minX: 2050, maxX: 2290 }
+      { template: 'khung_long', x: 1580, minX: 1480, maxX: 1700 },
+      { template: 'khung_long', x: 1850, minX: 1720, maxX: 1980 },
+      { template: 'khung_long', x: 2120, minX: 1990, maxX: 2260 }
     ]
   },
 
-  // ================= MAP 2: ĐỒI HOA CÚC =================
+  // [2] Vách Núi Aru (Nối Làng Aru & NPC Calích đi Tương Lai)
   {
-    id: 2,
-    key: 'doi_hoa_cuc',
-    name: 'Đồi Hoa Cúc',
-    planetTheme: 'traidat',
-    width: 2976,
-    height: 1000,
-    defaultSpawn: { x: 65, y: 175 },
+    id: 2, key: 'vach_nui_aru', name: 'Vách Núi Aru', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'cliff_earth',
+    width: 1900, height: 820, defaultSpawn: { x: 1810, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2120, h: 175 }],
+    waypoints: [wpRight('wp_2_1', 'Làng Aru', 1900, 1, 65, 175)],
+    npcs: [
+      { id: 'calich', name: 'Calích (Tương Lai)', kind: 'sprite', x: 320, y: 175, tex: 'nhanvat/npc/npc_calich.png', scale: 0.56 }
+    ],
+    monsters: [
+      { template: 'khung_long_bay', x: 1420, minX: 1260, maxX: 1580 },
+      { template: 'khung_long_bay', x: 1020, minX: 860, maxX: 1180 },
+      { template: 'khung_long_bay', x: 680, minX: 540, maxX: 820 }
+    ]
+  },
+
+  // [3] Trạm Tàu Vũ Trụ Trái Đất
+  {
+    id: 3, key: 'tram_tau_traidat', name: 'Trạm Tàu Vũ Trụ Trái Đất', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'spaceport_earth',
+    width: 1600, height: 820, defaultSpawn: { x: 520, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 1820, h: 175 }],
+    waypoints: [wpRight('wp_3_1', 'Làng Aru', 1600, 1, 220, 175)],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Trái Đất', kind: 'spaceship', x: 420, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' },
+      { id: 'ruong_do', name: 'Rương Đồ Trạm', kind: 'chest', x: 680, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' }
+    ],
+    monsters: []
+  },
+
+  // [4] Đồi Hoa Cúc (Map rừng 1/4)
+  {
+    id: 4, key: 'doi_hoa_cuc', name: 'Đồi Hoa Cúc', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'doi_hoa_cuc',
+    width: 2976, height: 1000, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [
-      { x: -200, y: -134, w: 1064, h: 309 },  // [0 .. 864] -> top = 175
-      { x: 864, y: -134, w: 864, h: 261 },    // [864 .. 1728] -> top = 127
-      { x: 1728, y: -134, w: 1450, h: 357 }   // [1728 .. 2976] -> top = 223
+      { x: -200, y: -134, w: 1064, h: 309 },
+      { x: 864, y: -134, w: 864, h: 261 },
+      { x: 1728, y: -134, w: 1450, h: 357 }
     ],
     waypoints: [
-      {
-        id: 'wp_dhc_to_aru',
-        label: 'Làng Aru',
-        kind: 'left_edge',
-        signRect: { x: 10, y: 300, w: 230, h: 60 },
-        showRangeX: [-120, 310],
-        edgeTriggerX: [-200, 12],
-        groundGlowX: 16,
-        targetMapId: 1,
-        targetX: 2335,
-        targetY: 175
-      },
-      {
-        id: 'wp_dhc_to_thunglungtre',
-        label: 'Thung lũng tre',
-        kind: 'right_edge',
-        signRect: { x: 2736, y: 340, w: 230, h: 60 },
-        showRangeX: [2600, 3100],
-        edgeTriggerX: [2962, 3150],
-        groundGlowX: 2960,
-        targetMapId: 4,
-        targetX: 65,
-        targetY: 175
-      }
+      wpLeft('wp_4_1', 'Làng Aru', 1, 2335, 175),
+      { ...wpRight('wp_4_5', 'Thung lũng tre', 2976, 5, 65, 175), signRect: { x: 2736, y: 340, w: 230, h: 60 } }
     ],
     npcs: [],
     monsters: [
@@ -825,265 +858,555 @@ export const MAPS_CONFIG = [
     ]
   },
 
-  // ================= MAP 3: VÁCH NÚI ARU (TRẠM TÀU VŨ TRỤ) =================
+  // [5] Thung Lũng Tre (Map rừng 2/4)
   {
-    id: 3,
-    key: 'vach_nui_aru',
-    name: 'Vách Núi Aru',
-    planetTheme: 'traidat',
-    width: 1900,
-    height: 820,
-    defaultSpawn: { x: 1810, y: 175 },
-    hitboxes: [{ x: -80, y: 0, w: 2120, h: 175 }],
+    id: 5, key: 'thung_lung_tre', name: 'Thung Lũng Tre', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
+    width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
     waypoints: [
-      {
-        id: 'wp_vachnui_to_aru',
-        label: 'Làng Aru',
-        kind: 'right_edge',
-        signRect: { x: 1660, y: 300, w: 230, h: 60 },
-        showRangeX: [1520, 2020],
-        edgeTriggerX: [1888, 2050],
-        groundGlowX: 1884,
-        targetMapId: 1,
-        targetX: 65,
-        targetY: 175
-      }
-    ],
-    npcs: [
-      { id: 'tau_vu_tru', name: 'Trạm Tàu Vũ Trụ', kind: 'spaceship', x: 280, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' }
-    ],
-    monsters: [
-      { template: 'khung_long_bay', x: 1460, minX: 1320, maxX: 1620 },
-      { template: 'khung_long_bay', x: 1160, minX: 1000, maxX: 1300 },
-      { template: 'khung_long_bay', x: 840, minX: 680, maxX: 980 }
-    ]
-  },
-
-  // ================= MAP 4: THUNG LŨNG TRE =================
-  {
-    id: 4,
-    key: 'thung_lung_tre',
-    name: 'Thung Lũng Tre',
-    planetTheme: 'traidat',
-    width: 2100,
-    height: 840,
-    defaultSpawn: { x: 65, y: 175 },
-    hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
-    waypoints: [
-      {
-        id: 'wp_tlt_to_dhc',
-        label: 'Đồi hoa cúc',
-        kind: 'left_edge',
-        signRect: { x: 10, y: 300, w: 230, h: 60 },
-        showRangeX: [-120, 310],
-        edgeTriggerX: [-160, 12],
-        groundGlowX: 16,
-        targetMapId: 2,
-        targetX: 2900,
-        targetY: 223
-      },
-      {
-        id: 'wp_tlt_to_rungkarin',
-        label: 'Rừng Karin',
-        kind: 'right_edge',
-        signRect: { x: 1860, y: 300, w: 230, h: 60 },
-        showRangeX: [1720, 2240],
-        edgeTriggerX: [2088, 2260],
-        groundGlowX: 2084,
-        targetMapId: 5,
-        targetX: 65,
-        targetY: 175
-      }
+      wpLeft('wp_5_4', 'Đồi hoa cúc', 4, 2900, 223),
+      wpRight('wp_5_6', 'Rừng nấm', 1950, 6, 65, 175)
     ],
     npcs: [],
     monsters: [
-      { template: 'lon_loi', x: 460, minX: 320, maxX: 620 },
-      { template: 'khung_long_me', x: 860, minX: 700, maxX: 1020 },
-      { template: 'khung_long_me', x: 1280, minX: 1120, maxX: 1440 },
-      { template: 'khung_long_me', x: 1680, minX: 1520, maxX: 1860 }
+      { template: 'lon_loi', x: 420, minX: 280, maxX: 580 },
+      { template: 'khung_long_me', x: 840, minX: 680, maxX: 1000 },
+      { template: 'khung_long_me', x: 1240, minX: 1080, maxX: 1400 },
+      { template: 'khung_long_me', x: 1600, minX: 1440, maxX: 1760 }
     ]
   },
 
-  // ================= MAP 5: RỪNG KARIN (CHÂN THÁP KARIN Ở CHÍNH GIỮA!) =================
+  // [6] Rừng Nấm (Map rừng 3/4)
   {
-    id: 5,
-    key: 'rung_karin',
-    name: 'Rừng Karin',
-    planetTheme: 'traidat',
-    width: 2100,
-    height: 960,
-    defaultSpawn: { x: 65, y: 175 },
+    id: 6, key: 'rung_nam', name: 'Rừng Nấm', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
+    width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    waypoints: [
+      wpLeft('wp_6_5', 'Thung lũng tre', 5, 1880, 175),
+      wpRight('wp_6_7', 'Rừng xương', 1950, 7, 65, 175)
+    ],
+    npcs: [],
+    monsters: [
+      { template: 'than_lan_xanh', x: 460, minX: 300, maxX: 620 },
+      { template: 'than_lan_xanh', x: 920, minX: 760, maxX: 1080 },
+      { template: 'khung_long_me', x: 1380, minX: 1220, maxX: 1560 }
+    ]
+  },
+
+  // [7] Rừng Xương (Map rừng 4/4 nối vào Đảo Kame!)
+  {
+    id: 7, key: 'rung_xuong', name: 'Rừng Xương', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'cliff_earth',
+    width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    waypoints: [
+      wpLeft('wp_7_6', 'Rừng nấm', 6, 1880, 175),
+      wpRight('wp_7_8', 'Đảo Kame', 1950, 8, 65, 175)
+    ],
+    npcs: [],
+    monsters: [
+      { template: 'quy_xuong', x: 480, minX: 320, maxX: 640 },
+      { template: 'quy_xuong', x: 960, minX: 800, maxX: 1120 },
+      { template: 'quy_xuong', x: 1440, minX: 1280, maxX: 1620 }
+    ]
+  },
+
+  // [8] Đảo Kame (Trung tâm giao lộ: Rừng Xương ← Đảo Kame → Nam Kame, nhánh Bắc lên Đông Karin & Phó bản Kho Báu!)
+  {
+    id: 8, key: 'dao_kame', name: 'Đảo Kame', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'dao_kame',
+    width: 2100, height: 840, defaultSpawn: { x: 340, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
-      {
-        id: 'wp_rk_to_tlt',
-        label: 'Thung lũng tre',
-        kind: 'left_edge',
-        signRect: { x: 10, y: 300, w: 230, h: 60 },
-        showRangeX: [-120, 310],
-        edgeTriggerX: [-160, 12],
-        groundGlowX: 16,
-        targetMapId: 4,
-        targetX: 2030,
-        targetY: 175
-      },
-      {
-        id: 'wp_rk_to_thapkarin',
-        label: 'Lên Tháp Karin',
-        kind: 'door', // Đứng ngay chân Cột Tháp Karin ở giữa map (x=910..1090) hoặc bay dọc thân tháp lên cao!
-        signRect: { x: 885, y: 325, w: 230, h: 60 },
-        showRangeX: [820, 1180],
-        doorRangeX: [890, 1110],
-        towerClimbX: [920, 1080],
-        towerClimbY: 460,
-        groundGlowX: 1000,
-        targetMapId: 6,
-        targetX: 700,
-        targetY: 220
-      },
-      {
-        id: 'wp_rk_to_daokame',
-        label: 'Đảo Kamê',
-        kind: 'right_edge',
-        signRect: { x: 1860, y: 300, w: 230, h: 60 },
-        showRangeX: [1720, 2240],
-        edgeTriggerX: [2088, 2260],
-        groundGlowX: 2084,
-        targetMapId: 7,
-        targetX: 65,
-        targetY: 175
-      }
+      wpLeft('wp_8_7', 'Rừng xương', 7, 1880, 175),
+      wpDoor('wp_8_9', 'Đông Karin', 1120, 315, 9, 1720, 175),
+      wpRight('wp_8_15', 'Nam Kame', 2100, 15, 65, 175)
     ],
     npcs: [
-      { id: 'bo_mong', name: 'Bò Mộng', kind: 'modular', folder: 'admin_huykhoi', x: 780, y: 175 }
-    ],
-    monsters: [
-      { template: 'lon_loi_rung', x: 360, minX: 220, maxX: 520 },
-      { template: 'lon_loi_rung', x: 610, minX: 490, maxX: 720 },
-      { template: 'tau_pay_pay', x: 1320, minX: 1180, maxX: 1480 },
-      { template: 'lon_loi_rung', x: 1680, minX: 1540, maxX: 1860 }
-    ]
-  },
-
-  // ================= MAP 6: ĐỈNH THÁP KARIN (THÁNH ĐỊA TRÊN MÂY) =================
-  {
-    id: 6,
-    key: 'thap_karin',
-    name: 'Tháp Karin',
-    planetTheme: 'traidat',
-    width: 1400,
-    height: 860,
-    defaultSpawn: { x: 700, y: 220 },
-    // Sàn tròn Đài Tháp Karin lơ lửng trên tầng mây tại x=[410..990], top=220; bước ra rìa rơi tự do xuống Rừng Karin!
-    hitboxes: [{ x: 410, y: 170, w: 580, h: 50 }],
-    waypoints: [
-      {
-        id: 'wp_thapkarin_down',
-        label: 'Xuống Rừng Karin',
-        kind: 'door',
-        signRect: { x: 585, y: 345, w: 230, h: 60 },
-        showRangeX: [610, 790],
-        doorRangeX: [630, 770],
-        groundGlowX: 700,
-        targetMapId: 5,
-        targetX: 1000,
-        targetY: 220
-      }
-    ],
-    npcs: [
-      { id: 'than_meo_karin', name: 'Thần Mèo Karin', kind: 'sprite', x: 555, y: 220, tex: 'nhanvat/npc/than_meo_karin.png', scale: 0.54 },
-      { id: 'dau_traidat', name: 'Đậu Thần Tiên', kind: 'senzu_tree', x: 845, y: 220 }
+      { id: 'quy_lao_kame', name: 'Quy Lão Kame', kind: 'sprite', x: 430, y: 175, tex: 'nhanvat/npc/quy_lao_kame.png', scale: 0.54 },
+      { id: 'thay_hieu', name: 'Bà Hạt Mít (Pha Lê)', kind: 'modular', folder: 'thay_hieu', x: 720, y: 175 },
+      { id: 'admin_thanhle', name: 'Santa (Cửa Hàng Đảo)', kind: 'modular', folder: 'admin_thanhle', x: 1420, y: 175 }
     ],
     monsters: []
   },
 
-  // ================= MAP 7: ĐẢO KAMÊ (QUY LÃO TIÊN SINH & BÀ HẠT MÍT / PHA LÊ) =================
+  // [9] Đông Karin (Nối Đảo Kame ↔ Rừng Karin & Phó bản Doanh Trại Độc Nhãn)
   {
-    id: 7,
-    key: 'dao_kame',
-    name: 'Đảo Kamê',
-    planetTheme: 'traidat',
-    width: 2100,
-    height: 840,
-    defaultSpawn: { x: 65, y: 175 },
-    hitboxes: [{ x: -160, y: 0, w: 2340, h: 175 }],
+    id: 9, key: 'dong_karin', name: 'Đông Karin', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'forest_earth',
+    width: 1900, height: 840, defaultSpawn: { x: 1680, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2220, h: 175 }],
+    waypoints: [
+      wpLeft('wp_9_10', 'Rừng Karin', 10, 1980, 175),
+      wpDoor('wp_9_34', 'Doanh Trại Độc Nhãn', 950, 315, 34, 120, 175),
+      wpRight('wp_9_8', 'Đảo Kame', 1900, 8, 1120, 175)
+    ],
+    npcs: [
+      { id: 'linh_doc_nhan', name: 'Lính Canh Độc Nhãn', kind: 'modular', folder: 'admin_dungle', x: 820, y: 175 }
+    ],
+    monsters: [
+      { template: 'quy_xuong', x: 460, minX: 300, maxX: 620 },
+      { template: 'quy_xuong', x: 1360, minX: 1200, maxX: 1520 }
+    ]
+  },
+
+  // [10] Rừng Karin (Chân Tháp Karin ở chính giữa x=1000!)
+  {
+    id: 10, key: 'rung_karin', name: 'Rừng Karin', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'rung_karin',
+    width: 2100, height: 960, defaultSpawn: { x: 1000, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
       {
-        id: 'wp_daokame_to_rk',
-        label: 'Rừng Karin',
-        kind: 'left_edge',
-        signRect: { x: 10, y: 300, w: 230, h: 60 },
-        showRangeX: [-120, 310],
-        edgeTriggerX: [-160, 12],
-        groundGlowX: 16,
-        targetMapId: 5,
-        targetX: 2030,
-        targetY: 175
+        ...wpDoor('wp_10_11', 'Lên Tháp Karin', 1000, 325, 11, 700, 220),
+        towerClimbX: [915, 1085],
+        towerClimbY: 460
+      },
+      wpRight('wp_10_9', 'Đông Karin', 2100, 9, 80, 175)
+    ],
+    npcs: [
+      { id: 'bo_mong', name: 'Bò Mộng', kind: 'modular', folder: 'admin_huykhoi', x: 760, y: 175 }
+    ],
+    monsters: [
+      { template: 'quy_xuong', x: 360, minX: 200, maxX: 520 },
+      { template: 'tau_pay_pay', x: 1340, minX: 1180, maxX: 1520 },
+      { template: 'quy_xuong', x: 1720, minX: 1580, maxX: 1860 }
+    ]
+  },
+
+  // [11] Tháp Karin (Nối Rừng Karin ↓ và Thần Điện ↑!)
+  {
+    id: 11, key: 'thap_karin', name: 'Tháp Karin', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'thap_karin',
+    width: 1400, height: 900, defaultSpawn: { x: 700, y: 220 },
+    hitboxes: [{ x: 410, y: 170, w: 580, h: 50 }],
+    waypoints: [
+      wpDoor('wp_11_10', 'Xuống Rừng Karin', 700, 330, 10, 1000, 220),
+      {
+        id: 'wp_11_12', label: 'Lên Thần Điện', kind: 'door',
+        signRect: { x: 585, y: 470, w: 230, h: 60 },
+        showRangeX: [540, 860],
+        doorRangeX: [580, 820],
+        towerClimbX: [520, 880],
+        towerClimbY: 560,
+        targetMapId: 12, targetX: 700, targetY: 200
       }
     ],
     npcs: [
-      { id: 'quy_lao_kame', name: 'Quy Lão Kame', kind: 'sprite', x: 430, y: 175, tex: 'nhanvat/npc/quy_lao_kame.png', scale: 0.54 },
-      { id: 'thay_hieu', name: 'Thầy Hiếu Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 690, y: 175 }
+      { id: 'than_meo_karin', name: 'Thần Mèo Karin', kind: 'sprite', x: 545, y: 220, tex: 'nhanvat/npc/than_meo_karin.png', scale: 0.54 },
+      { id: 'dau_traidat', name: 'Đậu Thần Tiên', kind: 'senzu_tree', x: 855, y: 220 }
     ],
-    monsters: [
-      { template: 'tuan_loc', x: 980, minX: 860, maxX: 1120 },
-      { template: 'xen_con', x: 1300, minX: 1160, maxX: 1450 },
-      { template: 'xen_con', x: 1580, minX: 1440, maxX: 1730 },
-      { template: 'xen_con', x: 1860, minX: 1720, maxX: 2000 }
-    ]
+    monsters: []
   },
 
-  // ================= MAP 8: VÁCH NÚI KAKAROT (HÀNH TINH XAYDA) =================
+  // [12] Thần Điện (Trục Thần Giới: ← Khí Gas Mr. Popo | ↓ Tháp Karin | → Con Đường Rắn Độc | ↑ NPC Whis đi Hành Tinh Bill!)
   {
-    id: 8,
-    key: 'vach_nui_kakarot',
-    name: 'Vách Núi Kakarot (Xayda)',
-    planetTheme: 'xayda',
-    width: 1900,
-    height: 820,
-    defaultSpawn: { x: 1680, y: 175 },
+    id: 12, key: 'than_dien', name: 'Thần Điện', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'than_dien',
+    width: 1500, height: 880, defaultSpawn: { x: 750, y: 200 },
+    hitboxes: [{ x: 220, y: 150, w: 1060, h: 50 }],
+    waypoints: [
+      wpDoor('wp_12_35', 'Khí Gas / Phòng Tập', 340, 320, 35, 140, 175),
+      wpDoor('wp_12_11', 'Xuống Tháp Karin', 750, 320, 11, 700, 220),
+      wpDoor('wp_12_13', 'Con Đường Rắn Độc', 1160, 320, 13, 120, 175)
+    ],
+    npcs: [
+      { id: 'mr_popo', name: 'Mr. Popo (Khí Gas)', kind: 'modular', folder: 'admin_dungle', x: 460, y: 200 },
+      { id: 'thuong_de', name: 'Thượng Đế', kind: 'modular', folder: 'admin_haidang', x: 640, y: 200 },
+      { id: 'whis', name: 'Thiên Sứ Whis', kind: 'sprite', x: 930, y: 200, tex: 'nhanvat/npc/npc_whis.png', scale: 0.58 }
+    ],
+    monsters: []
+  },
+
+  // [13] Con Đường Rắn Độc & Hành Tinh Kaio
+  {
+    id: 13, key: 'con_duong_ran_doc', name: 'Con Đường Rắn Độc & Kaio', region: 'Thần Giới & Karin', planetTheme: 'xayda', renderStyle: 'kaio_road',
+    width: 1850, height: 840, defaultSpawn: { x: 120, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2060, h: 175 }],
-    waypoints: [],
+    waypoints: [wpLeft('wp_13_12', 'Thần Điện', 12, 1120, 200)],
     npcs: [
-      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Xayda', kind: 'spaceship', x: 1740, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay3.png' }
+      { id: 'bac_kaio', name: 'Thần Vũ Trụ Bắc Kaio', kind: 'modular', folder: 'ong_gohan', x: 1520, y: 175 }
     ],
     monsters: [
-      { template: 'zinba', x: 1420, minX: 1280, maxX: 1560 },
-      { template: 'zinba', x: 1180, minX: 1040, maxX: 1320 },
-      { template: 'khi_dot', x: 920, minX: 780, maxX: 1060 },
-      { template: 'khi_dot', x: 680, minX: 540, maxX: 820 },
-      { template: 'boss_broly', x: 350, minX: 180, maxX: 520 }
+      { template: 'khung_long_bay', x: 620, minX: 460, maxX: 780 },
+      { template: 'khi_dot', x: 1080, minX: 920, maxX: 1240 }
     ]
   },
 
-  // ================= MAP 9: THUNG LŨNG NAMẾC (HÀNH TINH NAMẾC) =================
+  // [14] Hành Tinh Bill & Hành Tinh Thực Vật (NPC Whis đổi đồ Hủy Diệt / Thiên Sứ)
   {
-    id: 9,
-    key: 'thung_lung_namek',
-    name: 'Thung Lũng Namếc',
-    planetTheme: 'namek',
-    width: 2200,
-    height: 850,
-    defaultSpawn: { x: 240, y: 175 },
-    hitboxes: [{ x: -80, y: 0, w: 2360, h: 175 }],
-    waypoints: [],
+    id: 14, key: 'hanh_tinh_bill', name: 'Hành Tinh Bill & Thực Vật', region: 'Thần Giới & Karin', planetTheme: 'namek', renderStyle: 'bill_planet',
+    width: 1950, height: 860, defaultSpawn: { x: 260, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2150, h: 175 }],
+    waypoints: [wpDoor('wp_14_12', 'Về Thần Điện', 180, 310, 12, 930, 200)],
     npcs: [
-      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Namếc', kind: 'spaceship', x: 170, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay2.png' }
+      { id: 'whis', name: 'Thiên Sứ Whis (Đổi Hủy Diệt)', kind: 'sprite', x: 380, y: 175, tex: 'nhanvat/npc/npc_whis.png', scale: 0.58 }
     ],
     monsters: [
-      { template: 'rua_co_dai', x: 520, minX: 380, maxX: 680 },
-      { template: 'rua_co_dai', x: 820, minX: 680, maxX: 980 },
-      { template: 'xen_hoang_kim', x: 1140, minX: 980, maxX: 1300 },
-      { template: 'xen_hoang_kim', x: 1440, minX: 1280, maxX: 1600 },
-      { template: 'boss_black_rose', x: 1840, minX: 1640, maxX: 2040 }
+      { template: 'tuan_loc', x: 860, minX: 700, maxX: 1040 },
+      { template: 'tuan_loc', x: 1320, minX: 1160, maxX: 1500 },
+      { template: 'tuan_loc', x: 1680, minX: 1520, maxX: 1840 }
+    ]
+  },
+
+  // [15] Nam Kame (Nhánh mở rộng phía Nam từ Đảo Kame → Đại Hội Võ Thuật / Babidi & Thành Phố)
+  {
+    id: 15, key: 'nam_kame', name: 'Nam Kame & Đảo Bulông', region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'dao_kame',
+    width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    waypoints: [
+      wpLeft('wp_15_8', 'Đảo Kame', 8, 2020, 175),
+      wpDoor('wp_15_16', 'Đại Hội / Babidi', 960, 315, 16, 180, 175),
+      wpRight('wp_15_17', 'TP. Phía Đông & Ginder', 1950, 17, 65, 175)
+    ],
+    npcs: [],
+    monsters: [
+      { template: 'than_lan_xanh', x: 520, minX: 380, maxX: 680 },
+      { template: 'quy_xuong', x: 1440, minX: 1280, maxX: 1620 }
+    ]
+  },
+
+  // [16] Đại Hội Võ Thuật & Phi Thuyền Babidi (NPC Osin & BOSS Mabư)
+  {
+    id: 16, key: 'phi_thuyen_babidi', name: 'Đại Hội Võ Thuật & Tàu Babidi', region: 'Trái Đất Mở Rộng', planetTheme: 'xayda', renderStyle: 'babidi_ship',
+    width: 1900, height: 840, defaultSpawn: { x: 180, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2100, h: 175 }],
+    waypoints: [wpLeft('wp_16_15', 'Nam Kame', 15, 960, 175)],
+    npcs: [
+      { id: 'osin', name: 'Thần Tối Cao Osin', kind: 'modular', folder: 'admin_huykhoi', x: 340, y: 175 }
+    ],
+    monsters: [
+      { template: 'pic_poc_kk', x: 860, minX: 700, maxX: 1020 },
+      { template: 'boss_mabu', x: 1460, minX: 1260, maxX: 1660 }
+    ]
+  },
+
+  // [17] Cụm Thành Phố & Thị Trấn Ginder (Android 19, Dr. Kôrê, Pic-Poc-King Kong)
+  {
+    id: 17, key: 'thi_tran_ginder', name: 'TP. Phía Đông & Thị Trấn Ginder', region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'city_earth',
+    width: 2200, height: 840, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2520, h: 175 }],
+    waypoints: [
+      wpLeft('wp_17_15', 'Nam Kame', 15, 1880, 175),
+      wpRight('wp_17_18', 'Võ Đài Xên Bọ Hùng', 2200, 18, 80, 175)
+    ],
+    npcs: [],
+    monsters: [
+      { template: 'android_19', x: 520, minX: 380, maxX: 680 },
+      { template: 'dr_kore', x: 960, minX: 820, maxX: 1120 },
+      { template: 'pic_poc_kk', x: 1420, minX: 1280, maxX: 1580 },
+      { template: 'pic_poc_kk', x: 1820, minX: 1680, maxX: 1960 }
+    ]
+  },
+
+  // [18] Võ Đài Xên Bọ Hùng (Xên Con + Xên Hoàn Thiện → Siêu Bọ Hùng!)
+  {
+    id: 18, key: 'vo_dai_xen', name: 'Võ Đài Xên Bọ Hùng', region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'cell_arena',
+    width: 1950, height: 840, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2240, h: 175 }],
+    waypoints: [wpLeft('wp_18_17', 'Thị Trấn Ginder', 17, 2120, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'xen_con', x: 520, minX: 380, maxX: 660 },
+      { template: 'xen_con', x: 840, minX: 700, maxX: 980 },
+      { template: 'xen_con', x: 1140, minX: 1000, maxX: 1280 },
+      { template: 'xen_hoan_thien', x: 1560, minX: 1380, maxX: 1760 }
+    ]
+  },
+
+  // [19] Nhà Moori (Quê nhà Tân thủ Namếc!)
+  {
+    id: 19, key: 'nha_moori', name: 'Nhà Moori (Namếc)', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'home_namek',
+    width: 1420, height: 760, defaultSpawn: { x: 325, y: 175 },
+    hitboxes: [{ x: -100, y: 0, w: 1620, h: 175 }],
+    waypoints: [
+      { ...wpDoor('wp_19_20', 'Làng Mori', 875, 300, 20, 675, 175), edgeTriggerX: [1395, 1500] }
+    ],
+    npcs: [
+      { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 105, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
+      { id: 'ong_moori', name: 'Ông Moori', kind: 'modular', folder: 'ong_gohan', x: 445, y: 175 },
+      { id: 'dau_traidat', name: 'Cây Đậu Namếc', kind: 'senzu_tree', x: 635, y: 175 }
+    ],
+    monsters: []
+  },
+
+  // [20] Làng Mori (Namếc)
+  {
+    id: 20, key: 'lang_mori', name: 'Làng Mori', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    width: 2100, height: 850, defaultSpawn: { x: 675, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
+    waypoints: [
+      wpLeft('wp_20_21', 'Vách núi Moori & Trạm', 21, 1680, 175),
+      wpDoor('wp_20_19', 'Nhà Moori', 675, 300, 19, 875, 175),
+      wpRight('wp_20_22', 'Đồi Nấm Tím & Đảo Guru', 2100, 22, 65, 175)
+    ],
+    npcs: [
+      { id: 'admin_thanhle', name: 'Dende (Cửa Hàng Namếc)', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 }
+    ],
+    monsters: [
+      { template: 'moc_nhan', x: 920, minX: 920, maxX: 920 },
+      { template: 'moc_nhan', x: 1060, minX: 1060, maxX: 1060 },
+      { template: 'khung_long', x: 1420, minX: 1280, maxX: 1580 },
+      { template: 'lon_loi', x: 1780, minX: 1640, maxX: 1920 }
+    ]
+  },
+
+  // [21] Trạm Tàu Vũ Trụ Namếc & Vách Núi Moori (Có Tàu Vũ Trụ + NPC Calích)
+  {
+    id: 21, key: 'tram_tau_namek', name: 'Trạm Namếc & Vách Núi Moori', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    width: 1800, height: 850, defaultSpawn: { x: 320, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2000, h: 175 }],
+    waypoints: [wpRight('wp_21_20', 'Làng Mori', 1800, 20, 65, 175)],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Namếc', kind: 'spaceship', x: 280, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay2.png' },
+      { id: 'calich', name: 'Calích (Tương Lai)', kind: 'sprite', x: 560, y: 175, tex: 'nhanvat/npc/npc_calich.png', scale: 0.56 }
+    ],
+    monsters: [
+      { template: 'khung_long_bay', x: 1180, minX: 1020, maxX: 1340 }
+    ]
+  },
+
+  // [22] Thung Lũng Namếc & Đảo Guru (Trưởng Lão Guru + BOSS Kuku)
+  {
+    id: 22, key: 'dao_guru', name: 'Thung Lũng Namếc & Đảo Guru', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    width: 2100, height: 850, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
+    waypoints: [
+      wpLeft('wp_22_20', 'Làng Mori', 20, 2020, 175),
+      wpRight('wp_22_23', 'Vực Maima (Fide)', 2100, 23, 80, 175)
+    ],
+    npcs: [
+      { id: 'truong_lao_guru', name: 'Trưởng Lão Guru', kind: 'modular', folder: 'ong_gohan', x: 420, y: 175 }
+    ],
+    monsters: [
+      { template: 'khung_long_me', x: 840, minX: 700, maxX: 980 },
+      { template: 'than_lan_xanh', x: 1220, minX: 1080, maxX: 1360 },
+      { template: 'boss_kuku', x: 1680, minX: 1520, maxX: 1840 }
+    ]
+  },
+
+  // [23] Vực Maima & Vùng Sâu Namếc (5 Tiểu Đội Sát Thủ & Fide Đại Đế 3 Cấp!)
+  {
+    id: 23, key: 'vuc_maima', name: 'Vực Maima (Quyết Chiến Fide)', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    width: 2300, height: 850, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2560, h: 175 }],
+    waypoints: [wpLeft('wp_23_22', 'Đảo Guru', 22, 2020, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'tdst_so4', x: 420, minX: 300, maxX: 540 },
+      { template: 'tdst_so3', x: 740, minX: 620, maxX: 860 },
+      { template: 'tdst_so2_so1', x: 1060, minX: 940, maxX: 1180 },
+      { template: 'tdst_so2_so1', x: 1280, minX: 1180, maxX: 1380 },
+      { template: 'tdst_ginyu', x: 1580, minX: 1460, maxX: 1700 },
+      { template: 'fide_cap_1', x: 1980, minX: 1820, maxX: 2140 }
+    ]
+  },
+
+  // [24] Nhà Paragus (Quê nhà Tân thủ Xayda!)
+  {
+    id: 24, key: 'nha_paragus', name: 'Nhà Paragus (Xayda)', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'home_xayda',
+    width: 1420, height: 760, defaultSpawn: { x: 325, y: 175 },
+    hitboxes: [{ x: -100, y: 0, w: 1620, h: 175 }],
+    waypoints: [
+      { ...wpDoor('wp_24_25', 'Làng Kakarot', 875, 300, 25, 675, 175), edgeTriggerX: [1395, 1500] }
+    ],
+    npcs: [
+      { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 105, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
+      { id: 'ong_paragus', name: 'Ông Paragus', kind: 'modular', folder: 'admin_dungle', x: 445, y: 175 },
+      { id: 'dau_traidat', name: 'Cây Đậu Xayda', kind: 'senzu_tree', x: 635, y: 175 }
+    ],
+    monsters: []
+  },
+
+  // [25] Làng Kakarot (Xayda)
+  {
+    id: 25, key: 'lang_kakarot', name: 'Làng Kakarot', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    width: 2100, height: 850, defaultSpawn: { x: 675, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
+    waypoints: [
+      wpLeft('wp_25_26', 'Vách núi Kakarot & Trạm', 26, 1680, 175),
+      wpDoor('wp_25_24', 'Nhà Paragus', 675, 300, 24, 875, 175),
+      wpRight('wp_25_27', 'TP. Vegeta & Núi Khỉ', 2100, 27, 65, 175)
+    ],
+    npcs: [
+      { id: 'admin_thanhle', name: 'Appule (Cửa Hàng Xayda)', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 }
+    ],
+    monsters: [
+      { template: 'moc_nhan', x: 920, minX: 920, maxX: 920 },
+      { template: 'moc_nhan', x: 1060, minX: 1060, maxX: 1060 },
+      { template: 'khung_long', x: 1420, minX: 1280, maxX: 1580 },
+      { template: 'lon_loi', x: 1780, minX: 1640, maxX: 1920 }
+    ]
+  },
+
+  // [26] Trạm Tàu Vũ Trụ Xayda & Vách Núi Kakarot (Tàu Vũ Trụ + NPC Calích)
+  {
+    id: 26, key: 'tram_tau_xayda', name: 'Trạm Xayda & Vách Núi Kakarot', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    width: 1800, height: 850, defaultSpawn: { x: 320, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2000, h: 175 }],
+    waypoints: [wpRight('wp_26_25', 'Làng Kakarot', 1800, 25, 65, 175)],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Xayda', kind: 'spaceship', x: 280, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay3.png' },
+      { id: 'calich', name: 'Calích (Tương Lai)', kind: 'sprite', x: 560, y: 175, tex: 'nhanvat/npc/npc_calich.png', scale: 0.56 }
+    ],
+    monsters: [
+      { template: 'khung_long_bay', x: 1180, minX: 1020, maxX: 1340 }
+    ]
+  },
+
+  // [27] Thành Phố Vegeta & Cụm Núi Khỉ (Vua Vegeta, Mập Đầu Đinh, Rambo, Khỉ Đột & Broly)
+  {
+    id: 27, key: 'tp_vegeta', name: 'TP. Vegeta & Cụm Núi Khỉ', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    width: 2300, height: 850, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2560, h: 175 }],
+    waypoints: [wpLeft('wp_27_25', 'Làng Kakarot', 25, 2020, 175)],
+    npcs: [
+      { id: 'vua_vegeta', name: 'Vua Vegeta', kind: 'modular', folder: 'admin_huykhoi', x: 340, y: 175 }
+    ],
+    monsters: [
+      { template: 'khung_long_me', x: 640, minX: 520, maxX: 760 },
+      { template: 'boss_map_dau_dinh', x: 960, minX: 840, maxX: 1080 },
+      { template: 'boss_rambo', x: 1280, minX: 1160, maxX: 1400 },
+      { template: 'khi_dot', x: 1620, minX: 1480, maxX: 1760 },
+      { template: 'boss_broly', x: 2020, minX: 1860, maxX: 2160 }
+    ]
+  },
+
+  // [28] Siêu Thị Liên Hành Tinh (Nối Sân Sau Siêu Thị)
+  {
+    id: 28, key: 'sieu_thi', name: 'Siêu Thị Liên Hành Tinh', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'city_earth',
+    width: 1700, height: 820, defaultSpawn: { x: 320, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 1920, h: 175 }],
+    waypoints: [wpRight('wp_28_29', 'Sân Sau Siêu Thị', 1700, 29, 80, 175)],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Siêu Thị', kind: 'spaceship', x: 220, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' },
+      { id: 'admin_thanhle', name: 'Ký Gửi Liên Hành Tinh', kind: 'modular', folder: 'admin_thanhle', x: 560, y: 175 },
+      { id: 'ruong_do', name: 'Rương Đồ Chung', kind: 'chest', x: 760, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' }
+    ],
+    monsters: []
+  },
+
+  // [29] Sân Sau Siêu Thị (Android 13, 14, 15)
+  {
+    id: 29, key: 'san_sau_sieu_thi', name: 'Sân Sau Siêu Thị', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'city_earth',
+    width: 1900, height: 840, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
+    waypoints: [wpLeft('wp_29_28', 'Siêu Thị', 28, 1600, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'android_15_14', x: 580, minX: 440, maxX: 740 },
+      { template: 'android_15_14', x: 980, minX: 840, maxX: 1120 },
+      { template: 'android_13', x: 1480, minX: 1320, maxX: 1660 }
+    ]
+  },
+
+  // [30] Thế Giới Tương Lai (Calích Cỗ Máy Thời Gian — Black Goku → Super Black Goku Rosé!)
+  {
+    id: 30, key: 'tuong_lai', name: 'Thế Giới Tương Lai', region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'future_ruins',
+    width: 2000, height: 850, defaultSpawn: { x: 220, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2200, h: 175 }],
+    waypoints: [],
+    npcs: [
+      { id: 'calich_back', name: 'Calích (Về Hiện Tại)', kind: 'sprite', x: 180, y: 175, tex: 'nhanvat/npc/npc_calich.png', scale: 0.56 }
+    ],
+    monsters: [
+      { template: 'xen_con', x: 640, minX: 500, maxX: 780 },
+      { template: 'xen_con', x: 1020, minX: 880, maxX: 1160 },
+      { template: 'black_goku', x: 1560, minX: 1380, maxX: 1760 }
+    ]
+  },
+
+  // [31] Hành Tinh Cold — Cánh Đồng & Rừng Tuyết (Săn đồ Thần Linh & BOSS Cooler)
+  {
+    id: 31, key: 'hanh_tinh_cold', name: 'Hành Tinh Cold (Rừng Tuyết)', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'cold_planet',
+    width: 2050, height: 850, defaultSpawn: { x: 240, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2260, h: 175 }],
+    waypoints: [],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Cold', kind: 'spaceship', x: 180, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay3.png' }
+    ],
+    monsters: [
+      { template: 'zinba', x: 640, minX: 500, maxX: 780 },
+      { template: 'zinba', x: 1080, minX: 940, maxX: 1220 },
+      { template: 'boss_cooler', x: 1620, minX: 1440, maxX: 1820 }
+    ]
+  },
+
+  // [32] Hành Tinh Ngục Tù & Yardrat (Mở cổng bằng Nhẫn Thời Không — BOSS Cumber!)
+  {
+    id: 32, key: 'hanh_tinh_nguc_tu', name: 'Hành Tinh Ngục Tù & Yardrat', region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'prison_planet',
+    width: 2050, height: 850, defaultSpawn: { x: 240, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2260, h: 175 }],
+    waypoints: [wpDoor('wp_32_3', 'Khe Nứt Về Trái Đất', 180, 310, 3, 520, 175)],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Phi Thuyền Yardrat', kind: 'spaceship', x: 340, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay2.png' }
+    ],
+    monsters: [
+      { template: 'khi_dot', x: 760, minX: 620, maxX: 900 },
+      { template: 'khi_dot', x: 1140, minX: 1000, maxX: 1280 },
+      { template: 'boss_cumber', x: 1640, minX: 1460, maxX: 1840 }
+    ]
+  },
+
+  // [33] Phó Bản: Bản Đồ Kho Báu (Vào từ Quy Lão Kame tại Đảo Kame)
+  {
+    id: 33, key: 'ban_do_kho_bau', name: 'Phó Bản: Bản Đồ Kho Báu', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'dao_kame',
+    width: 1900, height: 840, defaultSpawn: { x: 100, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
+    waypoints: [wpLeft('wp_33_8', 'Rời Kho Báu (Đảo Kame)', 8, 430, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'quy_xuong', x: 520, minX: 380, maxX: 660 },
+      { template: 'quy_xuong', x: 960, minX: 820, maxX: 1100 },
+      { template: 'tuong_xanh_lo', x: 1480, minX: 1320, maxX: 1660 }
+    ]
+  },
+
+  // [34] Phó Bản: Doanh Trại Độc Nhãn (Vào từ Đông Karin)
+  {
+    id: 34, key: 'doanh_trai_doc_nhan', name: 'Phó Bản: Doanh Trại Độc Nhãn', region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'city_earth',
+    width: 1900, height: 840, defaultSpawn: { x: 100, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
+    waypoints: [wpLeft('wp_34_9', 'Rời Doanh Trại (Đông Karin)', 9, 950, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'android_19', x: 560, minX: 420, maxX: 700 },
+      { template: 'doc_nhan_tuong', x: 1420, minX: 1260, maxX: 1600 }
+    ]
+  },
+
+  // [35] Phó Bản: Khí Gas Hủy Diệt (Vào từ Mr. Popo trên Thần Điện)
+  {
+    id: 35, key: 'khi_gas_huy_diet', name: 'Phó Bản: Khí Gas Hủy Diệt', region: 'Vũ Trụ & Phó Bản', planetTheme: 'namek', renderStyle: 'prison_planet',
+    width: 1900, height: 840, defaultSpawn: { x: 100, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
+    waypoints: [wpLeft('wp_35_12', 'Về Thần Điện', 12, 460, 200)],
+    npcs: [],
+    monsters: [
+      { template: 'zinba', x: 580, minX: 440, maxX: 720 },
+      { template: 'hatchiyack', x: 1440, minX: 1280, maxX: 1620 }
     ]
   }
+];
+
+// Văn bản Sơ Đồ Thế Giới chuẩn theo kiến trúc 2 trục của Ngọc Rồng Online
+export const WORLD_TOPOLOGY_LINES = [
+  '[Hành Tinh Bill (14)] ↔ [Thực Vật]',
+  '        ↑ (NPC Whis)',
+  '[Khí Gas (35)] ← [THẦN ĐIỆN (12)] → [Rắn Độc & Kaio (13)]',
+  '        ↑',
+  '  [Tháp Karin (11)] ↑ [Rừng Karin (10)] ↔ [Đông Karin (9)] → [Độc Nhãn (34)]',
+  '                                              ↕',
+  '[Vách Núi Aru (2)] ↔ [Làng Aru (1)] → (4 Map Rừng 4-7) → [ĐẢO KAME (8)] → [Kho Báu (33)]',
+  '   ↓ (Calích)            ↕                                    ↓',
+  '[TƯƠNG LAI (30)]    [Nhà Gôhan (0) / Trạm TĐ (3)]        [Nam Kame (15)] → [Tàu Babidi (16)]',
+  '                         ↕                                    ↓',
+  '    ┌────────────────────┼────────────────────┐          [TP. Đông & Ginder (17)]',
+  '    ↕                    ↕                    ↕               ↓',
+  '[TRẠM NAMẾC (21)]   [TRẠM XAYDA (26)]   [SIÊU THỊ (28)]  [Võ Đài Xên (18)]',
+  '↔ Làng Mori (20)    ↔ Làng Kakarot (25) → Sân Sau (29)',
+  '→ Đảo Guru (22)     → TP. Vegeta (27)   • Hành Tinh Cold (31) (Cooler)',
+  '→ Vực Maima (23)    • Nhẫn Thời Không → Hành Tinh Ngục Tù (32) (Cumber)'
 ];
 
 export const GIFTCODES = {
   TANTHU: { gold: 50000, gem: 50, items: ['ve_quay', 'cuong_no', 'bo_huyet'], msg: 'Nhận Giftcode TANTHU: +50K Vàng, +50 Ngọc, Vé quay & Dược phẩm!' },
   NROWEB: { gold: 150000, gem: 120, items: ['vb_candauvan', 'trung_de_tu', 'bong_tai_c1'], msg: 'Nhận Giftcode NROWEB: +150K Vàng, +120 Ngọc, Cân Đẩu Vân, Trứng Đệ Tử & Bông Tai!' },
-  DRAGONBOY: { gold: 200000, gem: 200, items: ['ct_gohan_beast', 'dl_kiem_vip'], msg: 'Nhận Giftcode DRAGONBOY: +200K Vàng, +200 Ngọc, Cải Trang Gohan Beast & Kiếm Trunks!' },
+  TUONGLAI: { gold: 200000, gem: 150, items: ['nhan_thoi_khong', 'dl_kiem_vip'], msg: 'Nhận Giftcode TUONGLAI: Nhẫn Thời Không & Kiếm Ánh Sáng Calích!' },
   NGOCRONG: { gold: 100000, gem: 100, items: ['nr_1s', 'nr_2s', 'nr_3s', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s'], msg: 'Nhận trọn bộ 7 Viên Ngọc Rồng! Hãy mở Hành Trang gọi Rồng Thần ngay!' }
 };
 

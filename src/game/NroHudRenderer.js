@@ -11,6 +11,7 @@ import {
   SHOP_TABS,
   STORY_QUESTS,
   MAPS_CONFIG,
+  WORLD_TOPOLOGY_LINES,
   GIFTCODES,
   formatNroNum
 } from './nroData';
@@ -61,8 +62,9 @@ export class NroHudRenderer {
     this.selectedEquipSlot = null;
     this.selectedSkillIdx = 0;
 
-    // Trạng thái Cửa Hàng / Rương Đồ / Pha Lê / Gacha / Bảng Xếp Hạng
-    this.activePanel = null; // null | 'SHOP' | 'CHEST' | 'CRYSTAL' | 'GACHA' | 'LEADERBOARD'
+    // Trạng thái Cửa Hàng / Rương Đồ / Pha Lê / Gacha / Bảng Xếp Hạng / Sơ Đồ Thế Giới
+    this.activePanel = null; // null | 'SHOP' | 'CHEST' | 'CRYSTAL' | 'GACHA' | 'LEADERBOARD' | 'WORLD_MAP'
+    this.capsuleRegionIdx = 0;
     this.shopTabIdx = 0;
     this.selectedShopItemId = null;
     this.crystalEquipSlot = null;
@@ -113,7 +115,14 @@ export class NroHudRenderer {
   }
 
   isBlockingWorldClick() {
-    return Boolean(this.npcDialog || this.shenronActive || this.chatOpen || this.activePanel === 'GACHA' || this.activePanel === 'LEADERBOARD');
+    return Boolean(
+      this.npcDialog ||
+      this.shenronActive ||
+      this.chatOpen ||
+      this.activePanel === 'GACHA' ||
+      this.activePanel === 'LEADERBOARD' ||
+      this.activePanel === 'WORLD_MAP'
+    );
   }
 
   // ==================== TIỆN ÍCH VẼ TOẠ ĐỘ LIBGDX (GỐC DƯỚI-TRÁI) ====================
@@ -281,40 +290,29 @@ export class NroHudRenderer {
     if (npc.id === 'tau_vu_tru') {
       sound.playDialog();
       const curMap = this.engine.currentMapId;
-      const btns = [];
-      if (curMap !== 3) {
-        btns.push({
-          label: 'Bay tới\nTrái Đất',
+      const destinations = [
+        { mapId: 3, x: 520, y: 175, label: 'Trạm Vũ Trụ\nTrái Đất' },
+        { mapId: 21, x: 320, y: 175, label: 'Trạm Vũ Trụ\nNamếc' },
+        { mapId: 26, x: 320, y: 175, label: 'Trạm Vũ Trụ\nXayda' },
+        { mapId: 28, x: 320, y: 175, label: 'Siêu Thị\nLiên Hành Tinh' },
+        { mapId: 31, x: 240, y: 175, label: 'Hành Tinh\nCold (Tuyết)' },
+        { mapId: 32, x: 340, y: 175, label: 'Hành Tinh\nYardrat' }
+      ];
+      const btns = destinations
+        .filter((d) => d.mapId !== curMap)
+        .map((d) => ({
+          label: d.label,
           action: () => {
             this.npcDialog = null;
-            this.engine.flyBySpaceship(3, 320, 175);
+            this.engine.flyBySpaceship(d.mapId, d.x, d.y);
           }
-        });
-      }
-      if (curMap !== 8) {
-        btns.push({
-          label: 'Bay tới\nHành Tinh Xayda',
-          action: () => {
-            this.npcDialog = null;
-            this.engine.flyBySpaceship(8, 1620, 175);
-          }
-        });
-      }
-      if (curMap !== 9) {
-        btns.push({
-          label: 'Bay tới\nHành Tinh Namếc',
-          action: () => {
-            this.npcDialog = null;
-            this.engine.flyBySpaceship(9, 280, 175);
-          }
-        });
-      }
+        }));
       btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
 
       this.npcDialog = {
         npc,
         avt: npc.tex || 'vatpham/taubay/myTexture2dmaybay4b.png',
-        text: 'Tàu Vũ Trụ Capsule đã nạp đầy nhiên liệu siêu không gian!\nChiến binh muốn khởi hành bay tới hành tinh nào?',
+        text: 'Trục Giao Thông Liên Hành Tinh đã sẵn sàng khởi hành!\nChiến binh muốn đáp phi thuyền tới hành tinh nào?',
         buttons: btns
       };
       return;
@@ -358,22 +356,29 @@ export class NroHudRenderer {
       return;
     }
 
-    if (npc.id === 'ong_gohan') {
+    if (npc.id === 'ong_gohan' || npc.id === 'ong_moori' || npc.id === 'ong_paragus') {
+      sound.playDialog();
       const curStep = quest ? quest.steps[p.questStep || 0] : null;
-      let msg = `Chào cháu ${p.name}! Cháu hãy chăm chỉ rèn luyện võ đạo nhé!`;
+      const elderTitle = npc.name;
+      let msg = `Chào hậu bối ${p.name}! Hãy chăm chỉ rèn luyện từ những đòn căn bản nhất để bảo vệ quê hương nhé!`;
       const btns = [];
 
-      if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'ong_gohan') {
-        msg = curStep.dialogReply || `Khá lắm ${p.name}! Cháu đã hoàn thành nhiệm vụ "${quest.title}"!`;
+      const canReport = quest && curStep && (
+        curStep.type === 'talk_elder' ||
+        (curStep.type === 'talk' && curStep.targetId === npc.id)
+      );
+
+      if (canReport) {
+        msg = curStep.dialogReply || `Khá lắm ${p.name}! Con đã hoàn thành nhiệm vụ "${quest.title}"!`;
         btns.push({
           label: 'Báo Cáo\nNhận Thưởng',
           action: () => {
-            this.engine.advanceQuestEvent('talk', 'ong_gohan', 1);
+            this.engine.advanceQuestEvent('talk', npc.id, 1);
             this.npcDialog = null;
           }
         });
       } else if (quest && curStep) {
-        msg = `Nhiệm vụ hiện tại: ${quest.title}\n- ${curStep.text} (${p.questProgress}/${curStep.count})\n${quest.desc.split('\n')[0]}`;
+        msg = `[${quest.era}]\nNhiệm vụ: ${quest.title}\n- ${curStep.text} (${Math.min(p.questProgress, curStep.count)}/${curStep.count})`;
       }
 
       btns.push({
@@ -382,13 +387,16 @@ export class NroHudRenderer {
           p.hp = p.maxHp;
           p.ki = p.maxKi;
           sound.playHeal();
-          this.pushBanner('Ông Gôhan đã truyền khí hồi 100% HP & KI cho bạn!', '#86efac');
+          this.pushBanner(`${elderTitle} đã truyền khí hồi 100% HP & KI cho bạn!`, '#86efac');
           this.npcDialog = null;
         }
       });
       btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
 
-      this.npcDialog = { npc, avt: 'nhanvat/npc/ong_gohan/dau.png', text: msg, buttons: btns };
+      const avtPath = npc.id === 'ong_paragus'
+        ? 'nhanvat/npc/admin_dungle/avt.png'
+        : 'nhanvat/npc/ong_gohan/dau.png';
+      this.npcDialog = { npc, avt: avtPath, text: msg, buttons: btns };
       return;
     }
 
@@ -434,23 +442,28 @@ export class NroHudRenderer {
       return;
     }
 
-    if (npc.id === 'quy_lao_kame') {
+    if (npc.id === 'quy_lao_kame' || npc.id === 'truong_lao_guru' || npc.id === 'vua_vegeta') {
       sound.playDialog();
       const curStep = quest ? quest.steps[p.questStep || 0] : null;
       const btns = [];
-      let msg = `Hahaha! Chào con ${p.name}, đây là Đảo Kamê!\nCon hãy chăm chỉ tu luyện Sức Mạnh & Tiềm Năng để lĩnh hội thêm các bí kíp võ công thượng thừa nhé!`;
+      let msg = `Chào hậu bối ${p.name}! Ta là ${npc.name}.\nHãy chăm chỉ tu luyện Sức Mạnh & Tiềm Năng để lĩnh hội thêm các bí kíp võ công trấn phái nhé!`;
 
-      if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'quy_lao_kame') {
+      const canReport = quest && curStep && (
+        curStep.type === 'talk_master' ||
+        (curStep.type === 'talk' && curStep.targetId === npc.id)
+      );
+
+      if (canReport) {
         msg = curStep.dialogReply || `Khá lắm đệ tử ${p.name}! Hãy nhận phần thưởng nhiệm vụ của con!`;
         btns.push({
-          label: p.questId === 4 && (p.questStep || 0) === 0 ? 'Bái Sư &\nHọc Chưởng' : 'Báo Cáo\nNhận Thưởng',
+          label: curStep.unlockSkill2 ? 'Bái Sư &\nHọc Chưởng' : 'Báo Cáo\nNhận Thưởng',
           action: () => {
-            this.engine.advanceQuestEvent('talk', 'quy_lao_kame', 1);
+            this.engine.advanceQuestEvent('talk', npc.id, 1);
             this.npcDialog = null;
           }
         });
       } else if (quest && curStep) {
-        msg = `Nhiệm vụ hiện tại: ${quest.title}\n- ${curStep.text} (${Math.min(p.questProgress, curStep.count)}/${curStep.count})`;
+        msg = `[${quest.era}]\nNhiệm vụ: ${quest.title}\n- ${curStep.text}`;
       }
 
       btns.push({
@@ -461,21 +474,34 @@ export class NroHudRenderer {
           this.popupTab = 2;
         }
       });
+      if (npc.id === 'quy_lao_kame') {
+        btns.push({
+          label: 'Phó Bản\nKho Báu',
+          action: () => {
+            this.npcDialog = null;
+            this.engine.changeMap(33, 100, 175);
+          }
+        });
+      }
       btns.push({
         label: 'Hồi Phục\n100% HP/KI',
         action: () => {
           p.hp = p.maxHp;
           p.ki = p.maxKi;
           sound.playHeal();
-          this.pushBanner('Quy Lão Tiên Sinh truyền khí hồi 100% HP & KI!', '#86efac');
+          this.pushBanner(`${npc.name} truyền khí hồi 100% HP & KI!`, '#86efac');
           this.npcDialog = null;
         }
       });
       btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
 
+      const masterAvt = npc.id === 'quy_lao_kame'
+        ? 'nhanvat/npc/quy_lao_kame.png'
+        : (npc.id === 'vua_vegeta' ? 'nhanvat/npc/admin_huykhoi/avt.png' : 'nhanvat/npc/ong_gohan/dau.png');
+
       this.npcDialog = {
         npc,
-        avt: 'nhanvat/npc/quy_lao_kame.png',
+        avt: masterAvt,
         text: msg,
         buttons: btns
       };
@@ -486,7 +512,7 @@ export class NroHudRenderer {
       sound.playDialog();
       const curStep = quest ? quest.steps[p.questStep || 0] : null;
       const btns = [];
-      let msg = `Chào chiến binh ${p.name}! Ngay phía bên phải ta chính là Cột Tháp Karin huyền thoại dẫn thẳng lên Thánh địa của Thần Mèo Karin!`;
+      let msg = `Chào chiến binh ${p.name}! Ngay chính giữa Rừng Karin (bên phải ta) là Cột Tháp Karin dẫn thẳng lên Tháp Karin và Thần Điện!`;
 
       if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'bo_mong') {
         msg = curStep.dialogReply;
@@ -503,7 +529,7 @@ export class NroHudRenderer {
         label: 'Lên Đỉnh\nTháp Karin',
         action: () => {
           this.npcDialog = null;
-          this.engine.changeMap(6, 700, 220);
+          this.engine.changeMap(11, 700, 220);
         }
       });
       btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
@@ -522,8 +548,8 @@ export class NroHudRenderer {
       const curStep = quest ? quest.steps[p.questStep || 0] : null;
       const needFight = quest && curStep && curStep.targetId === 'boss_than_meo';
       const msg = needFight
-        ? `Meow~ Con leo được tới tận Đỉnh Tháp Karin này thật đáng khen!\nHãy bấm "Thách Đấu" và đánh thắng ta nếu muốn chứng minh thực lực trước khi đối đầu Tàu Pảy Pảy!`
-        : `Meow~ Chào mừng ${p.name} tới Thánh Địa Tháp Karin trên chín tầng mây!\nTa có thể ban cho con Siêu Thần Thủy hoặc tỷ thí võ nghệ cùng con bất cứ lúc nào!`;
+        ? `Meow~ Con leo được tới tận Đỉnh Tháp Karin này thật đáng khen!\nHãy bấm "Thách Đấu" và đánh thắng ta trước khi xuống chân tháp hạ Sát Thủ Tàu Pảy Pảy!`
+        : `Meow~ Đây là Tháp Karin! Phía trên đỉnh tháp có Gậy Như Ý nối thẳng lên Thần Điện của Thượng Đế và Thiên Sứ Whis!`;
 
       this.npcDialog = {
         npc,
@@ -538,6 +564,13 @@ export class NroHudRenderer {
             }
           },
           {
+            label: 'Lên\nThần Điện',
+            action: () => {
+              this.npcDialog = null;
+              this.engine.changeMap(12, 750, 200);
+            }
+          },
+          {
             label: 'Uống Siêu\nThần Thủy',
             action: () => {
               p.hp = p.maxHp;
@@ -545,7 +578,7 @@ export class NroHudRenderer {
               p.buffs.atk = 180;
               this.engine.recalcStats();
               sound.playHeal();
-              this.pushBanner('Uống Siêu Thần Thủy! Hồi 100% HP/KI & +50% Sức đánh trong 3 phút!', '#fde047');
+              this.pushBanner('Uống Siêu Thần Thủy! Hồi 100% HP/KI & +50% Sức đánh!', '#fde047');
               this.npcDialog = null;
             }
           },
@@ -553,13 +586,217 @@ export class NroHudRenderer {
             label: 'Xuống Chân\nTháp Karin',
             action: () => {
               this.npcDialog = null;
-              this.engine.changeMap(5, 1000, 220);
+              this.engine.changeMap(10, 1000, 220);
             }
           },
           { label: 'Đóng', action: () => { this.npcDialog = null; } }
         ]
       };
       return;
+    }
+
+    if (npc.id === 'calich' || npc.id === 'calich_back') {
+      sound.playDialog();
+      if (npc.id === 'calich_back') {
+        this.npcDialog = {
+          npc,
+          avt: 'nhanvat/npc/npc_calich.png',
+          text: `Cỗ Máy Thời Gian Capsule đã nạp đủ năng lượng!\nBạn muốn quay trở về dòng thời gian Hiện Tại chứ?`,
+          buttons: [
+            {
+              label: 'Về Hiện Tại',
+              action: () => {
+                const retMap = p.returnMapFromFuture || 2;
+                this.npcDialog = null;
+                this.engine.flyBySpaceship(retMap, 420, 175);
+              }
+            },
+            { label: 'Ở Lại', action: () => { this.npcDialog = null; } }
+          ]
+        };
+        return;
+      }
+
+      const curStep = quest ? quest.steps[p.questStep || 0] : null;
+      let msg = `Tôi là Calích (Future Trunks) đến từ 20 năm sau!\nThế giới Tương Lai đang bị Black Goku & Super Black Goku Rosé hủy diệt — hãy lên Cỗ Máy Thời Gian cùng tôi đoạt Nhẫn Thời Không!`;
+      if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'calich') {
+        msg = curStep.dialogReply;
+      }
+      this.npcDialog = {
+        npc,
+        avt: 'nhanvat/npc/npc_calich.png',
+        text: msg,
+        buttons: [
+          {
+            label: 'Đi Tương Lai\n(Cỗ Máy TG)',
+            action: () => {
+              p.returnMapFromFuture = this.engine.currentMapId;
+              this.engine.advanceQuestEvent('talk', 'calich', 1);
+              this.npcDialog = null;
+              this.engine.flyBySpaceship(30, 220, 175);
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+      return;
+    }
+
+    if (npc.id === 'whis') {
+      sound.playDialog();
+      const inBill = this.engine.currentMapId === 14;
+      const curStep = quest ? quest.steps[p.questStep || 0] : null;
+      let msg = inBill
+        ? `Hoan nghênh ${p.name} tới Hành Tinh Bill của Ngài Thần Hủy Diệt Beerus!\nTại đây ta có thể trao đổi Trang Bị Hủy Diệt & Thiên Sứ tối thượng cho con!`
+        : `Ồ hố hố~ Ta là Thiên Sứ Whis!\nCon muốn theo ta bay lên Hành Tinh Bill để tu luyện thần lực và đổi Trang Bị Hủy Diệt, Thiên Sứ chứ?`;
+      if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'whis') {
+        msg = curStep.dialogReply;
+      }
+
+      const btns = [];
+      if (!inBill) {
+        btns.push({
+          label: 'Bay Tới\nHành Tinh Bill',
+          action: () => {
+            this.engine.advanceQuestEvent('talk', 'whis', 1);
+            this.npcDialog = null;
+            this.engine.changeMap(14, 260, 175);
+          }
+        });
+      } else {
+        if (quest && curStep && curStep.type === 'talk' && curStep.targetId === 'whis') {
+          btns.push({
+            label: 'Thọ Giáo\nThiên Sứ Whis',
+            action: () => {
+              this.engine.advanceQuestEvent('talk', 'whis', 1);
+              this.npcDialog = null;
+            }
+          });
+        }
+        btns.push({
+          label: 'Về Lại\nThần Điện',
+          action: () => {
+            this.npcDialog = null;
+            this.engine.changeMap(12, 930, 200);
+          }
+        });
+      }
+      btns.push({
+        label: 'Đổi Trang Bị\nHủy Diệt',
+        action: () => {
+          this.npcDialog = null;
+          this.popupOpen = true;
+          this.popupTab = 1;
+          this.activePanel = 'SHOP';
+          this.shopTabIdx = 0;
+        }
+      });
+      btns.push({ label: 'Đóng', action: () => { this.npcDialog = null; } });
+
+      this.npcDialog = { npc, avt: 'nhanvat/npc/npc_whis.png', text: msg, buttons: btns };
+      return;
+    }
+
+    if (npc.id === 'mr_popo' || npc.id === 'linh_doc_nhan' || npc.id === 'thuong_de' || npc.id === 'bac_kaio' || npc.id === 'osin') {
+      sound.playDialog();
+      if (npc.id === 'mr_popo') {
+        this.npcDialog = {
+          npc,
+          avt: 'nhanvat/npc/admin_dungle/avt.png',
+          text: `Ta là Mr. Popo cai quản Thần Điện!\nPhó Bản [Khí Gas Hủy Diệt] đang giam giữ Cỗ Máy Hủy Diệt Hatchiyack — ngươi có dám tiến vào cày cấp không?`,
+          buttons: [
+            {
+              label: 'Vào Phó Bản\nKhí Gas',
+              action: () => {
+                this.npcDialog = null;
+                this.engine.changeMap(35, 100, 175);
+              }
+            },
+            { label: 'Đóng', action: () => { this.npcDialog = null; } }
+          ]
+        };
+        return;
+      }
+      if (npc.id === 'linh_doc_nhan') {
+        this.npcDialog = {
+          npc,
+          avt: 'nhanvat/npc/admin_dungle/avt.png',
+          text: `Phía trước là đại bản doanh [Phó Bản: Doanh Trại Độc Nhãn]!\nĐánh bại Độc Nhãn Đại Tướng sẽ rơi rất nhiều Tiềm năng, Vàng và Ngọc Rồng!`,
+          buttons: [
+            {
+              label: 'Đột Kích\nĐộc Nhãn',
+              action: () => {
+                this.npcDialog = null;
+                this.engine.changeMap(34, 100, 175);
+              }
+            },
+            { label: 'Đóng', action: () => { this.npcDialog = null; } }
+          ]
+        };
+        return;
+      }
+      if (npc.id === 'thuong_de') {
+        this.npcDialog = {
+          npc,
+          avt: 'nhanvat/npc/admin_haidang/avt.png',
+          text: `Ta là Thượng Đế tối cao trên Thần Điện!\nCon có thể thử vận may với Vòng Quay Thượng Đế hoặc rẽ phải sang Con Đường Rắn Độc tìm Bắc Kaio!`,
+          buttons: [
+            {
+              label: 'Vòng Quay\nThượng Đế',
+              action: () => {
+                this.npcDialog = null;
+                this.popupOpen = false;
+                this.activePanel = 'GACHA';
+                this.gachaResult = null;
+              }
+            },
+            { label: 'Đóng', action: () => { this.npcDialog = null; } }
+          ]
+        };
+        return;
+      }
+      if (npc.id === 'bac_kaio') {
+        this.npcDialog = {
+          npc,
+          avt: 'nhanvat/npc/ong_gohan/dau.png',
+          text: `Ồ, con đã chạy hết Con Đường Rắn Độc tới Hành Tinh Kaio của ta!\nHãy mở bảng Võ Công lĩnh hội tuyệt kỹ Kaioken và Quả Cầu Kênh Khi nhé!`,
+          buttons: [
+            {
+              label: 'Lĩnh Hội\nTuyệt Kỹ',
+              action: () => {
+                this.npcDialog = null;
+                this.popupOpen = true;
+                this.popupTab = 2;
+              }
+            },
+            { label: 'Đóng', action: () => { this.npcDialog = null; } }
+          ]
+        };
+        return;
+      }
+      if (npc.id === 'osin') {
+        this.npcDialog = {
+          npc,
+          avt: 'nhanvat/npc/admin_huykhoi/avt.png',
+          text: `Tôi là Thần Tối Cao Kaioshin (Osin)!\nPhù thủy Babidi đã giải phong ấn Ma Nhân Mabư ngay phía sâu trong Phi Thuyền — hãy đánh bại Mabư để thu phục Quả Trứng Đệ Tử!`,
+          buttons: [
+            {
+              label: 'Nhận Phù Hộ\n(+50% Công)',
+              action: () => {
+                p.buffs.atk = 300;
+                p.hp = p.maxHp;
+                p.ki = p.maxKi;
+                this.engine.recalcStats();
+                sound.playSuperSaiyan();
+                this.pushBanner('Thần Osin chúc phúc: Hồi 100% HP/KI & +50% Sức đánh!', '#fde047');
+                this.npcDialog = null;
+              }
+            },
+            { label: 'Đóng', action: () => { this.npcDialog = null; } }
+          ]
+        };
+        return;
+      }
     }
 
     if (npc.id === 'admin_thanhle') {
@@ -850,6 +1087,8 @@ export class NroHudRenderer {
       this.renderGachaModal(ctx);
     } else if (this.activePanel === 'LEADERBOARD') {
       this.renderLeaderboardModal(ctx);
+    } else if (this.activePanel === 'WORLD_MAP') {
+      this.renderWorldMapModal(ctx);
     }
 
     if (this.npcDialog) {
@@ -975,12 +1214,13 @@ export class NroHudRenderer {
     if (quest) {
       const curStep = quest.steps[p.questStep || 0];
       if (curStep) {
-        const qStr = curStep.type === 'talk'
+        const isTalkStep = curStep.type === 'talk' || curStep.type === 'talk_elder' || curStep.type === 'talk_master';
+        const qStr = isTalkStep
           ? `NV: ${curStep.text}`
           : `NV: ${curStep.text} (${Math.min(p.questProgress, curStep.count)}/${curStep.count})`;
         this.drawText(ctx, qStr, 938, 565, {
           size: 10.5,
-          color: curStep.type === 'talk' ? '#4ade80' : '#ffffff',
+          color: isTalkStep ? '#4ade80' : '#ffffff',
           align: 'right'
         });
       }
@@ -1266,29 +1506,34 @@ export class NroHudRenderer {
       return;
     }
 
-    // Tiêu đề nhiệm vụ căn giữa tại y=420 đúng chuẩn HUDPopupRenderer.java dòng 115
-    this.drawText(ctx, quest.title, 177, 420, {
-      size: 14, color: '#fde047', align: 'center'
+    if (quest.era) {
+      this.drawText(ctx, quest.era, 177, 434, {
+        size: 10, color: '#67e8f9', align: 'center'
+      });
+    }
+    this.drawText(ctx, quest.title, 177, 415, {
+      size: 13.5, color: '#fde047', align: 'center'
     });
 
-    // Các phần nhiệm vụ: đã xong (xanh lá), đang làm (vàng sáng kèm tiến độ), chưa mở ("- ...") đúng dòng 118-121
+    // Các phần nhiệm vụ: đã xong (xanh lá), đang làm (vàng sáng kèm tiến độ), chưa mở ("- ...")
     const curStepIdx = p.questStep || 0;
-    let curY = 386;
+    let curY = 384;
     for (let i = 0; i < quest.steps.length; i++) {
       const st = quest.steps[i];
+      const isTalkStep = st.type === 'talk' || st.type === 'talk_elder' || st.type === 'talk_master';
       if (i < curStepIdx) {
         const doneTxt = st.count > 1 ? `- ${st.text} (${st.count}/${st.count})` : `- ${st.text} (Xong)`;
-        this.drawText(ctx, doneTxt, 22, curY, { size: 11.5, color: '#86efac' });
-        curY -= 24;
+        this.drawText(ctx, doneTxt, 20, curY, { size: 10.5, color: '#86efac' });
+        curY -= 22;
       } else if (i === curStepIdx) {
-        const activeTxt = st.type === 'talk'
+        const activeTxt = isTalkStep
           ? `- ${st.text}`
           : `- ${st.text} (${Math.min(p.questProgress, st.count)}/${st.count})`;
-        this.drawText(ctx, activeTxt, 22, curY, { size: 11.5, color: '#fef08a' });
-        curY -= 24;
+        this.drawText(ctx, activeTxt, 20, curY, { size: 10.5, color: '#fef08a' });
+        curY -= 22;
       } else {
-        this.drawText(ctx, '- ...', 22, curY, { size: 11.5, color: '#cbd5e1' });
-        curY -= 24;
+        this.drawText(ctx, '- ...', 20, curY, { size: 10.5, color: '#cbd5e1' });
+        curY -= 22;
         break;
       }
     }
@@ -1700,21 +1945,50 @@ export class NroHudRenderer {
     });
   }
 
-  // --- TAB 4: CHỨC NĂNG (CAPSULE TRÁI ĐẤT, BẢNG XẾP HẠNG, KHU VỰC, LƯU CLOUD, THOÁT MENU) ---
+  // --- TAB 4: CHỨC NĂNG (VIÊN CAPSULE 36 MAP THEO VÙNG, SƠ ĐỒ THẾ GIỚI, HỆ THỐNG) ---
   renderTabFunctions(ctx) {
     const p = this.engine.player;
 
-    this.drawText(ctx, 'VIÊN CAPSULE DI CHUYỂN NHANH', 177, 424, {
-      size: 12.5, color: '#fde047', align: 'center'
+    this.drawText(ctx, 'CAPSULE & MẠNG LƯỚI 36 BẢN ĐỒ', 177, 430, {
+      size: 11.5, color: '#fde047', align: 'center'
     });
 
-    const earthMaps = MAPS_CONFIG.filter((m) => m.planetTheme === 'traidat');
-    for (let i = 0; i < earthMaps.length; i++) {
-      const m = earthMaps[i];
+    const regionGroups = [
+      { label: 'T.Đất', filter: (m) => m.region === 'Trái Đất' },
+      { label: 'Karin/Thần', filter: (m) => m.region === 'Thần Giới & Karin' },
+      { label: 'Mở Rộng', filter: (m) => m.region === 'Trái Đất Mở Rộng' },
+      { label: 'NM / XD', filter: (m) => m.region === 'Hành Tinh Namếc' || m.region === 'Hành Tinh Xayda' },
+      { label: 'VũTrụ/PB', filter: (m) => m.region === 'Vũ Trụ & Phó Bản' }
+    ];
+
+    for (let r = 0; r < regionGroups.length; r++) {
+      const rx = 18 + r * 64;
+      const ry = 398;
+      const active = (this.capsuleRegionIdx || 0) === r;
+      this.drawTex(
+        ctx,
+        active ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+        rx,
+        ry,
+        61,
+        24
+      );
+      this.drawText(ctx, regionGroups[r].label, rx + 30.5, ry + 8, {
+        size: 8.5, color: active ? '#fef08a' : '#ffffff', align: 'center'
+      });
+      this.addHit(`cap_reg_${r}`, rx, ry, 61, 24, () => {
+        this.capsuleRegionIdx = r;
+      });
+    }
+
+    const curGroup = regionGroups[this.capsuleRegionIdx || 0] || regionGroups[0];
+    const groupMaps = MAPS_CONFIG.filter(curGroup.filter).slice(0, 10);
+    for (let i = 0; i < groupMaps.length; i++) {
+      const m = groupMaps[i];
       const col = i % 2;
       const row = Math.floor(i / 2);
       const mx = 22 + col * 158;
-      const my = 382 - row * 42;
+      const my = 362 - row * 35;
       const isCur = this.engine.currentMapId === m.id;
       this.drawTex(
         ctx,
@@ -1722,12 +1996,13 @@ export class NroHudRenderer {
         mx,
         my,
         150,
-        34
+        30
       );
-      this.drawText(ctx, isCur ? `★ ${m.name}` : m.name, mx + 75, my + 12, {
-        size: 10, color: isCur ? '#fde047' : '#ffffff', align: 'center'
+      const shortName = m.name.length > 19 ? `${m.name.slice(0, 18)}…` : m.name;
+      this.drawText(ctx, isCur ? `★ ${shortName}` : shortName, mx + 75, my + 10, {
+        size: 9, color: isCur ? '#fde047' : '#ffffff', align: 'center'
       });
-      this.addHit(`teleport_map_${m.id}`, mx, my, 150, 34, () => {
+      this.addHit(`teleport_map_${m.id}`, mx, my, 150, 30, () => {
         if (!isCur) {
           this.popupOpen = false;
           this.engine.changeMap(m.id, m.defaultSpawn.x, m.defaultSpawn.y);
@@ -1735,10 +2010,17 @@ export class NroHudRenderer {
       });
     }
 
-    // Các nút hệ thống bên dưới (Có công tắc Bật/Tắt Nút Điều Hướng Ảo chuẩn VeHUD.java dòng 95!)
+    // Các nút hệ thống bên dưới (Sơ Đồ Thế Giới 2 Trục + Nút Ảo + Toàn Màn Hình + BXH + Âm Thanh + Đổi TK)
     const sysBtns = [
       {
-        label: `Nút Ảo: ${this.showVirtualControls ? 'ĐANG BẬT' : 'ĐANG TẮT'}`,
+        label: 'Sơ Đồ Thế Giới',
+        onClick: () => {
+          this.popupOpen = false;
+          this.activePanel = 'WORLD_MAP';
+        }
+      },
+      {
+        label: `Nút Ảo: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}`,
         onClick: () => {
           this.showVirtualControls = !this.showVirtualControls;
           localStorage.setItem('nro_virtual_controls', String(this.showVirtualControls));
@@ -1767,13 +2049,6 @@ export class NroHudRenderer {
         }
       },
       {
-        label: `Đổi Khu (Khu ${this.engine.zoneId || 1})`,
-        onClick: () => {
-          this.engine.zoneId = ((this.engine.zoneId || 1) % 5) + 1;
-          this.pushBanner(`Đã chuyển sang Khu ${this.engine.zoneId}!`, '#86efac');
-        }
-      },
-      {
         label: `Âm Thanh: ${sound.isMuted ? 'TẮT' : 'BẬT'}`,
         onClick: () => {
           sound.toggleMute();
@@ -1791,10 +2066,10 @@ export class NroHudRenderer {
     for (let i = 0; i < sysBtns.length; i++) {
       const b = sysBtns[i];
       const bx = 22 + (i % 2) * 158;
-      const by = 142 - Math.floor(i / 2) * 44;
-      this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', bx, by, 150, 36);
-      this.drawText(ctx, b.label, bx + 75, by + 13, { size: 9.5, color: '#fef08a', align: 'center' });
-      this.addHit(`sys_btn_${i}`, bx, by, 150, 36, b.onClick);
+      const by = 148 - Math.floor(i / 2) * 40;
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', bx, by, 150, 33);
+      this.drawText(ctx, b.label, bx + 75, by + 11, { size: 9.5, color: '#fef08a', align: 'center' });
+      this.addHit(`sys_btn_${i}`, bx, by, 150, 33, b.onClick);
     }
   }
 
@@ -2160,11 +2435,11 @@ export class NroHudRenderer {
       });
     }
 
-    // Hàng nút vuông chuẩn nutvuong.png ở đáy màn hình (y = 14)
+    // Hàng nút vuông chuẩn nutvuong.png ở đáy màn hình (tự động co giãn nếu có 6-7 điểm đến Tàu Vũ Trụ)
     const btns = dlg.buttons || [];
-    const btnW = 124;
-    const btnH = 96;
-    const gap = 18;
+    const btnW = btns.length > 5 ? 114 : 124;
+    const btnH = btns.length > 5 ? 90 : 96;
+    const gap = btns.length > 5 ? 10 : 18;
     const totalW = btns.length * btnW + Math.max(0, btns.length - 1) * gap;
     const startX = (VIRTUAL_W - totalW) / 2;
 
@@ -2173,10 +2448,45 @@ export class NroHudRenderer {
       const bx = startX + i * (btnW + gap);
       const by = 16;
       this.drawTex(ctx, 'hud/giaodientrong/nutvuong.png', bx, by, btnW, btnH);
-      this.drawWrappedText(ctx, b.label, bx + btnW / 2, by + 56, btnW - 22, 16, {
-        size: 11.5, color: '#532905', stroke: '#fef3c7', strokeWidth: 2, align: 'center'
+      this.drawWrappedText(ctx, b.label, bx + btnW / 2, by + (btns.length > 5 ? 52 : 56), btnW - 18, 15, {
+        size: btns.length > 5 ? 10.5 : 11.5, color: '#532905', stroke: '#fef3c7', strokeWidth: 2, align: 'center'
       });
       this.addHit(`npc_btn_${i}`, bx, by, btnW, btnH, b.action);
+    }
+  }
+
+  // ==================== SƠ ĐỒ THẾ GIỚI 2 TRỤC LIÊN THÔNG CHUẨN NGỌC RỒNG ONLINE ====================
+  renderWorldMapModal(ctx) {
+    this.fillRectGdx(ctx, 0, 0, VIRTUAL_W, VIRTUAL_H, 'rgba(0,0,0,0.72)', null);
+    const mw = 860;
+    const mh = 510;
+    const mx = (VIRTUAL_W - mw) / 2;
+    const my = (VIRTUAL_H - mh) / 2;
+
+    this.fillRectGdx(ctx, mx, my, mw, mh, '#0f172a', '#f59e0b', 3);
+    this.fillRectGdx(ctx, mx + 6, my + 6, mw - 12, mh - 12, 'rgba(15, 23, 42, 0.96)', '#38bdf8', 1.5);
+
+    this.drawTex(ctx, 'hud/giaodientrong/nutX.png', mx + mw - 42, my + mh - 42, 30, 30);
+    this.addHit('close_world_map', mx + mw - 48, my + mh - 48, 42, 42, () => {
+      this.activePanel = null;
+    });
+
+    const curMap = MAPS_CONFIG[this.engine.currentMapId] || MAPS_CONFIG[0];
+    this.drawText(ctx, 'SƠ ĐỒ KẾT NỐI THẾ GIỚI NGỌC RỒNG ONLINE (36 BẢN ĐỒ)', mx + mw / 2, my + mh - 32, {
+      size: 14, color: '#fde047', align: 'center'
+    });
+    this.drawText(ctx, `Vị trí hiện tại: [${curMap.name}] (${curMap.region})`, mx + mw / 2, my + mh - 54, {
+      size: 11.5, color: '#86efac', align: 'center'
+    });
+
+    for (let i = 0; i < WORLD_TOPOLOGY_LINES.length; i++) {
+      const ly = my + mh - 86 - i * 24;
+      this.drawText(ctx, WORLD_TOPOLOGY_LINES[i], mx + 28, ly, {
+        size: 11.2,
+        color: i % 3 === 0 ? '#e0f2fe' : '#f8fafc',
+        font: 'monospace',
+        bold: true
+      });
     }
   }
 

@@ -6,7 +6,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
   const [planetIndex, setPlanetIndex] = useState(0); // 0: Trái Đất, 1: Xayda, 2: Namếc
   const [characterIndex, setCharacterIndex] = useState(0); // 0, 1, 2
   const [focusGroup, setFocusGroup] = useState('char'); // 'planet' | 'char'
-  const [characterName, setCharacterName] = useState('SonGoku');
+  const [characterName, setCharacterName] = useState(PLANET_DEFS[0].defaultPlayerName);
   const [error, setError] = useState('');
   const [bobOffset, setBobOffset] = useState(0);
 
@@ -15,34 +15,41 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
       id: 0,
       folder: 'traidat',
       name: 'Trái đất',
-      bgColor: '#19b0f8',
-      characters: ['Goku', 'Krillin', 'Yamcha'],
-      defaultName: 'SonGoku'
+      skyColor: '#19b0f8',
+      groundColor: '#175e1c',
+      characters: PLANET_DEFS[0].charNames,
+      defaultName: PLANET_DEFS[0].defaultPlayerName,
+      lore: 'Quê nhà: Nhà Gôhan (Ông Gôhan) • Minh sư: Quy Lão Kame'
     },
     {
       id: 1,
       folder: 'xayda',
       name: 'Xayda',
-      bgColor: '#c26219',
-      characters: ['Cađíc', 'Rađíc', 'Kakalot'],
-      defaultName: 'Cađíc'
+      skyColor: '#c26219',
+      groundColor: '#572814',
+      characters: PLANET_DEFS[1].charNames,
+      defaultName: PLANET_DEFS[1].defaultPlayerName,
+      lore: 'Quê nhà: Nhà Paragus (Ông Paragus) • Minh sư: Vua Vegeta'
     },
     {
       id: 2,
       folder: 'namek',
       name: 'Namếc',
-      bgColor: '#05c2a8',
-      characters: ['Ốc tiêu', 'Piccolo', 'Kami'],
-      defaultName: 'Piccolo'
+      skyColor: '#05c2a8',
+      groundColor: '#0d6e5b',
+      characters: PLANET_DEFS[2].charNames,
+      defaultName: PLANET_DEFS[2].defaultPlayerName,
+      lore: 'Quê nhà: Nhà Moori (Ông Moori) • Minh sư: Trưởng Lão Guru'
     }
   ];
 
   const currentConfig = planetConfigs[planetIndex];
+  const folder = currentConfig.folder;
 
   useEffect(() => {
     let t = 0;
     const interval = setInterval(() => {
-      t += 0.15;
+      t += 0.16;
       setBobOffset(Math.sin(t) * 4);
     }, 30);
     return () => clearInterval(interval);
@@ -60,11 +67,10 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
     sound.playClick();
     setCharacterIndex(index);
     setFocusGroup('char');
-    setCharacterName(currentConfig.characters[index]);
   };
 
   const handleCreate = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     const name = characterName.trim();
     if (!name) {
       setError('Vui lòng nhập tên nhân vật!');
@@ -76,15 +82,16 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
     }
 
     sound.playClick();
-    const baseStats = PLANET_DEFS[planetIndex].baseStats;
+    const planetDef = PLANET_DEFS[planetIndex] || PLANET_DEFS[0];
+    const baseStats = planetDef.baseStats;
 
     onSelectCharacter({
-      saveVersion: 3,
+      saveVersion: 4,
       name,
       planet: planetIndex,
       characterIndex,
       headId: characterIndex + 1,
-      mapId: 0,
+      mapId: planetDef.homeMapId,
       x: 325,
       y: 175,
       questId: 1,
@@ -116,282 +123,362 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
     });
   };
 
-  const folder = currentConfig.folder;
+  // Tọa độ mũi tên vàng nhảy chuẩn ManHinhChoiMoi.java
+  const arrowIndex = focusGroup === 'planet' ? planetIndex : characterIndex;
+  const arrowLeft = 294 + arrowIndex * 155 + (135 - 28) / 2;
+  const arrowBottom = (focusGroup === 'planet' ? 385 : 300) + 52 + bobOffset;
 
   return (
     <div
-      className="fixed inset-0 z-40 flex flex-col items-center justify-between overflow-hidden select-none transition-colors duration-300"
-      style={{ backgroundColor: currentConfig.bgColor }}
+      className="absolute inset-0 z-40 w-[1020px] h-[610px] overflow-hidden select-none"
+      style={{ backgroundColor: currentConfig.groundColor }}
     >
-      {/* 1. PARALLAX NỀN THEO HÀNH TINH */}
+      {/* 1. PARALLAX NỀN THEO TỌA ĐỘ GỐC ManHinhChoiMoi.java (1020x610) */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0" style={{ backgroundColor: currentConfig.bgColor }} />
+        {/* Bầu trời nửa trên */}
+        <div
+          className="absolute left-0 top-0 w-[1020px]"
+          style={{ height: '330px', backgroundColor: currentConfig.skyColor }}
+        />
 
         {planetIndex === 1 ? (
-          <div
-            className="absolute bottom-[40%] left-0 w-full h-[240px]"
-            style={{
-              backgroundImage: `url('/assets/hud/giaodienngoai/xayda/bautroixayda.jpg')`,
-              backgroundSize: '255px 150px',
-              backgroundRepeat: 'repeat-x'
-            }}
-          >
+          <>
+            <div
+              className="absolute left-0 w-[1020px]"
+              style={{
+                bottom: '455px',
+                height: '155px',
+                backgroundImage: `url('/assets/hud/giaodienngoai/xayda/bautroixayda.jpg')`,
+                backgroundSize: '255px 155px',
+                backgroundRepeat: 'repeat-x'
+              }}
+            />
             <img
               src="/assets/hud/giaodienngoai/xayda/matrang.png"
               alt="Mặt Trăng"
-              className="absolute right-[18%] top-[10%] w-16 h-16 drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"
+              className="absolute object-contain"
+              style={{ left: '750px', bottom: '490px', width: '64px', height: '64px' }}
             />
-          </div>
+            <div
+              className="absolute left-0 w-[1020px]"
+              style={{
+                bottom: '310px',
+                height: '150px',
+                backgroundImage: `url('/assets/hud/giaodienngoai/xayda/sky_phu_xayda.png')`,
+                backgroundSize: '255px 150px',
+                backgroundPosition: 'bottom left',
+                backgroundRepeat: 'repeat-x'
+              }}
+            />
+          </>
         ) : (
           <div
-            className="absolute bottom-[40%] left-0 w-full h-[240px]"
+            className="absolute left-0 w-[1020px]"
             style={{
+              bottom: '310px',
+              height: '150px',
               backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/sky_${folder}.png')`,
               backgroundSize: '255px 150px',
+              backgroundPosition: 'bottom left',
               backgroundRepeat: 'repeat-x'
             }}
           />
         )}
 
+        {/* Núi xa: y=310 */}
         <div
-          className="absolute bottom-[34%] left-0 w-full h-[180px]"
+          className="absolute left-0 w-[1020px]"
           style={{
+            bottom: '310px',
+            height: '150px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nuixa_${folder}.png')`,
             backgroundSize: '255px 150px',
             backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
+
+        {/* Núi giữa: y=280 */}
         <div
-          className="absolute bottom-[25%] left-0 w-full h-[190px]"
+          className="absolute left-0 w-[1020px]"
           style={{
+            bottom: '280px',
+            height: '170px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nui_${folder}.png')`,
             backgroundSize: '510px 170px',
             backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
+
+        {/* Đồi cây: y=205 */}
         <div
-          className="absolute bottom-[100px] left-0 w-full h-[22%]"
-          style={{ backgroundColor: planetIndex === 1 ? '#572814' : planetIndex === 2 ? '#0d6e5b' : '#175e1c' }}
-        />
-        <div
-          className="absolute bottom-[18%] left-0 w-full h-[190px]"
+          className="absolute left-0 w-[1020px]"
           style={{
+            bottom: '205px',
+            height: '170px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nuicay_${folder}.png')`,
             backgroundSize: '340px 170px',
             backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
+
+        {/* Núi thấp: y=125 */}
         <div
-          className="absolute bottom-[100px] left-0 w-full h-[200px]"
+          className="absolute left-0 w-[1020px]"
           style={{
+            bottom: '125px',
+            height: '180px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/nuithap_${folder}.png')`,
             backgroundSize: '340px 180px',
             backgroundPosition: 'bottom left',
             backgroundRepeat: 'repeat-x'
           }}
         />
+
+        {/* Cỏ trên mặt đất: y=125, h=50 */}
         <div
-          className="absolute bottom-[100px] left-0 w-full h-[50px] z-10"
+          className="absolute left-0 w-[1050px]"
           style={{
+            bottom: '125px',
+            height: '50px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/cayco1_${folder}.png')`,
             backgroundSize: '50px 50px',
             backgroundRepeat: 'repeat-x'
           }}
         />
+
+        {/* Mặt đất: y=75, h=50 */}
         <div
-          className="absolute bottom-[50px] left-0 w-full h-[50px] z-10"
+          className="absolute left-0 w-[1050px]"
           style={{
+            bottom: '75px',
+            height: '50px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/matdat_${folder}1.png')`,
             backgroundSize: '50px 50px',
             backgroundRepeat: 'repeat-x'
           }}
         />
+
+        {/* Đất giữa: y=25, h=50 */}
         <div
-          className="absolute bottom-0 left-0 w-full h-[50px] z-10"
+          className="absolute left-0 w-[1050px]"
           style={{
+            bottom: '25px',
+            height: '50px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/dat_${folder}1.png')`,
+            backgroundSize: '50px 50px',
+            backgroundRepeat: 'repeat-x'
+          }}
+        />
+
+        {/* Lòng đất sát đáy y=0, h=50 */}
+        <div
+          className="absolute left-0 bottom-0 w-[1050px]"
+          style={{
+            height: '50px',
+            backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/longdat_${folder}1.png')`,
             backgroundSize: '50px 50px',
             backgroundRepeat: 'repeat-x'
           }}
         />
       </div>
 
-      {/* 2. TOP BAR: NÚT MÁY CHỦ */}
-      <div className="relative z-20 w-full max-w-5xl flex items-center justify-between p-4">
-        <button
-          type="button"
-          onClick={() => {
-            sound.playPunch();
-            onOpenServerSelect();
-          }}
-          className="relative w-[140px] h-[48px] flex items-center justify-center transition active:scale-95 shadow-md"
-        >
-          <img
-            src="/assets/hud/giaodienngoai/chung/nutdangnhap2.png"
-            alt=""
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-          />
-          <span className="relative z-10 font-dragon text-[#532905] text-xs font-bold">
-            Máy chủ ({currentServer})
-          </span>
-        </button>
-
-        <span className="font-dragon text-white text-xs sm:text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] font-bold">
-          Chọn Hành Tinh & Khởi Tạo Nhân Vật
+      {/* 2. NÚT MÁY CHỦ GÓC TRÁI TRÊN — (20, 540, 135, 50) */}
+      <button
+        type="button"
+        onClick={() => {
+          sound.playPunch();
+          onOpenServerSelect();
+        }}
+        className="absolute z-20 flex items-center justify-center transition active:scale-95"
+        style={{ left: '20px', bottom: '540px', width: '135px', height: '50px' }}
+      >
+        <img
+          src="/assets/hud/giaodienngoai/chung/nutdangnhap2.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+        />
+        <span className="relative z-10 font-dragon text-[#532905] text-xs font-bold">
+          Máy chủ ({currentServer})
         </span>
+      </button>
+
+      {/* Ghi chú Hậu Bối góc phải trên */}
+      <div
+        className="absolute z-20 text-right pointer-events-none"
+        style={{ right: '20px', top: '18px' }}
+      >
+        <div className="font-dragon text-white text-xs font-bold drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]">
+          Chiến Binh Hậu Bối ({currentConfig.name})
+        </div>
+        <div className="font-dragon text-[#fde047] text-[11px] drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]">
+          {currentConfig.lore}
+        </div>
       </div>
 
-      {/* 3. CENTER CONTROLS */}
-      <div className="relative z-20 flex flex-col items-center gap-3 w-full max-w-3xl px-4">
-        {/* Ô NHẬP TÊN NHÂN VẬT */}
-        <div className="relative w-[320px] h-[52px] flex items-center justify-center px-4 shadow-lg">
-          <img
-            src="/assets/hud/giaodienngoai/chung/input.png"
-            alt=""
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none"
-          />
-          <input
-            type="text"
-            value={characterName}
-            onChange={(e) => {
-              setCharacterName(e.target.value);
-              setError('');
-            }}
-            placeholder="Tên nhân vật..."
-            maxLength={16}
-            className="relative z-10 w-full h-full bg-transparent text-center font-dragon text-[#532905] text-sm font-bold outline-none placeholder:text-[#532905]/50"
-          />
-        </div>
-        {error && (
-          <span className="text-red-400 font-dragon text-xs bg-black/80 px-3 py-1 rounded-full border border-red-500/50">
+      {/* 3. Ô NHẬP TÊN NHÂN VẬT — (362, 480, 320, 50) */}
+      <form
+        onSubmit={handleCreate}
+        className="absolute z-20 flex items-center justify-center px-3"
+        style={{ left: '362px', bottom: '480px', width: '320px', height: '50px' }}
+      >
+        <img
+          src="/assets/hud/giaodienngoai/chung/input.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+        />
+        <input
+          type="text"
+          value={characterName}
+          onChange={(e) => {
+            setCharacterName(e.target.value);
+            setError('');
+          }}
+          placeholder="Tên nhân vật"
+          maxLength={16}
+          className="relative z-10 w-full h-full bg-transparent text-center font-dragon text-[#532905] text-sm font-bold outline-none placeholder:text-[#532905]/50"
+        />
+      </form>
+
+      {error && (
+        <div
+          className="absolute z-30 text-center w-[360px]"
+          style={{ left: '342px', bottom: '452px' }}
+        >
+          <span className="text-red-300 font-dragon text-xs bg-black/80 px-3 py-0.5 rounded-full border border-red-400/50">
             {error}
           </span>
-        )}
-
-        {/* HÀNG NÚT CHỌN HÀNH TINH */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-2">
-          {planetConfigs.map((p, idx) => {
-            const isSelected = planetIndex === idx;
-            return (
-              <div key={p.id} className="relative flex flex-col items-center">
-                {isSelected && focusGroup === 'planet' && (
-                  <img
-                    src="/assets/hud/giaodienngoai/chung/muitenvang.png"
-                    alt="Chọn"
-                    className="w-7 h-7 absolute -top-8 z-30 pointer-events-none drop-shadow"
-                    style={{ transform: `translateY(${bobOffset}px)` }}
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => handlePlanetChange(idx)}
-                  className="relative w-[120px] sm:w-[140px] h-[48px] flex items-center justify-center transition active:scale-95 shadow-md"
-                >
-                  <img
-                    src={`/assets/hud/giaodienngoai/chung/${isSelected ? 'nutclick.png' : 'nutdangnhap2.png'}`}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-                  />
-                  <span className="relative z-10 font-dragon text-[#532905] text-xs sm:text-sm font-bold">
-                    {p.name}
-                  </span>
-                </button>
-              </div>
-            );
-          })}
         </div>
+      )}
 
-        {/* HÀNG NÚT CHỌN NHÂN VẬT */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mt-2">
-          {currentConfig.characters.map((charName, idx) => {
-            const isSelected = characterIndex === idx;
-            return (
-              <div key={charName} className="relative flex flex-col items-center">
-                {isSelected && focusGroup === 'char' && (
-                  <img
-                    src="/assets/hud/giaodienngoai/chung/muitenvang.png"
-                    alt="Chọn"
-                    className="w-7 h-7 absolute -top-8 z-30 pointer-events-none drop-shadow"
-                    style={{ transform: `translateY(${bobOffset}px)` }}
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleCharacterChange(idx)}
-                  className="relative w-[120px] sm:w-[140px] h-[48px] flex items-center justify-center transition active:scale-95 shadow-md"
-                >
-                  <img
-                    src={`/assets/hud/giaodienngoai/chung/${isSelected ? 'nutclick.png' : 'nutdangnhap2.png'}`}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-                  />
-                  <span className="relative z-10 font-dragon text-[#532905] text-xs sm:text-sm font-bold">
-                    {charName}
-                  </span>
-                </button>
-              </div>
-            );
-          })}
-        </div>
+      {/* 4. MŨI TÊN VÀNG CHỈ MỤC ĐANG CHỌN */}
+      <img
+        src="/assets/hud/giaodienngoai/chung/muitenvang.png"
+        alt=""
+        className="absolute z-30 pointer-events-none object-contain"
+        style={{
+          left: `${arrowLeft}px`,
+          bottom: `${arrowBottom}px`,
+          width: '28px',
+          height: '28px'
+        }}
+      />
 
-        {/* PREVIEW NHÂN VẬT TRÊN MẶT ĐẤT */}
-        <div className="relative mt-2 w-32 h-36 flex flex-col items-center justify-center">
-          <img
-            src={`/assets/hud/giaodienngoai/${folder}/dau_${folder}_${characterIndex + 1}.png`}
-            alt="Head"
-            className="w-16 h-16 object-contain z-20 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-          />
-          <img
-            src={`/assets/hud/giaodienngoai/${folder}/than${folder}.png`}
-            alt="Body"
-            className="w-12 h-10 object-contain -mt-3.5 z-10"
-          />
-          <img
-            src={`/assets/hud/giaodienngoai/${folder}/chan${folder}.png`}
-            alt="Legs"
-            className="w-12 h-7 object-contain -mt-1.5 z-0"
-          />
-        </div>
+      {/* 5. HÀNG NÚT CHỌN HÀNH TINH — x = 294 + i * 155, y = 385, w = 135, h = 50 */}
+      {planetConfigs.map((p, idx) => {
+        const isSelected = planetIndex === idx;
+        return (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => handlePlanetChange(idx)}
+            className="absolute z-20 flex items-center justify-center transition active:scale-95"
+            style={{
+              left: `${294 + idx * 155}px`,
+              bottom: '385px',
+              width: '135px',
+              height: '50px'
+            }}
+          >
+            <img
+              src={`/assets/hud/giaodienngoai/chung/${isSelected ? 'nutclick.png' : 'nutdangnhap2.png'}`}
+              alt=""
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+            />
+            <span className="relative z-10 font-dragon text-[#532905] text-xs font-bold">
+              {p.name}
+            </span>
+          </button>
+        );
+      })}
+
+      {/* 6. HÀNG NÚT CHỌN NHÂN VẬT — x = 294 + idx * 155, y = 300, w = 135, h = 50 */}
+      {currentConfig.characters.map((charName, idx) => {
+        const isSelected = characterIndex === idx;
+        return (
+          <button
+            key={charName}
+            type="button"
+            onClick={() => handleCharacterChange(idx)}
+            className="absolute z-20 flex items-center justify-center transition active:scale-95"
+            style={{
+              left: `${294 + idx * 155}px`,
+              bottom: '300px',
+              width: '135px',
+              height: '50px'
+            }}
+          >
+            <img
+              src={`/assets/hud/giaodienngoai/chung/${isSelected ? 'nutclick.png' : 'nutdangnhap2.png'}`}
+              alt=""
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+            />
+            <span className="relative z-10 font-dragon text-[#532905] text-[11px] font-bold px-1 truncate">
+              {charName}
+            </span>
+          </button>
+        );
+      })}
+
+      {/* 7. NHÂN VẬT ĐỨNG TRÊN THẢM CỎ — veNhanVatDung(batch, 205, 105) */}
+      <div
+        className="absolute z-20 flex flex-col items-center pointer-events-none"
+        style={{ left: '190px', bottom: '122px', width: '96px' }}
+      >
+        <img
+          src={`/assets/hud/giaodienngoai/${folder}/dau_${folder}_${characterIndex + 1}.png`}
+          alt="Head"
+          className="w-16 h-16 object-contain z-20 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+        />
+        <img
+          src={`/assets/hud/giaodienngoai/${folder}/than${folder}.png`}
+          alt="Body"
+          className="w-12 h-10 object-contain -mt-3.5 z-10"
+        />
+        <img
+          src={`/assets/hud/giaodienngoai/${folder}/chan${folder}.png`}
+          alt="Legs"
+          className="w-12 h-7 object-contain -mt-1.5 z-0"
+        />
       </div>
 
-      {/* 4. BOTTOM BAR */}
-      <div className="relative z-20 w-full max-w-5xl flex items-center justify-between p-4 mb-2">
-        <button
-          type="button"
-          onClick={() => {
-            sound.playPunch();
-            onClose();
-          }}
-          className="relative w-[130px] h-[48px] flex items-center justify-center transition active:scale-95 shadow-md"
-        >
-          <img
-            src="/assets/hud/giaodienngoai/chung/nutdangnhap2.png"
-            alt=""
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-          />
-          <span className="relative z-10 font-dragon text-[#532905] text-xs font-bold">
-            Đóng
-          </span>
-        </button>
+      {/* 8. NÚT ĐÓNG GÓC TRÁI DƯỚI (20, 20, 135, 50) & TẠO MỚI GIỮA DƯỚI (442.5, 20, 135, 50) */}
+      <button
+        type="button"
+        onClick={() => {
+          sound.playPunch();
+          onClose();
+        }}
+        className="absolute z-20 flex items-center justify-center transition active:scale-95"
+        style={{ left: '20px', bottom: '20px', width: '135px', height: '50px' }}
+      >
+        <img
+          src="/assets/hud/giaodienngoai/chung/nutdangnhap2.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+        />
+        <span className="relative z-10 font-dragon text-[#532905] text-xs font-bold">
+          Đóng
+        </span>
+      </button>
 
-        <button
-          type="button"
-          onClick={handleCreate}
-          className="relative w-[150px] h-[50px] flex items-center justify-center transition active:scale-95 shadow-xl hover:brightness-105"
-        >
-          <img
-            src="/assets/hud/giaodienngoai/chung/nutdangnhap2.png"
-            alt=""
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none drop-shadow"
-          />
-          <span className="relative z-10 font-dragon text-[#532905] text-sm font-black">
-            Tạo mới
-          </span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleCreate}
+        className="absolute z-20 flex items-center justify-center transition active:scale-95"
+        style={{ left: '442px', bottom: '20px', width: '135px', height: '50px' }}
+      >
+        <img
+          src="/assets/hud/giaodienngoai/chung/nutdangnhap2.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+        />
+        <span className="relative z-10 font-dragon text-[#532905] text-sm font-bold">
+          Tạo mới
+        </span>
+      </button>
     </div>
   );
 };

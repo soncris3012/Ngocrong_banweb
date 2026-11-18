@@ -7,6 +7,7 @@ import { CharacterCreateModal } from './components/desktop_ui/CharacterCreateMod
 import { SplashScreen } from './components/desktop_ui/SplashScreen';
 import { saveCharacterData, loadCharacterData } from './services/supabase';
 import { assets } from './game/assetLoader';
+import { MAPS_CONFIG, PLANET_DEFS } from './game/nroData';
 
 export function App() {
   const canvasRef = useRef(null);
@@ -28,8 +29,8 @@ export function App() {
 
   const [savedCharacter, setSavedCharacter] = useState(null);
   const [playerState, setPlayerState] = useState({
-    saveVersion: 3,
-    name: 'SonGoku',
+    saveVersion: 4,
+    name: PLANET_DEFS[0].defaultPlayerName,
     planet: 0,
     characterIndex: 0,
     mapId: 0,
@@ -108,7 +109,8 @@ export function App() {
     if (lastCharName) {
       loadCharacterData(lastCharName).then((data) => {
         if (data) {
-          const validMap = typeof data.mapId === 'number' && data.mapId >= 0 && data.mapId <= 9 ? data.mapId : 0;
+          const homeMap = PLANET_DEFS[data.planet || 0]?.homeMapId || 0;
+          const validMap = typeof data.mapId === 'number' && data.mapId >= 0 && data.mapId < MAPS_CONFIG.length ? data.mapId : homeMap;
           const validY = data.y && data.y >= 100 && data.y <= 350 ? data.y : 175;
           const validX = data.x && data.x >= 40 ? data.x : 260;
           const normalized = { ...data, mapId: validMap, x: validX, y: validY };
@@ -271,7 +273,7 @@ export function App() {
         {screenView === 'SPLASH' && (
           <SplashScreen
             onFinish={() => setScreenView('GAME')}
-            message="Đang vào Nhà Gôhan..."
+            message={`Đang vào ${MAPS_CONFIG[playerState.mapId]?.name || 'Nhà Gôhan'}...`}
           />
         )}
 
