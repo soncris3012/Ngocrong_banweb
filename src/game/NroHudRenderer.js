@@ -15,6 +15,11 @@ import {
   GIFTCODES,
   formatNroNum
 } from './nroData';
+import {
+  DATANRO_MAPS_CATALOG,
+  DATANRO_MOBS_CATALOG,
+  DATANRO_SERVERS
+} from './dataNroArchive';
 import { sound } from './audio';
 import { fetchLeaderboard, saveCharacterData, sendChatMessage } from '../services/supabase';
 
@@ -62,9 +67,11 @@ export class NroHudRenderer {
     this.selectedEquipSlot = null;
     this.selectedSkillIdx = 0;
 
-    // Trạng thái Cửa Hàng / Rương Đồ / Pha Lê / Gacha / Bảng Xếp Hạng / Sơ Đồ Thế Giới
-    this.activePanel = null; // null | 'SHOP' | 'CHEST' | 'CRYSTAL' | 'GACHA' | 'LEADERBOARD' | 'WORLD_MAP'
+    // Trạng thái Cửa Hàng / Rương Đồ / Pha Lê / Gacha / Bảng Xếp Hạng / Sơ Đồ Thế Giới / Từ Điển DataNRO
+    this.activePanel = null; // null | 'SHOP' | 'CHEST' | 'CRYSTAL' | 'GACHA' | 'LEADERBOARD' | 'WORLD_MAP' | 'DATANRO_WIKI'
     this.capsuleRegionIdx = 0;
+    this.wikiTab = 0; // 0: 187 Map, 1: 97 Quái, 2: 25 Server
+    this.wikiPage = 0;
     this.shopTabIdx = 0;
     this.selectedShopItemId = null;
     this.crystalEquipSlot = null;
@@ -121,7 +128,8 @@ export class NroHudRenderer {
       this.chatOpen ||
       this.activePanel === 'GACHA' ||
       this.activePanel === 'LEADERBOARD' ||
-      this.activePanel === 'WORLD_MAP'
+      this.activePanel === 'WORLD_MAP' ||
+      this.activePanel === 'DATANRO_WIKI'
     );
   }
 
@@ -294,9 +302,10 @@ export class NroHudRenderer {
         { mapId: 3, x: 520, y: 175, label: 'Trạm Vũ Trụ\nTrái Đất' },
         { mapId: 21, x: 320, y: 175, label: 'Trạm Vũ Trụ\nNamếc' },
         { mapId: 26, x: 320, y: 175, label: 'Trạm Vũ Trụ\nXayda' },
-        { mapId: 28, x: 320, y: 175, label: 'Siêu Thị\nLiên Hành Tinh' },
+        { mapId: 28, x: 320, y: 175, label: 'Siêu Thị\nKý Gửi Đạt' },
         { mapId: 31, x: 240, y: 175, label: 'Hành Tinh\nCold (Tuyết)' },
-        { mapId: 32, x: 340, y: 175, label: 'Hành Tinh\nYardrat' }
+        { mapId: 44, x: 260, y: 175, label: 'Hành Tinh\nM-2 (Robot)' },
+        { mapId: 45, x: 260, y: 175, label: 'Hành Tinh\nPotaufeu' }
       ];
       const btns = destinations
         .filter((d) => d.mapId !== curMap)
@@ -404,7 +413,7 @@ export class NroHudRenderer {
       this.npcDialog = {
         npc,
         avt: 'nhanvat/npc/admin_dungle/avt.png',
-        text: `Xin chào chiến binh ${p.name}!\nTa là Admin Dũng Lê. Các mã Giftcode miễn phí đang mở:\nTANTHU | NROWEB | DRAGONBOY | NGOCRONG`,
+        text: `Xin chào anh em ${p.name}! Mình là Admin Sơn!\nNhập ngay Giftcode độc quyền của phòng anh em (Sơn•Quyết•Bảo•Hùng•Đạt•Khánh•Ba Chíp):\nANHEMPHONG | BACHIP | TANTHU | NROWEB | NGOCRONG`,
         buttons: [
           {
             label: 'Nhập Giftcode',
@@ -417,14 +426,15 @@ export class NroHudRenderer {
             label: 'Hỗ Trợ Tân Thủ',
             action: () => {
               if (p.claimedStarterGift) {
-                this.pushBanner('Bạn đã nhận Hỗ Trợ Tân Thủ rồi! Hãy làm nhiệm vụ cốt truyện nhé!', '#fde047');
+                this.pushBanner('Bạn đã nhận Quà Admin Sơn rồi! Nhập thêm code ANHEMPHONG nhé!', '#fde047');
               } else {
                 p.claimedStarterGift = true;
-                p.gold += 8000;
-                p.gem += 25;
-                p.senzuCount += 5;
+                p.gold += 20000;
+                p.gem += 50;
+                p.senzuCount += 8;
+                this.engine.addItemToBag('capsule_vip');
                 sound.playCoin();
-                this.pushBanner('Nhận Hỗ Trợ Tân Thủ: +8.000 Vàng, +25 Ngọc & +5 Đậu Thần!', '#86efac');
+                this.pushBanner('Quà Admin Sơn: +20K Vàng, +50 Ngọc, +8 Đậu & Viên Capsule VIP!', '#86efac');
               }
               this.npcDialog = null;
             }
@@ -434,6 +444,47 @@ export class NroHudRenderer {
             action: () => {
               this.npcDialog = null;
               this.openLeaderboard();
+            }
+          },
+          { label: 'Đóng', action: () => { this.npcDialog = null; } }
+        ]
+      };
+      return;
+    }
+
+    if (npc.id === 'ba_chip') {
+      sound.playDialog();
+      this.npcDialog = {
+        npc,
+        avt: 'nhanvat/npc/admin_huykhoi/avt.png',
+        text: `Yo anh em ${p.name}! Đại Ca Ba Chíp đây!\nAnh em trong phòng (Sơn, Quyết, Bảo, Hùng, Đạt, Khánh, Ba Chíp) muốn nhận Buff +50% Toàn Bộ Sức Mạnh hay bay thẳng sang Ngũ Hành Sơn & Phòng Tập Thời Gian x2 TNSM?`,
+        buttons: [
+          {
+            label: 'Buff Anh Em\n(+50% Tất Cả)',
+            action: () => {
+              p.buffs.atk = 300;
+              p.buffs.hp = 300;
+              p.buffs.ki = 300;
+              this.engine.recalcStats();
+              p.hp = p.maxHp;
+              p.ki = p.maxKi;
+              sound.playSuperSaiyan();
+              this.pushBanner('Đại Ca Ba Chíp chúc phúc: +50% Công/HP/KI trong 5 phút!', '#fde047');
+              this.npcDialog = null;
+            }
+          },
+          {
+            label: 'Tới Ngũ\nHành Sơn',
+            action: () => {
+              this.npcDialog = null;
+              this.engine.changeMap(43, 140, 175);
+            }
+          },
+          {
+            label: 'Phòng Tập\n(x2 TNSM)',
+            action: () => {
+              this.npcDialog = null;
+              this.engine.changeMap(36, 280, 200);
             }
           },
           { label: 'Đóng', action: () => { this.npcDialog = null; } }
@@ -703,13 +754,20 @@ export class NroHudRenderer {
         this.npcDialog = {
           npc,
           avt: 'nhanvat/npc/admin_dungle/avt.png',
-          text: `Ta là Mr. Popo cai quản Thần Điện!\nPhó Bản [Khí Gas Hủy Diệt] đang giam giữ Cỗ Máy Hủy Diệt Hatchiyack — ngươi có dám tiến vào cày cấp không?`,
+          text: `Chào ${p.name}! Ta là Hộ Vệ Hùng trên Thần Điện!\nNgươi muốn vào [Phó Bản: Khí Gas Hủy Diệt] săn Hatchiyack hay bước vào [Phòng Tập Thời Gian x2 TNSM] cùng Sư Huynh Quyết?`,
           buttons: [
             {
-              label: 'Vào Phó Bản\nKhí Gas',
+              label: 'Phó Bản\nKhí Gas',
               action: () => {
                 this.npcDialog = null;
                 this.engine.changeMap(35, 100, 175);
+              }
+            },
+            {
+              label: 'Phòng Tập\n(x2 TNSM)',
+              action: () => {
+                this.npcDialog = null;
+                this.engine.changeMap(36, 280, 200);
               }
             },
             { label: 'Đóng', action: () => { this.npcDialog = null; } }
@@ -721,7 +779,7 @@ export class NroHudRenderer {
         this.npcDialog = {
           npc,
           avt: 'nhanvat/npc/admin_dungle/avt.png',
-          text: `Phía trước là đại bản doanh [Phó Bản: Doanh Trại Độc Nhãn]!\nĐánh bại Độc Nhãn Đại Tướng sẽ rơi rất nhiều Tiềm năng, Vàng và Ngọc Rồng!`,
+          text: `Ta là Tướng Quân Khánh trấn thủ cửa ải Đông Karin!\nPhía trước là [Phó Bản: Doanh Trại Độc Nhãn] — đánh bại Độc Nhãn Đại Tướng sẽ rơi rất nhiều Vàng, Tiềm Năng và Ngọc Rồng!`,
           buttons: [
             {
               label: 'Đột Kích\nĐộc Nhãn',
@@ -739,10 +797,10 @@ export class NroHudRenderer {
         this.npcDialog = {
           npc,
           avt: 'nhanvat/npc/admin_haidang/avt.png',
-          text: `Ta là Thượng Đế tối cao trên Thần Điện!\nCon có thể thử vận may với Vòng Quay Thượng Đế hoặc rẽ phải sang Con Đường Rắn Độc tìm Bắc Kaio!`,
+          text: `Chào anh em ${p.name}! Thần Tài Hùng trên Thần Điện đây!\nHãy quay Vòng Quay Thượng Đế săn Cải Trang VIP, hoặc rẽ phải qua Con Đường Rắn Độc & Địa Ngục!`,
           buttons: [
             {
-              label: 'Vòng Quay\nThượng Đế',
+              label: 'Vòng Quay\nThần Tài Hùng',
               action: () => {
                 this.npcDialog = null;
                 this.popupOpen = false;
@@ -803,10 +861,10 @@ export class NroHudRenderer {
       this.npcDialog = {
         npc,
         avt: 'nhanvat/npc/admin_thanhle/avt.png',
-        text: `Chào mừng ${p.name} ghé thăm Tiệm Tạp Hóa Thành Lê tại Làng Aru!\nTại đây có đầy đủ Trang bị Thần Linh, Cải trang, Cân Đẩu Vân, Bông tai Porata và Ngọc Rồng!`,
+        text: `Chào mừng ${p.name} ghé thăm ${npc.name}!\nTại đây phân phối trọn bộ Trang bị Thần Linh, Hủy Diệt, Thiên Sứ (DataNRO), Cân Đẩu Vân, Bông tai Porata và Ngọc Rồng!`,
         buttons: [
           {
-            label: 'Cửa Hàng',
+            label: 'Mở Cửa Hàng',
             action: () => {
               this.npcDialog = null;
               this.popupOpen = true;
@@ -825,7 +883,7 @@ export class NroHudRenderer {
       this.npcDialog = {
         npc,
         avt: 'nhanvat/npc/admin_haidang/avt.png',
-        text: `Chào ${p.name}! Vòng Quay Thượng Đế Hải Đăng chứa Cải Trang Broly, Black Goku Rosé, Phượng Hoàng Lửa và Ngọc Rồng 1-3 Sao!\nMỗi lượt quay tốn 1 Vé Quay hoặc 10 Ngọc Xanh.`,
+        text: `Chào anh em ${p.name}! Thần Tài Hùng phụ trách Vòng Quay May Mắn đây!\nQuay trúng ngay Cải Trang Broly, Super Black Rosé, Phượng Hoàng Lửa và Ngọc Rồng 1-3 Sao!`,
         buttons: [
           {
             label: 'Vòng Quay',
@@ -846,7 +904,7 @@ export class NroHudRenderer {
       this.npcDialog = {
         npc,
         avt: 'nhanvat/npc/thay_hieu/avt.png',
-        text: `Ta là Thầy Hiếu dưới chân Tháp Karin!\nTa có thể giúp con Pha Lê Hóa đục lỗ Sao Đen và Ép Đá Pha Lê gia tăng cực đại sức mạnh cho Trang Bị!`,
+        text: `Chào ${p.name}! Mình là ${npc.name}!\nĐưa Trang Bị đây Quyết giúp đục lỗ Pha Lê Hóa 7 Sao Đen và Ép Đá Pha Lê tăng vọt sức chiến đấu nhé!`,
         buttons: [
           {
             label: 'Ép Sao Pha Lê',
@@ -1089,6 +1147,8 @@ export class NroHudRenderer {
       this.renderLeaderboardModal(ctx);
     } else if (this.activePanel === 'WORLD_MAP') {
       this.renderWorldMapModal(ctx);
+    } else if (this.activePanel === 'DATANRO_WIKI') {
+      this.renderDataNroWikiModal(ctx);
     }
 
     if (this.npcDialog) {
@@ -1203,9 +1263,10 @@ export class NroHudRenderer {
     const p = this.engine.player;
     const mapCfg = MAPS_CONFIG[this.engine.currentMapId] || MAPS_CONFIG[0];
 
-    // Tên bản đồ & Khu vực kiểu NRO cổ điển (chữ viền đen sắc nét, không khung đen giả)
-    this.drawText(ctx, `${mapCfg.name} - Khu ${this.engine.zoneId || 1}`, 938, 584, {
-      size: 13,
+    const svCfg = this.engine.serverCfg;
+    const rateTag = svCfg && svCfg.expRate > 1 ? ` [${svCfg.name} x${svCfg.expRate}]` : '';
+    this.drawText(ctx, `${mapCfg.name} - Khu ${this.engine.zoneId || 1}${rateTag}`, 938, 584, {
+      size: 12.5,
       color: '#fef08a',
       align: 'right'
     });
@@ -1833,21 +1894,25 @@ export class NroHudRenderer {
       return;
     }
 
-    // Kỹ năng đã mở khóa -> Nâng cấp Cấp 1..7 & Gán vào ô phím 1..5
+    // Kỹ năng đã mở khóa -> Nâng cấp Cấp 1..maxPoint (Skill 9 tới Cấp 9!) & Gán vào ô phím 1..5
+    const maxLv = selSkill.maxPoint || 7;
     const upgCost = lvl * 2000;
-    this.drawText(ctx, `${selSkill.name} (Cấp ${lvl}/7)`, 34, 186, { size: 12, color: '#fde047' });
-    this.drawWrappedText(ctx, selSkill.desc, 34, 166, 286, 15, { size: 9.8, color: '#e2e8f0', bold: false });
-    this.drawText(ctx, `Hồi chiêu: ${selSkill.cd}s   |   Tiêu hao: ${selSkill.kiCost} KI`, 34, 126, {
-      size: 10, color: '#67e8f9'
+    this.drawText(ctx, `${selSkill.name} (Cấp ${lvl}/${maxLv})`, 34, 188, { size: 11.5, color: '#fde047' });
+    if (selSkill.damInfo) {
+      this.drawText(ctx, selSkill.damInfo.slice(0, 44), 34, 170, { size: 9.2, color: '#86efac' });
+    }
+    this.drawWrappedText(ctx, selSkill.desc, 34, 154, 286, 14, { size: 9.2, color: '#e2e8f0', bold: false });
+    this.drawText(ctx, `Hồi chiêu: ${selSkill.cd}s   |   Tiêu hao: ${selSkill.kiCost} KI`, 34, 122, {
+      size: 9.8, color: '#67e8f9'
     });
 
     this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 34, 82, 165, 32);
-    this.drawText(ctx, lvl >= 7 ? 'Đã Tối Đa (Lv.7)' : `Nâng Cấp (${formatNroNum(upgCost)} TN)`, 116.5, 94, {
+    this.drawText(ctx, lvl >= maxLv ? `Đã Tối Đa (Lv.${maxLv})` : `Nâng Cấp (${formatNroNum(upgCost)} TN)`, 116.5, 94, {
       size: 9.5, color: '#fef08a', align: 'center'
     });
     this.addHit('btn_upg_skill', 34, 82, 165, 32, () => {
-      if (lvl >= 7) {
-        this.pushBanner('Kỹ năng đã đạt cấp tối đa (Lv.7)!', '#fde047');
+      if (lvl >= maxLv) {
+        this.pushBanner(`Kỹ năng đã đạt cấp tối đa (Lv.${maxLv})!`, '#fde047');
         return;
       }
       if (p.potential < upgCost) {
@@ -1857,7 +1922,7 @@ export class NroHudRenderer {
       p.potential -= upgCost;
       p.skillLevels[selSkill.id] = lvl + 1;
       sound.playHeal();
-      this.pushBanner(`Đã nâng [${selSkill.name}] lên Cấp ${lvl + 1}! (+15% Uy lực)`, '#86efac');
+      this.pushBanner(`Đã nâng [${selSkill.name}] lên Cấp ${lvl + 1}/${maxLv}! (+15% Uy lực)`, '#86efac');
     });
 
     this.drawText(ctx, 'Gán vào ô phím tắt:', 34, 62, { size: 10, color: '#cbd5e1' });
@@ -1949,8 +2014,8 @@ export class NroHudRenderer {
   renderTabFunctions(ctx) {
     const p = this.engine.player;
 
-    this.drawText(ctx, 'CAPSULE & MẠNG LƯỚI 36 BẢN ĐỒ', 177, 430, {
-      size: 11.5, color: '#fde047', align: 'center'
+    this.drawText(ctx, 'CAPSULE 48 MAP & TỪ ĐIỂN DATANRO', 177, 430, {
+      size: 11.2, color: '#fde047', align: 'center'
     });
 
     const regionGroups = [
@@ -2020,6 +2085,14 @@ export class NroHudRenderer {
         }
       },
       {
+        label: 'Từ Điển DataNRO',
+        onClick: () => {
+          this.popupOpen = false;
+          this.wikiPage = 0;
+          this.activePanel = 'DATANRO_WIKI';
+        }
+      },
+      {
         label: `Nút Ảo: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}`,
         onClick: () => {
           this.showVirtualControls = !this.showVirtualControls;
@@ -2028,17 +2101,6 @@ export class NroHudRenderer {
             `Nút điều hướng kéo thả: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}!`,
             '#fde047'
           );
-        }
-      },
-      {
-        label: 'Toàn Màn Hình',
-        onClick: () => {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen?.().catch(() => {});
-            window.screen?.orientation?.lock?.('landscape').catch(() => {});
-          } else {
-            document.exitFullscreen?.().catch(() => {});
-          }
         }
       },
       {
@@ -2089,8 +2151,8 @@ export class NroHudRenderer {
 
     if (this.activePanel === 'SHOP') {
       this.drawTex(ctx, 'nhanvat/npc/admin_thanhle/avt.png', ox + 20, 518, 46, 50);
-      this.drawText(ctx, 'CỬA HÀNG THÀNH LÊ', ox + 78, 550, { size: 13.5, color: '#fde047' });
-      this.drawText(ctx, 'Chọn vật phẩm để xem chi tiết & mua', ox + 78, 530, { size: 10.5, color: '#ffffff' });
+      this.drawText(ctx, 'TIỆM BẢO • ĐẠT • KHÁNH', ox + 78, 550, { size: 13, color: '#fde047' });
+      this.drawText(ctx, 'Trang bị Thần Linh, Hủy Diệt & Thiên Sứ DataNRO', ox + 78, 530, { size: 10, color: '#ffffff' });
 
       // 3 Tab cửa hàng
       for (let t = 0; t < SHOP_TABS.length; t++) {
@@ -2186,7 +2248,7 @@ export class NroHudRenderer {
       }
     } else if (this.activePanel === 'CRYSTAL') {
       this.drawTex(ctx, 'nhanvat/npc/thay_hieu/avt.png', ox + 20, 518, 46, 50);
-      this.drawText(ctx, 'PHA LÊ HÓA & ÉP SAO', ox + 78, 548, { size: 13.5, color: '#fde047' });
+      this.drawText(ctx, 'PHA LÊ HÓA THẦY QUYẾT', ox + 78, 548, { size: 13, color: '#fde047' });
       this.drawText(ctx, 'Chọn Trang Bị đang mặc bên trái để nâng Sao', ox + 78, 528, { size: 10, color: '#ffffff' });
 
       const slotKey = this.crystalEquipSlot || this.selectedEquipSlot || 'ao';
@@ -2472,8 +2534,8 @@ export class NroHudRenderer {
     });
 
     const curMap = MAPS_CONFIG[this.engine.currentMapId] || MAPS_CONFIG[0];
-    this.drawText(ctx, 'SƠ ĐỒ KẾT NỐI THẾ GIỚI NGỌC RỒNG ONLINE (36 BẢN ĐỒ)', mx + mw / 2, my + mh - 32, {
-      size: 14, color: '#fde047', align: 'center'
+    this.drawText(ctx, 'SƠ ĐỒ KẾT NỐI THẾ GIỚI NGỌC RỒNG ONLINE (48 MAP THỰC CHIẾN)', mx + mw / 2, my + mh - 32, {
+      size: 13.5, color: '#fde047', align: 'center'
     });
     this.drawText(ctx, `Vị trí hiện tại: [${curMap.name}] (${curMap.region})`, mx + mw / 2, my + mh - 54, {
       size: 11.5, color: '#86efac', align: 'center'
@@ -2481,13 +2543,104 @@ export class NroHudRenderer {
 
     for (let i = 0; i < WORLD_TOPOLOGY_LINES.length; i++) {
       const ly = my + mh - 86 - i * 24;
-      this.drawText(ctx, WORLD_TOPOLOGY_LINES[i], mx + 28, ly, {
-        size: 11.2,
+      this.drawText(ctx, WORLD_TOPOLOGY_LINES[i], mx + 24, ly, {
+        size: 10.5,
         color: i % 3 === 0 ? '#e0f2fe' : '#f8fafc',
         font: 'monospace',
         bold: true
       });
     }
+  }
+
+  // ==================== TỪ ĐIỂN GỐC ElectroHeavenVN/DataNRO (187 MAP • 97 QUÁI • 25 SERVER) ====================
+  renderDataNroWikiModal(ctx) {
+    this.fillRectGdx(ctx, 0, 0, VIRTUAL_W, VIRTUAL_H, 'rgba(0,0,0,0.75)', null);
+    const mw = 840;
+    const mh = 510;
+    const mx = (VIRTUAL_W - mw) / 2;
+    const my = (VIRTUAL_H - mh) / 2;
+
+    this.fillRectGdx(ctx, mx, my, mw, mh, '#0f172a', '#f59e0b', 3);
+    this.fillRectGdx(ctx, mx + 6, my + 6, mw - 12, mh - 12, 'rgba(15, 23, 42, 0.96)', '#38bdf8', 1.5);
+
+    this.drawTex(ctx, 'hud/giaodientrong/nutX.png', mx + mw - 42, my + mh - 42, 30, 30);
+    this.addHit('close_datanro_wiki', mx + mw - 48, my + mh - 48, 42, 42, () => {
+      this.activePanel = null;
+    });
+
+    this.drawText(ctx, 'TỪ ĐIỂN DỮ LIỆU GỐC ElectroHeavenVN/DataNRO', mx + mw / 2, my + mh - 30, {
+      size: 14, color: '#fde047', align: 'center'
+    });
+
+    const wTabs = [
+      `187 Map TeaMobi`,
+      `97 Mẫu Quái Gốc`,
+      `25 Máy Chủ DataNRO`
+    ];
+    for (let t = 0; t < wTabs.length; t++) {
+      const tx = mx + 95 + t * 225;
+      const ty = my + mh - 74;
+      const act = (this.wikiTab || 0) === t;
+      this.drawTex(
+        ctx,
+        act ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+        tx,
+        ty,
+        205,
+        30
+      );
+      this.drawText(ctx, wTabs[t], tx + 102.5, ty + 10, {
+        size: 10.5, color: act ? '#fef08a' : '#ffffff', align: 'center'
+      });
+      this.addHit(`wiki_tab_${t}`, tx, ty, 205, 30, () => {
+        this.wikiTab = t;
+        this.wikiPage = 0;
+      });
+    }
+
+    const list = this.wikiTab === 1
+      ? DATANRO_MOBS_CATALOG
+      : (this.wikiTab === 2 ? DATANRO_SERVERS : DATANRO_MAPS_CATALOG);
+    const pageSize = 24;
+    const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+    const curPage = Math.min(totalPages - 1, Math.max(0, this.wikiPage || 0));
+    const slice = list.slice(curPage * pageSize, (curPage + 1) * pageSize);
+
+    for (let i = 0; i < slice.length; i++) {
+      const item = slice[i];
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const ix = mx + 24 + col * 268;
+      const iy = my + mh - 126 - row * 42;
+      this.fillRectGdx(ctx, ix, iy, 256, 36, 'rgba(30, 41, 59, 0.9)', '#334155', 1);
+
+      if (this.wikiTab === 1) {
+        this.drawText(ctx, `#${item.id} ${item.name}`, ix + 8, iy + 21, { size: 9.8, color: '#fde047' });
+        this.drawText(ctx, `HP gốc: ${formatNroNum(item.hp)} | Tốc: ${item.speed}`, ix + 8, iy + 7, { size: 8.8, color: '#86efac' });
+      } else if (this.wikiTab === 2) {
+        this.drawText(ctx, `[${item.publisher}] ${item.name}`, ix + 8, iy + 21, { size: 9.8, color: '#fde047' });
+        this.drawText(ctx, `Mã: ${item.code} • ${item.tag}`, ix + 8, iy + 7, { size: 8.8, color: '#67e8f9' });
+      } else {
+        this.drawText(ctx, `[Map #${item.id}] ${item.name}`, ix + 10, iy + 14, { size: 10, color: '#f8fafc' });
+      }
+    }
+
+    // Phân trang
+    this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', mx + 220, my + 16, 120, 32);
+    this.drawText(ctx, '◄ Trang Trước', mx + 280, my + 28, { size: 10, color: '#fef08a', align: 'center' });
+    this.addHit('wiki_prev', mx + 220, my + 16, 120, 32, () => {
+      this.wikiPage = (curPage - 1 + totalPages) % totalPages;
+    });
+
+    this.drawText(ctx, `Trang ${curPage + 1} / ${totalPages}`, mx + mw / 2, my + 28, {
+      size: 11, color: '#ffffff', align: 'center'
+    });
+
+    this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', mx + mw - 340, my + 16, 120, 32);
+    this.drawText(ctx, 'Trang Sau ►', mx + mw - 280, my + 28, { size: 10, color: '#fef08a', align: 'center' });
+    this.addHit('wiki_next', mx + mw - 340, my + 16, 120, 32, () => {
+      this.wikiPage = (curPage + 1) % totalPages;
+    });
   }
 
   // ==================== KHUNG CHAT & NHẬP GIFTCODE (khungchat.png) ====================

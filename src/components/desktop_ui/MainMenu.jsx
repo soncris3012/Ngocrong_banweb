@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sound } from '../../game/audio';
+import { getServerConfig } from '../../game/dataNroArchive';
 
 export const MainMenu = ({
   savedCharacter,
@@ -40,12 +41,8 @@ export const MainMenu = ({
 
   const hasCharacter = Boolean(savedCharacter && savedCharacter.name);
 
-  const serverLabel =
-    currentServer === 'HAIDANG1'
-      ? 'Máy chủ: HAIDANG1'
-      : typeof currentServer === 'number'
-      ? `Máy chủ: Vũ trụ ${currentServer}`
-      : `Máy chủ: ${currentServer}`;
+  const svCfg = getServerConfig(currentServer);
+  const serverLabel = `Máy chủ: ${svCfg.name}`;
 
   const buttons = hasCharacter
     ? [

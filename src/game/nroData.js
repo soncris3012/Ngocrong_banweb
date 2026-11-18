@@ -80,39 +80,40 @@ export const NPC_OFFSETS = {
   admin_huykhoi: { chanX: 0, chanY: 0, thanX: 0, thanY: -3.0, dauX: -1.2, dauY: -18.0, extraThanY: 0 }
 };
 
+// Hệ thống 27 Bí Kíp Chiêu Thức chuẩn 100% NClasses.json từ ElectroHeavenVN/DataNRO (TeaMobi)
 export const PLANET_SKILLS = {
   traidat: [
-    { id: 'td_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Dragon', type: 'melee', mult: 1.25, kiCost: 0, cd: 0.32, range: 78, icon: 'kynang/iconkynang/traidat/skill1_traidat.png', desc: 'Đòn cận chiến cơ bản của hậu bối Trái Đất.' },
-    { id: 'td_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Kamejoko', type: 'beam', mult: 2.8, kiCost: 30, cd: 1.6, range: 520, color: '#38bdf8', core: '#e0f2fe', icon: 'kynang/iconkynang/traidat/skill2_traidat.png', desc: 'Chưởng khí Kamejoko do Quy Lão Kame truyền dạy.' },
-    { id: 'td_3', slotIdx: 2, reqPower: 18000, learnCost: 6000, name: 'Thái Dương Hạ San', type: 'solar', mult: 1.8, kiCost: 55, cd: 7.5, range: 280, icon: 'kynang/iconkynang/traidat/skill3_traidat.png', desc: 'Làm chói mắt và choáng toàn bộ quái xung quanh 4 giây.' },
-    { id: 'td_4', slotIdx: 3, reqPower: 80000, learnCost: 25000, name: 'Quả Cầu Kênh Khi', type: 'spirit', mult: 5.5, kiCost: 120, cd: 10.0, range: 460, color: '#60a5fa', icon: 'kynang/iconkynang/traidat/skill4_traidat.png', desc: 'Tuyệt kỹ của Thần Vũ Trụ Bắc Kaio hủy diệt vùng rộng.' },
-    { id: 'td_5', slotIdx: 4, reqPower: 40000, learnCost: 14000, name: 'Kaioken', type: 'transform', caitrang: 'gohan_beast', mult: 2.0, kiCost: 70, cd: 14.0, range: 0, icon: 'kynang/iconkynang/traidat/skill5_traidat.png', desc: 'Bộc phát giới hạn chiến binh (+90% Sức đánh).' },
-    { id: 'td_6', slotIdx: 5, reqPower: 6000, learnCost: 1800, name: 'Tái Tạo Năng Lượng', type: 'charge', mult: 0, kiCost: 0, cd: 8.0, range: 0, icon: 'kynang/iconkynang/traidat/skill6_traidat.png', desc: 'Gồng khí phục hồi nhanh 55% HP và KI.' },
-    { id: 'td_7', slotIdx: 6, reqPower: 150000, learnCost: 45000, name: 'Khiên Năng Lượng', type: 'shield', mult: 0, kiCost: 45, cd: 12.0, range: 0, icon: 'kynang/iconkynang/traidat/skill7_traidat.png', desc: 'Tạo lá chắn giảm 75% sát thương nhận vào trong 8 giây.' },
-    { id: 'td_8', slotIdx: 7, reqPower: 250000, learnCost: 80000, name: 'Dịch Chuyển Tức Thời', type: 'tele', mult: 2.4, kiCost: 35, cd: 4.5, range: 420, icon: 'kynang/iconkynang/traidat/skill8_traidat.png', desc: 'Bí thuật Hành tinh Yardrat áp sát tung đòn chí mạng.' },
-    { id: 'td_9', slotIdx: 8, reqPower: 500000, learnCost: 160000, name: 'Super Kamejoko', type: 'beam', mult: 4.8, kiCost: 95, cd: 6.0, range: 600, color: '#2563eb', core: '#ffffff', icon: 'kynang/iconkynang/traidat/skill9_traidat.png', desc: 'Siêu chưởng Kamejoko cực đại.' }
+    { id: 'td_1', dataNroId: 0, slotIdx: 0, maxPoint: 7, starter: true, reqPower: 0, learnCost: 0, name: 'Chiêu đấm Dragon', type: 'melee', mult: 1.25, kiCost: 1, cd: 0.5, range: 78, icon: 'kynang/datanro/539.png', damInfo: 'Tăng sức đánh: 100% → 160%', desc: 'Tấn công cận chiến chuẩn Trái Đất (Học tại Ông Gôhan ngay lúc đầu).' },
+    { id: 'td_2', dataNroId: 1, slotIdx: 1, maxPoint: 7, reqPower: 10000, learnCost: 500, name: 'Chiêu Kamejoko', type: 'beam', mult: 2.8, kiCost: 30, cd: 1.8, range: 540, color: '#38bdf8', core: '#e0f2fe', icon: 'kynang/datanro/540.png', damInfo: 'Tăng sức đánh: 150% → 450%', desc: 'Đánh xa nhờ năng lượng (Học tại Quy Lão Kame).' },
+    { id: 'td_3', dataNroId: 6, slotIdx: 2, maxPoint: 7, reqPower: 60000, learnCost: 3500, name: 'Thái Dương Hạ San', type: 'solar', mult: 1.8, kiCost: 45, cd: 8.5, range: 300, icon: 'kynang/datanro/717.png', damInfo: 'Chói mắt đối phương: 3s → 9s', desc: 'Làm chói mắt và choáng toàn bộ kẻ địch xung quanh.' },
+    { id: 'td_4', dataNroId: 9, slotIdx: 3, maxPoint: 7, reqPower: 120000, learnCost: 12000, name: 'Kaioken', type: 'transform', caitrang: 'gohan_beast', mult: 2.2, kiCost: 65, cd: 12.0, range: 90, icon: 'kynang/datanro/716.png', damInfo: 'Bộc phát giới hạn Sức đánh: +90% → +160%', desc: 'Bộc phát giới hạn cơ thể cường hóa cực mạnh đòn cận chiến & tốc độ.' },
+    { id: 'td_5', dataNroId: 10, slotIdx: 4, maxPoint: 7, reqPower: 250000, learnCost: 25000, name: 'Quả cầu kênh khi', type: 'spirit', mult: 5.8, kiCost: 110, cd: 11.0, range: 480, color: '#60a5fa', icon: 'kynang/datanro/711.png', damInfo: 'Sát thương diện rộng: 500% → 1100%', desc: 'Tụ nguyên khí vạn vật tạo Quả Cầu Năng Lượng hủy diệt diện rộng.' },
+    { id: 'td_6', dataNroId: 20, slotIdx: 5, maxPoint: 7, reqPower: 80000, learnCost: 9000, name: 'Dịch chuyển tức thời', type: 'tele', mult: 2.6, kiCost: 40, cd: 5.0, range: 460, icon: 'kynang/datanro/3783.png', damInfo: 'Áp sát chí mạng & gây choáng 2.5s', desc: 'Bí thuật Hành tinh Yardrat dịch chuyển ngay tới mục tiêu & gây choáng.' },
+    { id: 'td_7', dataNroId: 22, slotIdx: 6, maxPoint: 7, reqPower: 150000, learnCost: 18000, name: 'Thôi miên', type: 'sleep', mult: 1.5, kiCost: 50, cd: 9.5, range: 380, icon: 'kynang/datanro/3782.png', damInfo: 'Ru ngủ kẻ thù: 5s → 11s (x2 sát thương đòn kế)', desc: 'Bí kỹ Trái Đất ru ngủ mục tiêu đứng im, đòn đánh tiếp theo gây x2 sát thương!' },
+    { id: 'td_8', dataNroId: 19, slotIdx: 7, maxPoint: 7, reqPower: 200000, learnCost: 30000, name: 'Khiên năng lượng', type: 'shield', mult: 0, kiCost: 55, cd: 13.0, range: 0, icon: 'kynang/datanro/3784.png', damInfo: 'Vô hiệu đòn tấn công: 8s → 16s', desc: 'Tạo lá chắn năng lượng giảm 80% sát thương nhận vào.' },
+    { id: 'td_9', dataNroId: 24, slotIdx: 8, maxPoint: 9, reqPower: 600000, learnCost: 120000, name: 'Super Kamejoko', type: 'super_beam', mult: 6.8, kiCost: 140, cd: 8.0, range: 640, color: '#2563eb', core: '#ffffff', icon: 'kynang/datanro/11162.png', damInfo: 'Skill 9 Tối Thượng: 550% → 1000% (Max Cấp 9)', desc: 'Tuyệt kỹ Skill 9 tối thượng của Trái Đất xuyên phá toàn màn hình!' }
   ],
   xayda: [
-    { id: 'xd_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Galick', type: 'melee', mult: 1.35, kiCost: 0, cd: 0.32, range: 78, icon: 'kynang/iconkynang/xayda/skill1_xayda.png', desc: 'Cú đấm cơ bản của hậu bối chiến binh Xayda.' },
-    { id: 'xd_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Antomic', type: 'beam', mult: 3.1, kiCost: 32, cd: 1.6, range: 520, color: '#c084fc', core: '#faf5ff', icon: 'kynang/iconkynang/xayda/skill2_xayda.png', desc: 'Tia chưởng tím Antomic do Vua Vegeta truyền dạy.' },
-    { id: 'xd_3', slotIdx: 2, reqPower: 6000, learnCost: 1800, name: 'Tái Tạo Năng Lượng', type: 'charge', mult: 0, kiCost: 0, cd: 7.5, range: 0, icon: 'kynang/iconkynang/xayda/skill3_xayda.png', desc: 'Gồng nguyên khí Xayda hồi mạnh HP & KI.' },
-    { id: 'xd_4', slotIdx: 3, reqPower: 40000, learnCost: 15000, name: 'Biến Khỉ Khổng Lồ', type: 'transform', caitrang: 'khi_7', mult: 2.2, kiCost: 75, cd: 14.0, range: 0, icon: 'kynang/iconkynang/xayda/skill4_xayda.png', desc: 'Hóa Khỉ Đột Khổng Lồ (+100% Sức đánh & HP).' },
-    { id: 'xd_5', slotIdx: 4, reqPower: 90000, learnCost: 30000, name: 'Tự Phát Nổ', type: 'spirit', mult: 6.2, kiCost: 135, cd: 11.0, range: 360, color: '#facc15', icon: 'kynang/iconkynang/xayda/skill5_xayda.png', desc: 'Giải phóng toàn bộ KI gây nổ diện rộng cực mạnh.' },
-    { id: 'xd_6', slotIdx: 5, reqPower: 20000, learnCost: 7000, name: 'Huýt Sáo', type: 'whistle', mult: 0, kiCost: 40, cd: 15.0, range: 0, icon: 'kynang/iconkynang/xayda/skill6_xayda.png', desc: 'Tăng +50% HP tối đa cho bản thân & Đệ tử.' },
-    { id: 'xd_7', slotIdx: 6, reqPower: 150000, learnCost: 45000, name: 'Khiên Năng Lượng', type: 'shield', mult: 0, kiCost: 45, cd: 12.0, range: 0, icon: 'kynang/iconkynang/xayda/skill7_xayda.png', desc: 'Tạo khiên chắn sát thương 8 giây.' },
-    { id: 'xd_8', slotIdx: 7, reqPower: 250000, learnCost: 85000, name: 'Biến Siêu Xayda', type: 'transform', caitrang: 'broly_lssj', mult: 2.5, kiCost: 95, cd: 15.0, range: 0, icon: 'kynang/iconkynang/xayda/skill8_xayda.png', desc: 'Thức tỉnh huyết thống Siêu Xayda (+120% Sức đánh).' },
-    { id: 'xd_9', slotIdx: 8, reqPower: 500000, learnCost: 160000, name: 'Final Flash', type: 'beam', mult: 5.0, kiCost: 105, cd: 6.0, range: 600, color: '#eab308', core: '#fef9c3', icon: 'kynang/iconkynang/xayda/skill9_xayda.png', desc: 'Tuyệt kỹ Final Flash hoàng tộc Xayda.' }
+    { id: 'xd_1', dataNroId: 4, slotIdx: 0, maxPoint: 7, starter: true, reqPower: 0, learnCost: 0, name: 'Chiêu đấm Galick', type: 'melee', mult: 1.35, kiCost: 1, cd: 0.5, range: 78, icon: 'kynang/datanro/539.png', damInfo: 'Tăng sức đánh: 110% → 170%', desc: 'Tấn công cận chiến dũng mãnh của chiến binh Xayda.' },
+    { id: 'xd_2', dataNroId: 5, slotIdx: 1, maxPoint: 7, reqPower: 10000, learnCost: 500, name: 'Chiêu Antomic', type: 'beam', mult: 3.1, kiCost: 32, cd: 1.7, range: 540, color: '#c084fc', core: '#faf5ff', icon: 'kynang/datanro/540.png', damInfo: 'Tăng sức đánh: 110% → 290%', desc: 'Tia chưởng năng lượng tím Antomic do Vua Vegeta truyền dạy.' },
+    { id: 'xd_3', dataNroId: 8, slotIdx: 2, maxPoint: 7, reqPower: 40000, learnCost: 2500, name: 'Tái tạo năng lượng', type: 'charge', mult: 0, kiCost: 0, cd: 7.5, range: 0, icon: 'kynang/datanro/720.png', damInfo: 'Tự tái tạo HP & KI: 55% → 85%', desc: 'Bộc phát nguyên khí tự tái tạo nhanh HP và KI.' },
+    { id: 'xd_4', dataNroId: 13, slotIdx: 3, maxPoint: 7, reqPower: 150000, learnCost: 18000, name: 'Biến hình (Khỉ Đột)', type: 'transform', caitrang: 'khi_7', mult: 2.3, kiCost: 75, cd: 14.0, range: 0, icon: 'kynang/datanro/718.png', damInfo: 'Hóa Khỉ Khổng Lồ (+100% Sức đánh & HP)', desc: 'Biến hình Khỉ Đột Khổng Lồ tăng gấp đôi Sức đánh, HP và tốc độ!' },
+    { id: 'xd_5', dataNroId: 14, slotIdx: 4, maxPoint: 7, reqPower: 250000, learnCost: 28000, name: 'Tự phát nổ', type: 'spirit', mult: 6.5, kiCost: 135, cd: 11.0, range: 380, color: '#facc15', icon: 'kynang/datanro/2248.png', damInfo: 'Phát nổ nguyên khí gây sát thương cực đại', desc: 'Giải phóng toàn bộ KI tạo vụ nổ hoàng kim hủy diệt mọi kẻ thù xung quanh!' },
+    { id: 'xd_6', dataNroId: 21, slotIdx: 5, maxPoint: 7, reqPower: 80000, learnCost: 9000, name: 'Huýt sáo', type: 'whistle', mult: 0, kiCost: 45, cd: 14.0, range: 0, icon: 'kynang/datanro/3781.png', damInfo: 'Tăng tạm thời +40% → +100% HP tối đa', desc: 'Huýt sáo kích phát huyết thống Xayda tăng mạnh HP tối đa & Chí mạng.' },
+    { id: 'xd_7', dataNroId: 23, slotIdx: 6, maxPoint: 7, reqPower: 130000, learnCost: 16000, name: 'Trói', type: 'bind', mult: 2.1, kiCost: 48, cd: 8.5, range: 400, icon: 'kynang/datanro/3779.png', damInfo: 'Trói chặt kẻ thù: 5s → 11s', desc: 'Phóng vòng năng lượng khóa chặt mục tiêu đứng im chịu đòn!' },
+    { id: 'xd_8', dataNroId: 19, slotIdx: 7, maxPoint: 7, reqPower: 200000, learnCost: 30000, name: 'Khiên năng lượng', type: 'shield', mult: 0, kiCost: 55, cd: 13.0, range: 0, icon: 'kynang/datanro/3784.png', damInfo: 'Vô hiệu đòn tấn công: 8s → 16s', desc: 'Tạo lá chắn năng lượng giảm 80% sát thương nhận vào.' },
+    { id: 'xd_9', dataNroId: 25, slotIdx: 8, maxPoint: 9, reqPower: 600000, learnCost: 120000, name: 'Cađíc liên hoàn chưởng', type: 'barrage', mult: 7.2, kiCost: 145, cd: 8.0, range: 580, color: '#facc15', core: '#fef9c3', icon: 'kynang/datanro/11193.png', damInfo: 'Skill 9 Tối Thượng: 550% → 1000% (Max Cấp 9)', desc: 'Tuyệt kỹ Skill 9 của Hoàng tử Xayda bắn mưa cầu năng lượng liên hoàn hủy diệt!' }
   ],
   namek: [
-    { id: 'nm_1', slotIdx: 0, starter: true, reqPower: 0, learnCost: 0, name: 'Đấm Demon', type: 'melee', mult: 1.25, kiCost: 0, cd: 0.32, range: 82, icon: 'kynang/iconkynang/namek/skill1_namek.png', desc: 'Đòn cận chiến cơ bản của hậu bối tộc Namếc.' },
-    { id: 'nm_2', slotIdx: 1, reqPower: 10000, learnCost: 2500, name: 'Masenko', type: 'beam', mult: 2.9, kiCost: 30, cd: 1.5, range: 520, color: '#4ade80', core: '#dcfce7', icon: 'kynang/iconkynang/namek/skill2_namek.png', desc: 'Chưởng khí Masenko do Trưởng Lão Guru truyền dạy.' },
-    { id: 'nm_3', slotIdx: 2, reqPower: 6000, learnCost: 1800, name: 'Trị Thương Namếc', type: 'charge', mult: 0, kiCost: 25, cd: 6.5, range: 0, icon: 'kynang/iconkynang/namek/skill3_namek.png', desc: 'Năng lực hồi phục thần tốc 65% HP & KI.' },
-    { id: 'nm_4', slotIdx: 3, reqPower: 80000, learnCost: 25000, name: 'Makankosappo', type: 'spirit', mult: 5.6, kiCost: 115, cd: 9.0, range: 500, color: '#22c55e', icon: 'kynang/iconkynang/namek/skill4_namek.png', desc: 'Tia sáng xoắn ốc xuyên thủng mọi lớp giáp.' },
-    { id: 'nm_5', slotIdx: 4, reqPower: 45000, learnCost: 16000, name: 'Đẻ Trứng Đệ Tử', type: 'egg', mult: 0, kiCost: 100, cd: 20.0, range: 0, icon: 'kynang/iconkynang/namek/skill5_namek.png', desc: 'Triệu hồi ngay Đệ Tử Namếc sát cánh chiến đấu.' },
-    { id: 'nm_6', slotIdx: 5, reqPower: 20000, learnCost: 7000, name: 'Liên Hoàn Chưởng', type: 'tele', mult: 3.4, kiCost: 55, cd: 4.5, range: 380, icon: 'kynang/iconkynang/namek/skill6_namek.png', desc: 'Áp sát tung liên hoàn chưởng lực.' },
-    { id: 'nm_7', slotIdx: 6, reqPower: 150000, learnCost: 45000, name: 'Khiên Năng Lượng', type: 'shield', mult: 0, kiCost: 45, cd: 12.0, range: 0, icon: 'kynang/iconkynang/namek/skill7_namek.png', desc: 'Tạo khiên bảo hộ giảm 75% sát thương.' },
-    { id: 'nm_8', slotIdx: 7, reqPower: 250000, learnCost: 85000, name: 'Đồng Hóa Thần Namếc', type: 'transform', caitrang: 'goku_black_rose', mult: 2.3, kiCost: 85, cd: 14.0, range: 0, icon: 'kynang/iconkynang/namek/skill8_namek.png', desc: 'Đồng hóa chiến binh Namếc tối thượng.' },
-    { id: 'nm_9', slotIdx: 8, reqPower: 500000, learnCost: 160000, name: 'Hellzone Grenade', type: 'beam', mult: 4.8, kiCost: 95, cd: 6.0, range: 580, color: '#10b981', core: '#ecfdf5', icon: 'kynang/iconkynang/namek/skill9_namek.png', desc: 'Mưa đạn khí bao vây mục tiêu.' }
+    { id: 'nm_1', dataNroId: 2, slotIdx: 0, maxPoint: 7, starter: true, reqPower: 0, learnCost: 0, name: 'Chiêu đấm Demon', type: 'melee', mult: 1.25, kiCost: 1, cd: 0.42, range: 84, icon: 'kynang/datanro/539.png', damInfo: 'Tăng sức đánh: 95% → 155%', desc: 'Đòn cận chiến tầm xa linh hoạt của tộc Namếc.' },
+    { id: 'nm_2', dataNroId: 3, slotIdx: 1, maxPoint: 7, reqPower: 10000, learnCost: 500, name: 'Chiêu Masenko', type: 'beam', mult: 2.7, kiCost: 24, cd: 1.2, range: 530, color: '#4ade80', core: '#dcfce7', icon: 'kynang/datanro/540.png', damInfo: 'Tăng sức đánh: 100% → 160% (Hồi chiêu cực nhanh)', desc: 'Chưởng khí Masenko tốc độ cao do Trưởng Lão Guru truyền dạy.' },
+    { id: 'nm_3', dataNroId: 7, slotIdx: 2, maxPoint: 7, reqPower: 40000, learnCost: 2500, name: 'Trị thương', type: 'charge', mult: 0, kiCost: 30, cd: 6.5, range: 0, icon: 'kynang/datanro/724.png', damInfo: 'Phục hồi: 50% → 80% HP và KI', desc: 'Thiên phú trị thương thần tốc của Long Tộc Namếc.' },
+    { id: 'nm_4', dataNroId: 11, slotIdx: 3, maxPoint: 7, reqPower: 180000, learnCost: 22000, name: 'Makankosappo', type: 'spirit', mult: 5.9, kiCost: 115, cd: 9.5, range: 520, color: '#22c55e', icon: 'kynang/datanro/723.png', damInfo: 'Tia xoắn ốc xuyên thủng mọi lớp giáp', desc: 'Tụ lực đầu ngón tay bắn tia sáng xoắn ốc Makankosappo chí mạng!' },
+    { id: 'nm_5', dataNroId: 12, slotIdx: 4, maxPoint: 7, reqPower: 120000, learnCost: 15000, name: 'Đẻ trứng', type: 'egg', mult: 0, kiCost: 90, cd: 18.0, range: 0, icon: 'kynang/datanro/722.png', damInfo: 'Tạo Đệ Tử đi theo hỗ trợ chiến đấu', desc: 'Sinh ra Quả Trứng triệu hồi Đệ Tử sát cánh tấn công mục tiêu.' },
+    { id: 'nm_6', dataNroId: 17, slotIdx: 5, maxPoint: 7, reqPower: 90000, learnCost: 10000, name: 'Liên hoàn', type: 'barrage', mult: 3.6, kiCost: 48, cd: 3.2, range: 420, color: '#34d399', core: '#ecfdf5', icon: 'kynang/datanro/3778.png', damInfo: 'Liên hoàn chưởng tốc độ cao: 160% → 190%', desc: 'Tung loạt chưởng khí liên hoàn dồn dập vào kẻ thù.' },
+    { id: 'nm_7', dataNroId: 18, slotIdx: 6, maxPoint: 7, reqPower: 150000, learnCost: 18000, name: 'Biến Sôcôla', type: 'socola', mult: 2.2, kiCost: 52, cd: 9.0, range: 420, icon: 'kynang/datanro/3780.png', damInfo: 'Biến quái & BOSS thành Sôcôla (+65% sát thương nhận vào)', desc: 'Phóng tia phép biến mục tiêu thành thanh Sôcôla bất lực trong 7 giây!' },
+    { id: 'nm_8', dataNroId: 19, slotIdx: 7, maxPoint: 7, reqPower: 200000, learnCost: 30000, name: 'Khiên năng lượng', type: 'shield', mult: 0, kiCost: 55, cd: 13.0, range: 0, icon: 'kynang/datanro/3784.png', damInfo: 'Vô hiệu đòn tấn công: 8s → 16s', desc: 'Tạo lá chắn năng lượng giảm 80% sát thương nhận vào.' },
+    { id: 'nm_9', dataNroId: 26, slotIdx: 8, maxPoint: 9, reqPower: 600000, learnCost: 120000, name: 'Ma phong ba', type: 'mafuba', mult: 7.0, kiCost: 140, cd: 8.5, range: 480, color: '#10b981', core: '#d1fae5', icon: 'kynang/datanro/11194.png', damInfo: 'Skill 9 Tối Thượng: Phong ấn Mafuba rút máu chuẩn (Max Cấp 9)', desc: 'Tuyệt kỹ Skill 9 Ma Phong Ba cuốn phăng kẻ địch vào bình phong ấn!' }
   ]
 };
 
@@ -184,14 +185,44 @@ export const ITEM_CATALOG = {
     desc: 'Quần Thần Hủy Diệt đổi tại Hành tinh Bill.'
   },
   gang_huy_diet: {
-    id: 'gang_huy_diet', name: 'Găng Thiên Sứ Tối Thượng (Whis)', slot: 'gang',
+    id: 'gang_huy_diet', name: 'Găng Hủy Diệt Beerus (Whis)', slot: 'gang',
     icon: 'vatpham/do/traidat/set_huy_diet/gang.png',
-    stats: { attack: 1850, crit: 22 }, gold: 0, gem: 220, maxSocket: 7,
-    desc: 'Thần khí Thiên Sứ Whis rèn tại Hành tinh Bill.'
+    stats: { attack: 1450, crit: 18 }, gold: 0, gem: 180, maxSocket: 7,
+    desc: 'Găng Hủy Diệt đổi từ Thiên Sứ Whis tại Hành tinh Bill.'
+  },
+  ao_thien_su: {
+    id: 'ao_thien_su', name: 'Áo Thiên Sứ Tối Thượng (DataNRO)', slot: 'ao', setVisual: 'set_huy_diet',
+    icon: 'vatpham/datanro/10165.png',
+    stats: { defense: 850, maxHp: 36000, attack: 950 }, gold: 0, gem: 280, maxSocket: 7,
+    desc: 'Thánh y Thiên Sứ cấp cao nhất đổi tại Hành tinh Bill.'
+  },
+  quan_thien_su: {
+    id: 'quan_thien_su', name: 'Quần Thiên Sứ Tối Thượng (DataNRO)', slot: 'quan', setVisual: 'set_huy_diet',
+    icon: 'vatpham/datanro/10166.png',
+    stats: { maxHp: 48000, maxKi: 28000 }, gold: 0, gem: 260, maxSocket: 7,
+    desc: 'Quần Thiên Sứ tối thượng gia tăng sinh lực khổng lồ.'
+  },
+  gang_thien_su: {
+    id: 'gang_thien_su', name: 'Găng Thiên Sứ Tối Thượng (DataNRO)', slot: 'gang',
+    icon: 'vatpham/datanro/10168.png',
+    stats: { attack: 3200, crit: 28 }, gold: 0, gem: 350, maxSocket: 7,
+    desc: 'Găng Thiên Sứ công phá cực hạn vũ trụ.'
+  },
+  nhan_than_linh: {
+    id: 'nhan_than_linh', name: 'Nhẫn Thần Linh (Cold)', slot: 'rada',
+    icon: 'vatpham/datanro/6314.png',
+    stats: { crit: 18, attack: 480 }, gold: 120000, gem: 55, maxSocket: 7,
+    desc: 'Nhẫn Thần Linh cổ đại tăng mạnh tỉ lệ Chí Mạng.'
+  },
+  capsule_vip: {
+    id: 'capsule_vip', name: 'Viên Capsule Đặc Biệt', slot: 'consumable', action: 'open_capsule',
+    icon: 'vatpham/datanro/1088.png',
+    gold: 25000, gem: 10,
+    desc: 'Tàu Vận Chuyển VIP dùng không giới hạn số lần mở bảng bay 48 Map!'
   },
   nhan_thoi_khong: {
     id: 'nhan_thoi_khong', name: 'Nhẫn Thời Không', slot: 'consumable', action: 'portal_prison',
-    icon: 'vatpham/do/rada/rada1.png',
+    icon: 'vatpham/datanro/9067.png',
     gold: 0, gem: 90,
     desc: 'Bảo vật đoạt từ Super Black Goku! Bấm Sử Dụng để xé toạc không gian tới Hành tinh Ngục Tù đánh BOSS Cumber!'
   },
@@ -336,7 +367,7 @@ export const SHOP_TABS = [
   {
     key: 'AO_QUAN',
     label: 'Trang Bị',
-    items: ['ao_cam', 'quan_cam', 'gang_cam', 'giay_cam', 'rada_cap1', 'ao_than_linh', 'quan_than_linh', 'gang_than_linh', 'ao_huy_diet', 'quan_huy_diet', 'gang_huy_diet']
+    items: ['ao_cam', 'quan_cam', 'gang_cam', 'giay_cam', 'rada_cap1', 'ao_than_linh', 'quan_than_linh', 'gang_than_linh', 'nhan_than_linh', 'ao_huy_diet', 'quan_huy_diet', 'gang_huy_diet', 'ao_thien_su', 'quan_thien_su', 'gang_thien_su']
   },
   {
     key: 'PHU_KIEN',
@@ -346,7 +377,7 @@ export const SHOP_TABS = [
   {
     key: 'DAC_BIET',
     label: 'Đặc Biệt',
-    items: ['nhan_thoi_khong', 'bong_tai_c1', 'bong_tai_c2', 'trung_de_tu', 'cuong_no', 'bo_huyet', 'bo_khi', 've_quay', 'da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s']
+    items: ['capsule_vip', 'nhan_thoi_khong', 'bong_tai_c1', 'bong_tai_c2', 'trung_de_tu', 'cuong_no', 'bo_huyet', 'bo_khi', 've_quay', 'da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s']
   }
 ];
 
@@ -720,6 +751,62 @@ export const MONSTER_TEMPLATES = {
   hatchiyack: {
     id: 'hatchiyack', name: 'Cỗ Máy Hủy Diệt Hatchiyack (Khí Gas)', renderType: 'caitrang', caitrangKey: 'broly_lssj', isBoss: true, auraColor: 'tim', scale: 0.7,
     hp: 420000, attack: 1950, exp: 390000, gold: 420000, speed: 80, respawnSec: 16
+  },
+  // --- Quái & BOSS Bổ Sung Từ MobTemplates.json (ElectroHeavenVN/DataNRO) ---
+  may_do_suc_manh: {
+    id: 'may_do_suc_manh', name: 'Máy Đo Sức Mạnh (Phòng Tập)', renderType: 'dummy',
+    idleTex: 'nhanvat/quai/moc_nhan_1.png', hitTex: 'nhanvat/quai/moc_nhan_2.png',
+    scale: 0.72, hp: 5000000, attack: 0, exp: 45000, gold: 15000, speed: 0, respawnSec: 2.0
+  },
+  oc_muon_hon: {
+    id: 'oc_muon_hon', name: 'Ốc Mượn Hồn & Ốc Sên', renderType: 'sheet_vertical',
+    sheet: 'vatpham/vanbay/rua/mount_9_0.png', nativeLeft: true, frameCount: 4, drawW: 68, drawH: 68,
+    hp: 3000, attack: 55, exp: 950, gold: 880, speed: 44
+  },
+  bulon_ukulele: {
+    id: 'bulon_ukulele', name: 'Bulon & Ukulele (Namếc)', renderType: 'sheet_vertical',
+    sheet: 'vatpham/vanbay/xenvang/mount_17_0.png', nativeLeft: true, frameCount: 4, drawW: 78, drawH: 78,
+    hp: 18000, attack: 215, exp: 8800, gold: 9200, speed: 56
+  },
+  heo_xayda: {
+    id: 'heo_xayda', name: 'Heo Xayda & Quỷ Đất', renderType: 'frames',
+    frames: ['nhanvat/quai/lon_loi_1.png', 'nhanvat/quai/lon_loi_2.png'],
+    nativeLeft: false, scale: 0.66, hp: 3200, attack: 62, exp: 1100, gold: 960, speed: 52
+  },
+  nappa_fide: {
+    id: 'nappa_fide', name: 'Chiến Binh Nappa & Appule', renderType: 'caitrang', caitrangKey: 'hop_the_thuong_xayda', scale: 0.58,
+    hp: 40000, attack: 380, exp: 21000, gold: 22000, speed: 66
+  },
+  khi_giap_sat: {
+    id: 'khi_giap_sat', name: 'Khỉ Giáp Sắt & Khỉ Lông Đỏ', renderType: 'caitrang', caitrangKey: 'khi_2', scale: 0.64,
+    hp: 350000, attack: 1420, exp: 165000, gold: 145000, speed: 68
+  },
+  voi_chin_nga: {
+    id: 'voi_chin_nga', name: 'BOSS Voi Chín Ngà (Ngũ Hành Sơn)', renderType: 'frames',
+    frames: ['vatpham/vatphamgame/pet/zinba/25200.png', 'vatpham/vatphamgame/pet/zinba/25201.png'],
+    nativeLeft: false, isBoss: true, scale: 0.92, hp: 320000, attack: 1450, exp: 220000, gold: 260000, speed: 62, respawnSec: 16
+  },
+  ga_chin_cua: {
+    id: 'ga_chin_cua', name: 'Gà Chín Cựa & Ngựa Hồng Mao', renderType: 'frames',
+    frames: ['vatpham/vatphamgame/pet/tuan_loc/6680.png', 'vatpham/vatphamgame/pet/tuan_loc/6681.png'],
+    nativeLeft: false, scale: 0.8, hp: 165000, attack: 940, exp: 92000, gold: 85000, speed: 68
+  },
+  robot_bao_ve: {
+    id: 'robot_bao_ve', name: 'Rôbốt Bảo Vệ Hành Tinh M-2', renderType: 'caitrang', caitrangKey: 'bong_tai_2_traidat', scale: 0.62,
+    hp: 260000, attack: 1280, exp: 145000, gold: 135000, speed: 66
+  },
+  copy_vegeta: {
+    id: 'copy_vegeta', name: 'BOSS Nhân Bản Copy-Vegeta (Potaufeu)', renderType: 'caitrang', caitrangKey: 'bong_tai_3_xayda', isBoss: true, auraColor: 'tim', scale: 0.66,
+    hp: 480000, attack: 2250, exp: 420000, gold: 480000, speed: 84, respawnSec: 18
+  },
+  hirudegarn: {
+    id: 'hirudegarn', name: 'MA THẦN HIRUDEGARN (Địa Ngục)', renderType: 'frames',
+    frames: ['nhanvat/quai/cooler_boss.png'], nativeLeft: true, isBoss: true, auraColor: 'tim', scale: 0.74,
+    hp: 580000, attack: 2550, exp: 520000, gold: 620000, speed: 84, respawnSec: 18
+  },
+  abo_kado: {
+    id: 'abo_kado', name: 'BOSS Hợp Thể Abo & Kado (Dr. Myuu)', renderType: 'caitrang', caitrangKey: 'bong_tai_2_namek', isBoss: true, auraColor: 'xanh', scale: 0.66,
+    hp: 390000, attack: 1880, exp: 310000, gold: 340000, speed: 78, respawnSec: 16
   }
 };
 
@@ -771,7 +858,7 @@ export const MAPS_CONFIG = [
     ],
     npcs: [
       { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 105, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
-      { id: 'admin_dungle', name: 'Sứ Giả Hỗ Trợ', kind: 'modular', folder: 'admin_dungle', x: 210, y: 175 },
+      { id: 'admin_dungle', name: 'Admin Sơn (Hỗ Trợ)', kind: 'modular', folder: 'admin_dungle', x: 210, y: 175 },
       { id: 'ong_gohan', name: 'Ông Gôhan', kind: 'modular', folder: 'ong_gohan', x: 445, y: 175 },
       { id: 'dau_traidat', name: 'Cây Đậu Thần', kind: 'senzu_tree', x: 615, y: 175 },
       { id: 'dui_ga', name: 'Đùi Gà Nướng', kind: 'meat', x: 1178, y: 205, tex: 'nhanvat/npc/dui_ga/1.png' }
@@ -791,8 +878,9 @@ export const MAPS_CONFIG = [
       wpRight('wp_1_4', 'Đồi hoa cúc', 2400, 4, 65, 175)
     ],
     npcs: [
-      { id: 'admin_thanhle', name: 'Bunma (Cửa Hàng)', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 },
-      { id: 'admin_haidang', name: 'Vòng Quay May Mắn', kind: 'modular', folder: 'admin_haidang', x: 1380, y: 175 }
+      { id: 'admin_thanhle', name: 'Chủ Tiệm Bảo', kind: 'modular', folder: 'admin_thanhle', x: 370, y: 175 },
+      { id: 'ba_chip', name: 'Đại Ca Ba Chíp', kind: 'modular', folder: 'admin_huykhoi', x: 525, y: 175 },
+      { id: 'admin_haidang', name: 'Thần Tài Hùng', kind: 'modular', folder: 'admin_haidang', x: 1380, y: 175 }
     ],
     monsters: [
       { template: 'moc_nhan', x: 850, minX: 850, maxX: 850 },
@@ -829,12 +917,13 @@ export const MAPS_CONFIG = [
     waypoints: [wpRight('wp_3_1', 'Làng Aru', 1600, 1, 220, 175)],
     npcs: [
       { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Trái Đất', kind: 'spaceship', x: 420, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' },
-      { id: 'ruong_do', name: 'Rương Đồ Trạm', kind: 'chest', x: 680, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' }
+      { id: 'ruong_do', name: 'Rương Đồ Trạm', kind: 'chest', x: 680, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
+      { id: 'admin_thanhle', name: 'Kỹ Sư Đạt (Tiếp Tế)', kind: 'modular', folder: 'admin_thanhle', x: 860, y: 175 }
     ],
     monsters: []
   },
 
-  // [4] Đồi Hoa Cúc (Map rừng 1/4)
+  // [4] Đồi Hoa Cúc (Map rừng 1/4 — Có Thầy Quyết Pha Lê đứng trên mỏm đá cao!)
   {
     id: 4, key: 'doi_hoa_cuc', name: 'Đồi Hoa Cúc', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'doi_hoa_cuc',
     width: 2976, height: 1000, defaultSpawn: { x: 65, y: 175 },
@@ -847,7 +936,9 @@ export const MAPS_CONFIG = [
       wpLeft('wp_4_1', 'Làng Aru', 1, 2335, 175),
       { ...wpRight('wp_4_5', 'Thung lũng tre', 2976, 5, 65, 175), signRect: { x: 2736, y: 340, w: 230, h: 60 } }
     ],
-    npcs: [],
+    npcs: [
+      { id: 'thay_hieu', name: 'Thầy Quyết Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 2260, y: 223 }
+    ],
     monsters: [
       { template: 'khung_long', x: 340, minX: 220, maxX: 480 },
       { template: 'khung_long', x: 650, minX: 520, maxX: 800 },
@@ -922,8 +1013,8 @@ export const MAPS_CONFIG = [
     ],
     npcs: [
       { id: 'quy_lao_kame', name: 'Quy Lão Kame', kind: 'sprite', x: 430, y: 175, tex: 'nhanvat/npc/quy_lao_kame.png', scale: 0.54 },
-      { id: 'thay_hieu', name: 'Bà Hạt Mít (Pha Lê)', kind: 'modular', folder: 'thay_hieu', x: 720, y: 175 },
-      { id: 'admin_thanhle', name: 'Santa (Cửa Hàng Đảo)', kind: 'modular', folder: 'admin_thanhle', x: 1420, y: 175 }
+      { id: 'thay_hieu', name: 'Thầy Quyết Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 720, y: 175 },
+      { id: 'admin_thanhle', name: 'Chủ Tiệm Bảo (Đảo)', kind: 'modular', folder: 'admin_thanhle', x: 1420, y: 175 }
     ],
     monsters: []
   },
@@ -939,7 +1030,7 @@ export const MAPS_CONFIG = [
       wpRight('wp_9_8', 'Đảo Kame', 1900, 8, 1120, 175)
     ],
     npcs: [
-      { id: 'linh_doc_nhan', name: 'Lính Canh Độc Nhãn', kind: 'modular', folder: 'admin_dungle', x: 820, y: 175 }
+      { id: 'linh_doc_nhan', name: 'Tướng Quân Khánh', kind: 'modular', folder: 'admin_dungle', x: 820, y: 175 }
     ],
     monsters: [
       { template: 'quy_xuong', x: 460, minX: 300, maxX: 620 },
@@ -994,19 +1085,20 @@ export const MAPS_CONFIG = [
     monsters: []
   },
 
-  // [12] Thần Điện (Trục Thần Giới: ← Khí Gas Mr. Popo | ↓ Tháp Karin | → Con Đường Rắn Độc | ↑ NPC Whis đi Hành Tinh Bill!)
+  // [12] Thần Điện (Trục Thần Giới: ← Khí Gas Mr. Popo | Phòng Tập Thời Gian | ↓ Tháp Karin | → Con Đường Rắn Độc | ↑ NPC Whis!)
   {
-    id: 12, key: 'than_dien', name: 'Thần Điện', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'than_dien',
+    id: 12, teaMobiMapId: 45, key: 'than_dien', name: 'Thần Điện', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'than_dien',
     width: 1500, height: 880, defaultSpawn: { x: 750, y: 200 },
     hitboxes: [{ x: 220, y: 150, w: 1060, h: 50 }],
     waypoints: [
-      wpDoor('wp_12_35', 'Khí Gas / Phòng Tập', 340, 320, 35, 140, 175),
+      wpDoor('wp_12_35', 'Phó Bản Khí Gas', 310, 320, 35, 140, 175),
+      wpDoor('wp_12_36', 'Phòng Tập Thời Gian', 540, 320, 36, 220, 175),
       wpDoor('wp_12_11', 'Xuống Tháp Karin', 750, 320, 11, 700, 220),
       wpDoor('wp_12_13', 'Con Đường Rắn Độc', 1160, 320, 13, 120, 175)
     ],
     npcs: [
-      { id: 'mr_popo', name: 'Mr. Popo (Khí Gas)', kind: 'modular', folder: 'admin_dungle', x: 460, y: 200 },
-      { id: 'thuong_de', name: 'Thượng Đế', kind: 'modular', folder: 'admin_haidang', x: 640, y: 200 },
+      { id: 'mr_popo', name: 'Hộ Vệ Hùng (Khí Gas)', kind: 'modular', folder: 'admin_dungle', x: 430, y: 200 },
+      { id: 'thuong_de', name: 'Thần Tài Hùng', kind: 'modular', folder: 'admin_haidang', x: 640, y: 200 },
       { id: 'whis', name: 'Thiên Sứ Whis', kind: 'sprite', x: 930, y: 200, tex: 'nhanvat/npc/npc_whis.png', scale: 0.58 }
     ],
     monsters: []
@@ -1017,7 +1109,10 @@ export const MAPS_CONFIG = [
     id: 13, key: 'con_duong_ran_doc', name: 'Con Đường Rắn Độc & Kaio', region: 'Thần Giới & Karin', planetTheme: 'xayda', renderStyle: 'kaio_road',
     width: 1850, height: 840, defaultSpawn: { x: 120, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2060, h: 175 }],
-    waypoints: [wpLeft('wp_13_12', 'Thần Điện', 12, 1120, 200)],
+    waypoints: [
+      wpLeft('wp_13_12', 'Thần Điện', 12, 1120, 200),
+      wpRight('wp_13_46', 'Địa Ngục Tầng 1-4', 1850, 46, 80, 175)
+    ],
     npcs: [
       { id: 'bac_kaio', name: 'Thần Vũ Trụ Bắc Kaio', kind: 'modular', folder: 'ong_gohan', x: 1520, y: 175 }
     ],
@@ -1050,7 +1145,8 @@ export const MAPS_CONFIG = [
     hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
     waypoints: [
       wpLeft('wp_15_8', 'Đảo Kame', 8, 2020, 175),
-      wpDoor('wp_15_16', 'Đại Hội / Babidi', 960, 315, 16, 180, 175),
+      wpDoor('wp_15_43', 'Ngũ Hành Sơn', 580, 315, 43, 120, 175),
+      wpDoor('wp_15_16', 'Đại Hội / Babidi', 1120, 315, 16, 180, 175),
       wpRight('wp_15_17', 'TP. Phía Đông & Ginder', 1950, 17, 65, 175)
     ],
     npcs: [],
@@ -1065,7 +1161,10 @@ export const MAPS_CONFIG = [
     id: 16, key: 'phi_thuyen_babidi', name: 'Đại Hội Võ Thuật & Tàu Babidi', region: 'Trái Đất Mở Rộng', planetTheme: 'xayda', renderStyle: 'babidi_ship',
     width: 1900, height: 840, defaultSpawn: { x: 180, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2100, h: 175 }],
-    waypoints: [wpLeft('wp_16_15', 'Nam Kame', 15, 960, 175)],
+    waypoints: [
+      wpLeft('wp_16_15', 'Nam Kame', 15, 1120, 175),
+      wpRight('wp_16_37', 'Thánh Địa Kaio', 1900, 37, 80, 175)
+    ],
     npcs: [
       { id: 'osin', name: 'Thần Tối Cao Osin', kind: 'modular', folder: 'admin_huykhoi', x: 340, y: 175 }
     ],
@@ -1082,6 +1181,7 @@ export const MAPS_CONFIG = [
     hitboxes: [{ x: -160, y: 0, w: 2520, h: 175 }],
     waypoints: [
       wpLeft('wp_17_15', 'Nam Kame', 15, 1880, 175),
+      wpDoor('wp_17_47', 'Phòng TN Dr. Myuu', 1100, 315, 47, 100, 175),
       wpRight('wp_17_18', 'Võ Đài Xên Bọ Hùng', 2200, 18, 80, 175)
     ],
     npcs: [],
@@ -1118,6 +1218,7 @@ export const MAPS_CONFIG = [
     ],
     npcs: [
       { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 105, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
+      { id: 'admin_dungle', name: 'Admin Sơn (Hỗ Trợ)', kind: 'modular', folder: 'admin_dungle', x: 225, y: 175 },
       { id: 'ong_moori', name: 'Ông Moori', kind: 'modular', folder: 'ong_gohan', x: 445, y: 175 },
       { id: 'dau_traidat', name: 'Cây Đậu Namếc', kind: 'senzu_tree', x: 635, y: 175 }
     ],
@@ -1132,10 +1233,10 @@ export const MAPS_CONFIG = [
     waypoints: [
       wpLeft('wp_20_21', 'Vách núi Moori & Trạm', 21, 1680, 175),
       wpDoor('wp_20_19', 'Nhà Moori', 675, 300, 19, 875, 175),
-      wpRight('wp_20_22', 'Đồi Nấm Tím & Đảo Guru', 2100, 22, 65, 175)
+      wpRight('wp_20_38', 'Đồi Nấm Tím & TT. Moori', 2100, 38, 65, 175)
     ],
     npcs: [
-      { id: 'admin_thanhle', name: 'Dende (Cửa Hàng Namếc)', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 }
+      { id: 'admin_thanhle', name: 'Tổng Quản Đạt (Namếc)', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 }
     ],
     monsters: [
       { template: 'moc_nhan', x: 920, minX: 920, maxX: 920 },
@@ -1166,7 +1267,8 @@ export const MAPS_CONFIG = [
     width: 2100, height: 850, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
-      wpLeft('wp_22_20', 'Làng Mori', 20, 2020, 175),
+      wpLeft('wp_22_38', 'Đồi Nấm Tím & TT. Moori', 38, 1880, 175),
+      wpDoor('wp_22_39', 'Núi Hoa Vàng & Hoa Tím', 1050, 315, 39, 80, 175),
       wpRight('wp_22_23', 'Vực Maima (Fide)', 2100, 23, 80, 175)
     ],
     npcs: [
@@ -1206,6 +1308,7 @@ export const MAPS_CONFIG = [
     ],
     npcs: [
       { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 105, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
+      { id: 'admin_dungle', name: 'Admin Sơn (Hỗ Trợ)', kind: 'modular', folder: 'admin_dungle', x: 225, y: 175 },
       { id: 'ong_paragus', name: 'Ông Paragus', kind: 'modular', folder: 'admin_dungle', x: 445, y: 175 },
       { id: 'dau_traidat', name: 'Cây Đậu Xayda', kind: 'senzu_tree', x: 635, y: 175 }
     ],
@@ -1220,10 +1323,10 @@ export const MAPS_CONFIG = [
     waypoints: [
       wpLeft('wp_25_26', 'Vách núi Kakarot & Trạm', 26, 1680, 175),
       wpDoor('wp_25_24', 'Nhà Paragus', 675, 300, 24, 875, 175),
-      wpRight('wp_25_27', 'TP. Vegeta & Núi Khỉ', 2100, 27, 65, 175)
+      wpRight('wp_25_40', 'Đồi Hoang & Làng Plant', 2100, 40, 65, 175)
     ],
     npcs: [
-      { id: 'admin_thanhle', name: 'Appule (Cửa Hàng Xayda)', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 }
+      { id: 'admin_thanhle', name: 'Thương Nhân Khánh', kind: 'modular', folder: 'admin_thanhle', x: 380, y: 175 }
     ],
     monsters: [
       { template: 'moc_nhan', x: 920, minX: 920, maxX: 920 },
@@ -1253,7 +1356,10 @@ export const MAPS_CONFIG = [
     id: 27, key: 'tp_vegeta', name: 'TP. Vegeta & Cụm Núi Khỉ', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
     width: 2300, height: 850, defaultSpawn: { x: 80, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2560, h: 175 }],
-    waypoints: [wpLeft('wp_27_25', 'Làng Kakarot', 25, 2020, 175)],
+    waypoints: [
+      wpLeft('wp_27_41', 'Rừng Nguyên Sinh & Thông XD', 41, 1880, 175),
+      wpRight('wp_27_42', 'Vách Núi Đen & Hang Khỉ', 2300, 42, 80, 175)
+    ],
     npcs: [
       { id: 'vua_vegeta', name: 'Vua Vegeta', kind: 'modular', folder: 'admin_huykhoi', x: 340, y: 175 }
     ],
@@ -1274,7 +1380,7 @@ export const MAPS_CONFIG = [
     waypoints: [wpRight('wp_28_29', 'Sân Sau Siêu Thị', 1700, 29, 80, 175)],
     npcs: [
       { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Siêu Thị', kind: 'spaceship', x: 220, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' },
-      { id: 'admin_thanhle', name: 'Ký Gửi Liên Hành Tinh', kind: 'modular', folder: 'admin_thanhle', x: 560, y: 175 },
+      { id: 'admin_thanhle', name: 'Tổng Quản Đạt (Ký Gửi)', kind: 'modular', folder: 'admin_thanhle', x: 560, y: 175 },
       { id: 'ruong_do', name: 'Rương Đồ Chung', kind: 'chest', x: 760, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' }
     ],
     monsters: []
@@ -1369,44 +1475,235 @@ export const MAPS_CONFIG = [
     ]
   },
 
-  // [35] Phó Bản: Khí Gas Hủy Diệt (Vào từ Mr. Popo trên Thần Điện)
+  // [35] Phó Bản: Khí Gas Hủy Diệt (Vào từ Hộ Vệ Hùng trên Thần Điện)
   {
-    id: 35, key: 'khi_gas_huy_diet', name: 'Phó Bản: Khí Gas Hủy Diệt', region: 'Vũ Trụ & Phó Bản', planetTheme: 'namek', renderStyle: 'prison_planet',
+    id: 35, teaMobiMapId: 148, key: 'khi_gas_huy_diet', name: 'Phó Bản: Khí Gas Hủy Diệt', region: 'Vũ Trụ & Phó Bản', planetTheme: 'namek', renderStyle: 'prison_planet',
     width: 1900, height: 840, defaultSpawn: { x: 100, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
-    waypoints: [wpLeft('wp_35_12', 'Về Thần Điện', 12, 460, 200)],
+    waypoints: [wpLeft('wp_35_12', 'Về Thần Điện', 12, 430, 200)],
     npcs: [],
     monsters: [
       { template: 'zinba', x: 580, minX: 440, maxX: 720 },
       { template: 'hatchiyack', x: 1440, minX: 1280, maxX: 1620 }
     ]
+  },
+
+  // =========================================================================
+  // 12 BẢN ĐỒ MỞ RỘNG TRÍCH XUẤT TỪ ElectroHeavenVN/DataNRO (ID 36 .. 47)
+  // =========================================================================
+
+  // [36] Phòng Tập Thời Gian (DataNRO #49 — x2 TNSM, có Sư Huynh Quyết & Máy Đo Sức Mạnh)
+  {
+    id: 36, teaMobiMapId: 49, key: 'phong_tap_thoi_gian', name: 'Phòng Tập Thời Gian (x2 TNSM)', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'than_dien',
+    expBonus: 2,
+    width: 1500, height: 880, defaultSpawn: { x: 280, y: 200 },
+    hitboxes: [{ x: 220, y: 150, w: 1060, h: 50 }],
+    waypoints: [wpDoor('wp_36_12', 'Về Thần Điện', 280, 320, 12, 540, 200)],
+    npcs: [
+      { id: 'thay_hieu', name: 'Sư Huynh Quyết (Phòng Tập)', kind: 'modular', folder: 'thay_hieu', x: 450, y: 200 }
+    ],
+    monsters: [
+      { template: 'may_do_suc_manh', x: 760, minX: 760, maxX: 760 },
+      { template: 'may_do_suc_manh', x: 960, minX: 960, maxX: 960 },
+      { template: 'may_do_suc_manh', x: 1140, minX: 1140, maxX: 1140 }
+    ]
+  },
+
+  // [37] Thánh Địa Kaio (DataNRO #50 / #156 — Săn Thần Linh & Thần Tối Cao)
+  {
+    id: 37, teaMobiMapId: 50, key: 'thanh_dia_kaio', name: 'Thánh Địa Kaio (DataNRO)', region: 'Thần Giới & Karin', planetTheme: 'namek', renderStyle: 'bill_planet',
+    width: 1950, height: 860, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2150, h: 175 }],
+    waypoints: [wpLeft('wp_37_16', 'Về Tàu Babidi', 16, 1820, 175)],
+    npcs: [
+      { id: 'osin', name: 'Tổ Sư Kaio', kind: 'modular', folder: 'ong_gohan', x: 320, y: 175 }
+    ],
+    monsters: [
+      { template: 'tuan_loc', x: 760, minX: 620, maxX: 920 },
+      { template: 'black_goku', x: 1460, minX: 1300, maxX: 1640 }
+    ]
+  },
+
+  // [38] Đồi Nấm Tím & Thị Trấn Moori (DataNRO #8-9 — Tuyến Namếc chuẩn gốc)
+  {
+    id: 38, teaMobiMapId: 8, key: 'doi_nam_tim', name: 'Đồi Nấm Tím & TT. Moori', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    width: 1950, height: 850, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    waypoints: [
+      wpLeft('wp_38_20', 'Làng Mori', 20, 2020, 175),
+      wpRight('wp_38_22', 'Thung Lũng Namếc & Đảo Guru', 1950, 22, 65, 175)
+    ],
+    npcs: [],
+    monsters: [
+      { template: 'oc_muon_hon', x: 460, minX: 320, maxX: 620 },
+      { template: 'oc_muon_hon', x: 940, minX: 780, maxX: 1100 },
+      { template: 'khung_long_me', x: 1440, minX: 1280, maxX: 1620 }
+    ]
+  },
+
+  // [39] Núi Hoa Vàng & Núi Hoa Tím (DataNRO #31-32 — Vùng Sâu Namếc)
+  {
+    id: 39, teaMobiMapId: 31, key: 'nui_hoa_vang_tim', name: 'Núi Hoa Vàng & Hoa Tím', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    width: 1950, height: 850, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    waypoints: [wpLeft('wp_39_22', 'Về Đảo Guru', 22, 1050, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'bulon_ukulele', x: 520, minX: 380, maxX: 680 },
+      { template: 'bulon_ukulele', x: 1020, minX: 880, maxX: 1180 },
+      { template: 'boss_kuku', x: 1540, minX: 1380, maxX: 1700 }
+    ]
+  },
+
+  // [40] Đồi Hoang & Làng Plant (DataNRO #15-16 — Tuyến Xayda chuẩn gốc)
+  {
+    id: 40, teaMobiMapId: 15, key: 'doi_hoang_plant', name: 'Đồi Hoang & Làng Plant', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    width: 1950, height: 850, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    waypoints: [
+      wpLeft('wp_40_25', 'Làng Kakarot', 25, 2020, 175),
+      wpRight('wp_40_41', 'Rừng Nguyên Sinh & Thông XD', 1950, 41, 65, 175)
+    ],
+    npcs: [],
+    monsters: [
+      { template: 'heo_xayda', x: 460, minX: 320, maxX: 620 },
+      { template: 'heo_xayda', x: 960, minX: 820, maxX: 1120 },
+      { template: 'khung_long_bay', x: 1460, minX: 1300, maxX: 1620 }
+    ]
+  },
+
+  // [41] Rừng Nguyên Sinh & Rừng Thông Xayda (DataNRO #17-18)
+  {
+    id: 41, teaMobiMapId: 17, key: 'rung_thong_xayda', name: 'Rừng Nguyên Sinh & Thông XD', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    width: 1950, height: 850, defaultSpawn: { x: 65, y: 175 },
+    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    waypoints: [
+      wpLeft('wp_41_40', 'Đồi Hoang & Làng Plant', 40, 1880, 175),
+      wpRight('wp_41_27', 'TP. Vegeta & Núi Khỉ', 1950, 27, 80, 175)
+    ],
+    npcs: [],
+    monsters: [
+      { template: 'nappa_fide', x: 520, minX: 380, maxX: 680 },
+      { template: 'nappa_fide', x: 1020, minX: 880, maxX: 1180 },
+      { template: 'khi_dot', x: 1520, minX: 1380, maxX: 1680 }
+    ]
+  },
+
+  // [42] Vách Núi Đen & Hang Khỉ Đen (DataNRO #20, #79-83 — Cụm Khỉ Đỏ / Vàng / Đen)
+  {
+    id: 42, teaMobiMapId: 83, key: 'hang_khi_den', name: 'Vách Núi Đen & Hang Khỉ Đen', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'prison_planet',
+    width: 2050, height: 850, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2300, h: 175 }],
+    waypoints: [wpLeft('wp_42_27', 'Về TP. Vegeta', 27, 2200, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'khi_giap_sat', x: 540, minX: 400, maxX: 680 },
+      { template: 'khi_giap_sat', x: 1040, minX: 900, maxX: 1180 },
+      { template: 'boss_broly', x: 1620, minX: 1460, maxX: 1800 }
+    ]
+  },
+
+  // [43] Ngũ Hành Sơn (DataNRO #122-124 — Đại Ca Ba Chíp & Voi Chín Ngà, Gà Chín Cựa)
+  {
+    id: 43, teaMobiMapId: 122, key: 'ngu_hanh_son', name: 'Ngũ Hành Sơn (DataNRO)', region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'cliff_earth',
+    expBonus: 2,
+    width: 2050, height: 850, defaultSpawn: { x: 120, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2300, h: 175 }],
+    waypoints: [wpLeft('wp_43_15', 'Về Nam Kame', 15, 580, 175)],
+    npcs: [
+      { id: 'ba_chip', name: 'Đại Ca Ba Chíp (Ngũ Hành)', kind: 'modular', folder: 'admin_huykhoi', x: 280, y: 175 }
+    ],
+    monsters: [
+      { template: 'ga_chin_cua', x: 680, minX: 540, maxX: 840 },
+      { template: 'ga_chin_cua', x: 1120, minX: 980, maxX: 1280 },
+      { template: 'voi_chin_nga', x: 1620, minX: 1460, maxX: 1800 }
+    ]
+  },
+
+  // [44] Hành Tinh M-2 & Rudeeze (DataNRO #85-89 — Bay từ Tàu Vũ Trụ)
+  {
+    id: 44, teaMobiMapId: 85, key: 'hanh_tinh_m2', name: 'Hành Tinh M-2 & Rudeeze', region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'babidi_ship',
+    width: 1950, height: 850, defaultSpawn: { x: 260, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2150, h: 175 }],
+    waypoints: [],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Phi Thuyền M-2', kind: 'spaceship', x: 180, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' }
+    ],
+    monsters: [
+      { template: 'robot_bao_ve', x: 640, minX: 500, maxX: 780 },
+      { template: 'robot_bao_ve', x: 1080, minX: 940, maxX: 1220 },
+      { template: 'hatchiyack', x: 1560, minX: 1400, maxX: 1740 }
+    ]
+  },
+
+  // [45] Hành Tinh Potaufeu (DataNRO #139-140 — Săn BOSS Nhân Bản Copy-Vegeta)
+  {
+    id: 45, teaMobiMapId: 139, key: 'hanh_tinh_potaufeu', name: 'Hành Tinh Potaufeu', region: 'Vũ Trụ & Phó Bản', planetTheme: 'namek', renderStyle: 'bill_planet',
+    width: 1950, height: 850, defaultSpawn: { x: 260, y: 175 },
+    hitboxes: [{ x: -80, y: 0, w: 2150, h: 175 }],
+    waypoints: [],
+    npcs: [
+      { id: 'tau_vu_tru', name: 'Phi Thuyền Jaco (Potaufeu)', kind: 'spaceship', x: 180, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay2.png' }
+    ],
+    monsters: [
+      { template: 'zinba', x: 680, minX: 540, maxX: 840 },
+      { template: 'copy_vegeta', x: 1480, minX: 1320, maxX: 1660 }
+    ]
+  },
+
+  // [46] Địa Ngục Tầng 1-4 (DataNRO #167-171 — Săn Ma Thần Hirudegarn)
+  {
+    id: 46, teaMobiMapId: 167, key: 'dia_nguc', name: 'Địa Ngục Tầng 1-4 (DataNRO)', region: 'Thần Giới & Karin', planetTheme: 'xayda', renderStyle: 'future_ruins',
+    width: 2050, height: 850, defaultSpawn: { x: 80, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2300, h: 175 }],
+    waypoints: [wpLeft('wp_46_13', 'Về Con Đường Rắn Độc', 13, 1760, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'khi_giap_sat', x: 620, minX: 480, maxX: 780 },
+      { template: 'hirudegarn', x: 1520, minX: 1340, maxX: 1720 }
+    ]
+  },
+
+  // [47] Phòng Thí Nghiệm Dr. Myuu & Thành Cổ (DataNRO #179, #186)
+  {
+    id: 47, teaMobiMapId: 179, key: 'phong_tn_myuu', name: 'Phòng TN Dr. Myuu & Thành Cổ', region: 'Trái Đất Mở Rộng', planetTheme: 'xayda', renderStyle: 'city_earth',
+    width: 1950, height: 840, defaultSpawn: { x: 100, y: 175 },
+    hitboxes: [{ x: -120, y: 0, w: 2200, h: 175 }],
+    waypoints: [wpLeft('wp_47_17', 'Về Thị Trấn Ginder', 17, 1100, 175)],
+    npcs: [],
+    monsters: [
+      { template: 'robot_bao_ve', x: 580, minX: 440, maxX: 720 },
+      { template: 'abo_kado', x: 1460, minX: 1300, maxX: 1640 }
+    ]
   }
 ];
 
-// Văn bản Sơ Đồ Thế Giới chuẩn theo kiến trúc 2 trục của Ngọc Rồng Online
+// Văn bản Sơ Đồ Thế Giới chuẩn theo kiến trúc 2 trục của Ngọc Rồng Online + DataNRO (48 Map Thực Chiến / 187 Map Từ Điển)
 export const WORLD_TOPOLOGY_LINES = [
-  '[Hành Tinh Bill (14)] ↔ [Thực Vật]',
-  '        ↑ (NPC Whis)',
-  '[Khí Gas (35)] ← [THẦN ĐIỆN (12)] → [Rắn Độc & Kaio (13)]',
+  '[Hành Tinh Bill (14)] ↔ [Thánh Địa Kaio (37)]   [Phòng Tập Thời Gian (36, x2 TNSM)]',
+  '        ↑ (NPC Whis)                                      ↑',
+  '[Khí Gas (35)] ← [THẦN ĐIỆN (12)] → [Rắn Độc & Kaio (13)] → [Địa Ngục 1-4 (46)]',
   '        ↑',
-  '  [Tháp Karin (11)] ↑ [Rừng Karin (10)] ↔ [Đông Karin (9)] → [Độc Nhãn (34)]',
+  '  [Tháp Karin (11)] ↑ [Rừng Karin (10)] ↔ [Đông Karin (9: Tướng Quân Khánh)] → [Độc Nhãn (34)]',
   '                                              ↕',
-  '[Vách Núi Aru (2)] ↔ [Làng Aru (1)] → (4 Map Rừng 4-7) → [ĐẢO KAME (8)] → [Kho Báu (33)]',
-  '   ↓ (Calích)            ↕                                    ↓',
-  '[TƯƠNG LAI (30)]    [Nhà Gôhan (0) / Trạm TĐ (3)]        [Nam Kame (15)] → [Tàu Babidi (16)]',
-  '                         ↕                                    ↓',
-  '    ┌────────────────────┼────────────────────┐          [TP. Đông & Ginder (17)]',
-  '    ↕                    ↕                    ↕               ↓',
-  '[TRẠM NAMẾC (21)]   [TRẠM XAYDA (26)]   [SIÊU THỊ (28)]  [Võ Đài Xên (18)]',
-  '↔ Làng Mori (20)    ↔ Làng Kakarot (25) → Sân Sau (29)',
-  '→ Đảo Guru (22)     → TP. Vegeta (27)   • Hành Tinh Cold (31) (Cooler)',
-  '→ Vực Maima (23)    • Nhẫn Thời Không → Hành Tinh Ngục Tù (32) (Cumber)'
+  '[Vách Núi Aru (2)] ↔ [Làng Aru (1: Bảo•Hùng•Ba Chíp)] → [Đồi Hoa Cúc (4: Quyết)..Rừng (7)] → [ĐẢO KAME (8)]',
+  '   ↓ (Calích)            ↕                                                                      ↓',
+  '[TƯƠNG LAI (30)]    [Nhà Gôhan (0: Sơn) / Trạm TĐ (3: Đạt)]             [Nam Kame (15)] → [Ngũ Hành Sơn (43)]',
+  '                         ↕                                                   ↓         → [Tàu Babidi (16)]',
+  '    ┌────────────────────┼────────────────────┐                        [TP. Đông & Ginder (17)] → [Dr. Myuu (47)]',
+  '    ↕                    ↕                    ↕                              ↓',
+  '[TRẠM NAMẾC (21)]   [TRẠM XAYDA (26)]   [SIÊU THỊ (28: Đạt)]           [Võ Đài Xên (18)]',
+  '↔ Làng Mori (20)    ↔ Làng Kakarot (25) → Sân Sau (29) • Cold (31)',
+  '→ Đồi Nấm Tím (38)  → Làng Plant (40)   • Hành Tinh M-2 (44) & Potaufeu (45)',
+  '→ Đảo Guru (22-23)  → Vegeta & Hang Khỉ (27,41,42) • Nhẫn Thời Không → Ngục Tù (32: Cumber)'
 ];
 
 export const GIFTCODES = {
   TANTHU: { gold: 50000, gem: 50, items: ['ve_quay', 'cuong_no', 'bo_huyet'], msg: 'Nhận Giftcode TANTHU: +50K Vàng, +50 Ngọc, Vé quay & Dược phẩm!' },
   NROWEB: { gold: 150000, gem: 120, items: ['vb_candauvan', 'trung_de_tu', 'bong_tai_c1'], msg: 'Nhận Giftcode NROWEB: +150K Vàng, +120 Ngọc, Cân Đẩu Vân, Trứng Đệ Tử & Bông Tai!' },
   TUONGLAI: { gold: 200000, gem: 150, items: ['nhan_thoi_khong', 'dl_kiem_vip'], msg: 'Nhận Giftcode TUONGLAI: Nhẫn Thời Không & Kiếm Ánh Sáng Calích!' },
+  BACHIP: { gold: 300000, gem: 250, items: ['capsule_vip', 'ao_thien_su', 'bong_tai_c2'], msg: 'Quà Đại Ca Ba Chíp & Anh Em Phòng: +300K Vàng, +250 Ngọc, Capsule VIP & Áo Thiên Sứ!' },
+  ANHEMPHONG: { gold: 500000, gem: 350, items: ['ao_thien_su', 'quan_thien_su', 'gang_thien_su'], msg: 'Giftcode Phòng Anh Em (Sơn•Quyết•Bảo•Hùng•Đạt•Khánh•Ba Chíp): Trọn bộ Thiên Sứ Tối Thượng!' },
   NGOCRONG: { gold: 100000, gem: 100, items: ['nr_1s', 'nr_2s', 'nr_3s', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s'], msg: 'Nhận trọn bộ 7 Viên Ngọc Rồng! Hãy mở Hành Trang gọi Rồng Thần ngay!' }
 };
 

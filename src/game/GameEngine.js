@@ -18,6 +18,7 @@ import {
   createStarterSkillLevels,
   formatNroNum
 } from './nroData';
+import { getServerConfig } from './dataNroArchive';
 import {
   NroHudRenderer,
   JOYSTICK_CX,
@@ -78,6 +79,7 @@ export class GameEngine {
     this.lastTime = 0;
     this.animClock = 0;
     this.zoneId = 1;
+    this.serverCfg = getServerConfig(initialPlayer.serverId || (typeof localStorage !== 'undefined' ? localStorage.getItem('nro_server') : 1) || 1);
 
     // Khởi tạo dữ liệu người chơi chuẩn cốt truyện Hậu Bối 3 Chủng Tộc (Nhà Gôhan: 0 | Nhà Paragus: 24 | Nhà Moori: 19)
     const planetIdx = [0, 1, 2].includes(Number(initialPlayer.planet)) ? Number(initialPlayer.planet) : 0;
@@ -339,6 +341,13 @@ export class GameEngine {
     }
 
     if (def.slot === 'consumable') {
+      if (def.action === 'open_capsule') {
+        sound.playHeal();
+        this.hud.popupOpen = true;
+        this.hud.popupTab = 4;
+        this.hud.pushBanner('Viên Capsule Đặc Biệt sẵn sàng! Chọn bản đồ bất kỳ để bay ngay!', '#67e8f9');
+        return;
+      }
       if (def.action === 'portal_prison') {
         sound.playSuperSaiyan();
         this.skillEffects.push({ type: 'SolarFlash', x: p.x, y: p.y + 34, timer: 0, duration: 0.45 });
@@ -1078,20 +1087,115 @@ export class GameEngine {
       this.hud.pushBanner('Huýt Sáo! Tăng mạnh sinh lực tối đa!', '#86efac');
     } else if (skill.type === 'egg') {
       this.unlockDetu(false);
+    } else if (skill.type === 'sleep') {
+      // Thôi miên (DataNRO #22): Ru ngủ kẻ thù 5s..11s, đòn tiếp theo gây x2.2 sát thương!
+      const m = targetMob || this.monsters.find((it) => !it.dead && Math.hypot(it.x - p.x, it.y - p.y) < 380);
+      sound.playSolarFlare();
+      if (m) {
+        m.sleepTimer = 4.5 + skillLv;
+        this.spawnFloatingText(m.x, m.y + 72, `💤 THÔI MIÊN (${Math.round(m.sleepTimer)}s)!`, '#c084fc');
+        this.skillEffects.push({ type: 'SolarFlash', x: m.x, y: m.y + 30, timer: 0, duration: 0.45 });
+      }
+    } else if (skill.type === 'socola') {
+      // Biến Sôcôla (DataNRO #18): Biến quái/BOSS thành viên Sôcôla bất lực & nhận +65% sát thương!
+      const m = targetMob || this.monsters.find((it) => !it.dead && Math.hypot(it.x - p.x, it.y - p.y) < 420);
+      sound.playBeam(p.planet);
+      if (m) {
+        m.socolaTimer = 5.5 + skillLv;
+        this.applyDamageToMonster(m, p.attack * skill.mult * lvMult);
+        this.spawnFloatingText(m.x, m.y + 74, '🍫 HÓA SÔCÔLA!', '#f59e0b');
+        this.skillEffects.push({ type: 'SolarFlash', x: m.x, y: m.y + 30, timer: 0, duration: 0.45 });
+      }
+    } else if (skill.type === 'bind') {
+      // Trói (DataNRO #23): Khóa chặt mục tiêu bằng vòng năng lượng!
+      const m = targetMob || this.monsters.find((it) => !it.dead && Math.hypot(it.x - p.x, it.y - p.y) < 400);
+      sound.playSolarFlare();
+      if (m) {
+        m.bindTimer = 4.5 + skillLv;
+        this.applyDamageToMonster(m, p.attack * skill.mult * lvMult);
+        this.spawnFloatingText(m.x, m.y + 72, `⛓️ TRÓI CHẶT (${Math.round(m.bindTimer)}s)!`, '#fde047');
+      }
+    } else if (skill.type === 'barrage') {
+      // Liên hoàn / Cađíc liên hoàn chưởng (DataNRO #17 & #25): Bắn loạt cầu năng lượng dồn dập!
+      p.attackAnimTimer = 0.55;
+      sound.playBeam(p.planet);
+      const tx = targetMob ? targetMob.x : p.x + p.dir * 380;
+      const ty = targetMob ? targetMob.y + 26 : p.y + 28;
+      for (let b = 0; b < 5; b++) {
+        const spreadY = (b - 2) * 18;
+        const ang = Math.atan2((ty + spreadY) - (p.y + 34), tx - (p.x + p.dir * 20));
+        this.projectiles.push({
+          kind: 'beam',
+          startX: p.x + p.dir * 20,
+          startY: p.y + 34 + spreadY * 0.4,
+          x: p.x + p.dir * 20 - b * p.dir * 26,
+          y: p.y + 34 + spreadY * 0.4,
+          vx: Math.cos(ang) * 920,
+          vy: Math.sin(ang) * 920,
+          color: skill.color || '#facc15',
+          core: skill.core || '#ffffff',
+          dmg: (p.attack * skill.mult * lvMult) / 3.2,
+          ttl: 0.72,
+          hitSet: new Set()
+        });
+      }
+    } else if (skill.type === 'super_beam') {
+      // Super Kamejoko (DataNRO Skill 9 #24): Đại chưởng lực cực đại xuyên màn hình!
+      p.attackAnimTimer = 0.62;
+      sound.playSuperSaiyan();
+      sound.playBeam(0);
+      const tx = targetMob ? targetMob.x : p.x + p.dir * 560;
+      const ty = targetMob ? targetMob.y + 28 : p.y + 32;
+      const angle = Math.atan2(ty - (p.y + 32), tx - (p.x + p.dir * 24));
+      this.skillEffects.push({ type: 'SolarFlash', x: p.x + p.dir * 28, y: p.y + 34, timer: 0, duration: 0.4 });
+      for (const offY of [-12, 0, 12]) {
+        this.projectiles.push({
+          kind: 'beam',
+          startX: p.x + p.dir * 24,
+          startY: p.y + 32 + offY,
+          x: p.x + p.dir * 24,
+          y: p.y + 32 + offY,
+          vx: Math.cos(angle) * 980,
+          vy: Math.sin(angle) * 980,
+          color: skill.color || '#2563eb',
+          core: '#ffffff',
+          dmg: (p.attack * skill.mult * lvMult) / 2.2,
+          ttl: 0.78,
+          hitSet: new Set()
+        });
+      }
+    } else if (skill.type === 'mafuba') {
+      // Ma phong ba (DataNRO Skill 9 #26): Lốc xoáy phong ấn rút máu chuẩn cực mạnh!
+      sound.playSuperSaiyan();
+      const m = targetMob || this.monsters.find((it) => !it.dead && Math.hypot(it.x - p.x, it.y - p.y) < 480);
+      if (m) {
+        m.bindTimer = 4.5;
+        const trueBonus = Math.round(p.maxHp * (0.25 + skillLv * 0.08));
+        this.applyDamageToMonster(m, p.attack * skill.mult * lvMult + trueBonus, true);
+        this.skillEffects.push({ type: 'Explosion', x: m.x, y: m.y + 34, timer: 0, duration: 0.55, big: true });
+        this.spawnFloatingText(m.x, m.y + 78, '🏺 MA PHONG BA!', '#34d399');
+      }
     }
   }
 
   applyDamageToMonster(m, rawDmg, forceCrit = false) {
     if (!m || m.dead) return;
     const p = this.player;
-    const isCrit = forceCrit || Math.random() * 100 < p.crit;
-    const finalDmg = Math.max(1, Math.round(rawDmg * (isCrit ? 1.85 : 1) * (0.94 + Math.random() * 0.12)));
+    const wokeFromSleep = (m.sleepTimer || 0) > 0;
+    if (wokeFromSleep) {
+      m.sleepTimer = 0;
+    }
+    const debuffMult = (wokeFromSleep ? 2.2 : 1) * ((m.socolaTimer || 0) > 0 ? 1.65 : 1);
+    const isCrit = forceCrit || wokeFromSleep || Math.random() * 100 < p.crit;
+    const finalDmg = Math.max(1, Math.round(rawDmg * debuffMult * (isCrit ? 1.85 : 1) * (0.94 + Math.random() * 0.12)));
 
     m.hp = Math.max(0, m.hp - finalDmg);
     m.hurtTimer = 0.18;
 
-    // Cộng Sức mạnh & Tiềm năng theo sát thương gây ra chuẩn NRO!
-    const gainSm = Math.max(8, Math.round(finalDmg * 0.45));
+    // Cộng Sức mạnh & Tiềm năng nhân với Hệ Số Máy Chủ DataNRO (expRate) & Bonus Bản Đồ (Phòng Tập Thời Gian x2)!
+    const curMapCfg = MAPS_CONFIG[this.currentMapId];
+    const expMult = (this.serverCfg?.expRate || 1) * (curMapCfg?.expBonus || 1);
+    const gainSm = Math.max(8, Math.round(finalDmg * 0.45 * expMult));
     p.power += gainSm;
     p.potential += gainSm;
 
@@ -1398,7 +1502,11 @@ export class GameEngine {
       sound.playStep();
     }
 
-    // Rơi xuống vực sâu ở Thần Điện (12) -> rơi thẳng về Đỉnh Tháp Karin (11)!
+    // Rơi xuống vực sâu ở Phòng Tập Thời Gian (36) hoặc Thần Điện (12)
+    if (mapCfg.key === 'phong_tap_thoi_gian' && p.y < 30 && this.mapTransitionTimer <= 0) {
+      this.changeMap(12, 540, 200);
+      return;
+    }
     if (mapCfg.key === 'than_dien' && p.y < 30 && this.mapTransitionTimer <= 0) {
       this.changeMap(11, 700, 320);
       return;
@@ -1409,7 +1517,7 @@ export class GameEngine {
       return;
     }
     // Khỏi lọt đáy ở các bản đồ mặt đất thường
-    if (mapCfg.key !== 'thap_karin' && mapCfg.key !== 'than_dien' && p.y < 80) {
+    if (mapCfg.key !== 'thap_karin' && mapCfg.key !== 'than_dien' && mapCfg.key !== 'phong_tap_thoi_gian' && p.y < 80) {
       const safeTop = Math.max(127, curGroundY);
       p.y = safeTop;
       p.vy = 0;
@@ -1524,7 +1632,10 @@ export class GameEngine {
       }
 
       if (m.hurtTimer > 0) m.hurtTimer = Math.max(0, m.hurtTimer - dt);
-      if (m.stunTimer > 0) {
+      if (m.sleepTimer > 0) m.sleepTimer = Math.max(0, m.sleepTimer - dt);
+      if (m.socolaTimer > 0) m.socolaTimer = Math.max(0, m.socolaTimer - dt);
+      if (m.bindTimer > 0) m.bindTimer = Math.max(0, m.bindTimer - dt);
+      if (m.stunTimer > 0 || m.sleepTimer > 0 || m.socolaTimer > 0 || m.bindTimer > 0) {
         m.stunTimer = Math.max(0, m.stunTimer - dt);
         continue;
       }
@@ -2343,7 +2454,12 @@ export class GameEngine {
         ctx.filter = 'brightness(1.6)';
       }
 
-      if (m.renderType === 'dummy') {
+      if ((m.socolaTimer || 0) > 0) {
+        // Đang bị Biến Sôcôla (DataNRO #18) -> Vẽ thanh Sôcôla 4133.png nảy nhẹ trên mặt đất!
+        const bobChoc = Math.abs(Math.sin(this.animClock * 6)) * 6;
+        this.drawWorldTex(ctx, 'vatpham/datanro/4133.png', m.x - 22, m.y + bobChoc, 44, 44);
+        topOffset = 52;
+      } else if (m.renderType === 'dummy') {
         const texPath = m.hurtTimer > 0 ? m.hitTex : m.idleTex;
         const img = assets.tex(texPath);
         if (img) {
@@ -2410,6 +2526,20 @@ export class GameEngine {
       }
 
       ctx.restore();
+
+      // Hiệu ứng vòng Trói (DataNRO #23) hoặc Ngủ Say Thôi Miên (DataNRO #22)
+      if ((m.bindTimer || 0) > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(vx, VIRTUAL_H - vy - 28, 32, 12, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      if ((m.sleepTimer || 0) > 0) {
+        this.hud.drawText(ctx, '💤 Zzz', vx, vy + topOffset + 18, { size: 11, color: '#e879f9', align: 'center' });
+      }
 
       const barW = m.isBoss ? 76 : 46;
       const barH = m.isBoss ? 7 : 5;

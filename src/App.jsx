@@ -129,7 +129,7 @@ export function App() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new GameEngine(canvas, playerState, {
+    const engine = new GameEngine(canvas, { ...playerState, serverId: currentServer }, {
       onStateSync: (syncedPlayer) => {
         setPlayerState(syncedPlayer);
       },
