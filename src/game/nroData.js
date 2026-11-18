@@ -560,12 +560,12 @@ export const MONSTER_TEMPLATES = {
   moc_nhan: {
     id: 'moc_nhan', name: 'Mộc Nhân', renderType: 'dummy',
     idleTex: 'nhanvat/quai/moc_nhan_1.png', hitTex: 'nhanvat/quai/moc_nhan_2.png',
-    scale: 0.56, hp: 120, attack: 0, exp: 65, gold: 80, speed: 0, respawnSec: 3.0
+    scale: 0.58, hp: 120, attack: 0, exp: 65, gold: 80, speed: 0, respawnSec: 3.0
   },
   khung_long: {
     id: 'khung_long', name: 'Khủng Long', renderType: 'frames',
     frames: ['nhanvat/quai/khung_long_1.png', 'nhanvat/quai/khung_long_2.png'],
-    nativeLeft: false, scale: 0.54, hp: 240, attack: 10, exp: 140, gold: 160, dropsMeat: true, speed: 42
+    nativeLeft: false, scale: 0.52, hp: 240, attack: 10, exp: 140, gold: 160, dropsMeat: true, speed: 42
   },
   lon_loi: {
     id: 'lon_loi', name: 'Lợn Lòi', renderType: 'frames',
@@ -575,7 +575,7 @@ export const MONSTER_TEMPLATES = {
   khung_long_me: {
     id: 'khung_long_me', name: 'Khủng Long Mẹ', renderType: 'frames',
     frames: ['nhanvat/quai/khung_long_1.png', 'nhanvat/quai/khung_long_2.png'],
-    nativeLeft: false, scale: 0.74, hp: 1100, attack: 38, exp: 620, gold: 640, dropsMeat: true, speed: 46
+    nativeLeft: false, scale: 0.68, hp: 1100, attack: 38, exp: 620, gold: 640, dropsMeat: true, speed: 46
   },
   than_lan_xanh: {
     id: 'than_lan_xanh', name: 'Nấm Độc Rừng Sâu', renderType: 'sheet_vertical',
@@ -583,9 +583,9 @@ export const MONSTER_TEMPLATES = {
     hp: 1550, attack: 48, exp: 820, gold: 760, speed: 46
   },
   quy_xuong: {
-    id: 'quy_xuong', name: 'Khủng Long Xương', renderType: 'frames',
-    frames: ['nhanvat/quai/lon_loi_1.png', 'nhanvat/quai/lon_loi_2.png'],
-    nativeLeft: false, scale: 0.68, hp: 1950, attack: 58, exp: 980, gold: 880, speed: 54
+    id: 'quy_xuong', name: 'Quỷ Đất Rừng Xương', renderType: 'frames',
+    frames: ['nhanvat/quai/quy_dat_1.png', 'nhanvat/quai/quy_dat_2.png'],
+    nativeLeft: false, scale: 0.60, hp: 1950, attack: 58, exp: 980, gold: 880, speed: 54
   },
   khung_long_bay: {
     id: 'khung_long_bay', name: 'Thằn Lằn Bay', renderType: 'sheet_vertical',
@@ -769,9 +769,9 @@ export const MONSTER_TEMPLATES = {
     hp: 18000, attack: 215, exp: 8800, gold: 9200, speed: 56
   },
   heo_xayda: {
-    id: 'heo_xayda', name: 'Heo Xayda & Quỷ Đất', renderType: 'frames',
-    frames: ['nhanvat/quai/lon_loi_1.png', 'nhanvat/quai/lon_loi_2.png'],
-    nativeLeft: false, scale: 0.66, hp: 3200, attack: 62, exp: 1100, gold: 960, speed: 52
+    id: 'heo_xayda', name: 'Quỷ Đất Xayda', renderType: 'frames',
+    frames: ['nhanvat/quai/quy_dat_1.png', 'nhanvat/quai/quy_dat_2.png'],
+    nativeLeft: false, scale: 0.60, hp: 3200, attack: 62, exp: 1100, gold: 960, speed: 52
   },
   nappa_fide: {
     id: 'nappa_fide', name: 'Chiến Binh Nappa & Appule', renderType: 'caitrang', caitrangKey: 'hop_the_thuong_xayda', scale: 0.58,

@@ -59,6 +59,8 @@ export class NroHudRenderer {
     this.attackClickTimer = 0;
     this.changeClickTimer = 0;
     this.senzuClickTimer = 0;
+    // Chiều cao nền trắng hồi chiêu Đậu Thần bên dưới lòng trái tim odauthan.png chuẩn VeHUD.java (0 -> 53 trong 5s)
+    this.senzuFillH = 53;
 
     // Trạng thái cửa sổ Popup Nhân Vật (popupnhanvat.jpg)
     this.popupOpen = false;
@@ -258,6 +260,7 @@ export class NroHudRenderer {
     if (this.attackClickTimer > 0) this.attackClickTimer = Math.max(0, this.attackClickTimer - dt);
     if (this.changeClickTimer > 0) this.changeClickTimer = Math.max(0, this.changeClickTimer - dt);
     if (this.senzuClickTimer > 0) this.senzuClickTimer = Math.max(0, this.senzuClickTimer - dt);
+    if (this.senzuFillH < 53) this.senzuFillH = Math.min(53, this.senzuFillH + 10.6 * dt);
 
     if (this.shenronActive) {
       this.shenronTimer += dt;
@@ -1128,9 +1131,18 @@ export class NroHudRenderer {
     this.renderBottomSkillAndActionBar(ctx);
 
     if (!this.popupOpen) {
-      // Nút mở Popup Nhân Vật (nutpopup.png ở mép trái chuẩn VeHUD.java)
-      this.drawTex(ctx, 'hud/giaodientrong/nutpopup.png', 0, 452, 26, 42);
-      this.addHit('btn_open_popup', 0, 448, 34, 50, () => {
+      // Nền tam giác đen mờ + Nút mở Popup Nhân Vật (nutpopup.png ở mép trái chuẩn VeHUD.java dòng 987 & 1121)
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(0, VIRTUAL_H - (VIRTUAL_H * 0.75 - 10));
+      ctx.lineTo(0, VIRTUAL_H - (VIRTUAL_H * 0.75 + 48));
+      ctx.lineTo(29, VIRTUAL_H - (VIRTUAL_H * 0.75 + 19));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      this.drawTex(ctx, 'hud/giaodientrong/nutpopup.png', 0, VIRTUAL_H * 0.75, 22, 38);
+      this.addHit('btn_open_popup', 0, VIRTUAL_H * 0.75 - 10, 34, 58, () => {
         this.popupOpen = true;
         this.activePanel = null;
       });
@@ -1162,42 +1174,43 @@ export class NroHudRenderer {
     this.renderBanners(ctx);
   }
 
-  // 1. THANH MÁU / KI / SCOUTER GÓC TRÊN TRÁI (thanhhp1.png, thanhhp.png, thanhki.png)
+  // 1. THANH MÁU / KI / SCOUTER GÓC TRÊN TRÁI (thanhhp1.png, thanhhp.png, thanhki.png chuẩn VeHUD.java dòng 993-1005 & 1189-1191)
   renderTopLeftScouter(ctx) {
     const p = this.engine.player;
     this.drawTex(ctx, 'hud/giaodientrong/thanhhp1.png', 0, 530, 308, 80);
 
-    // Avatar nhân vật trong khung tròn Scouter
-    const avtPath = this.engine.getPlayerAvatarPath();
-    this.drawTex(ctx, avtPath, 14, 542, 44, 48);
     this.addHit('scouter_open_popup', 0, 530, 160, 80, () => {
       this.popupOpen = !this.popupOpen;
       if (!this.popupOpen) this.activePanel = null;
     });
 
-    // Tên nhân vật & Sức mạnh bên trong màn hình xanh lá Scouter [62..155]
-    this.drawText(ctx, p.name, 62, 574, { size: 12, color: '#fef08a', stroke: '#052e16', strokeWidth: 2.5 });
-    this.drawText(ctx, `SM: ${formatNroNum(p.power)}`, 62, 555, { size: 10.5, color: '#86efac', stroke: '#052e16', strokeWidth: 2 });
+    // Tên nhân vật & Sức mạnh hiển thị trên mặt kính xanh lá Scouter [2.5..157.5] bằng màu xanh đậm LCD #005325 chuẩn VeHUD.java dòng 1189!
+    this.drawText(ctx, p.name, 80, 576, {
+      size: 13, color: '#005325', stroke: null, strokeWidth: 0, align: 'center'
+    });
+    this.drawText(ctx, `SM: ${formatNroNum(p.power)}`, 80, 555, {
+      size: 11, color: '#005325', stroke: null, strokeWidth: 0, align: 'center'
+    });
 
     // Thanh HP (thanhhp.png: 132x20 tại 165, 580)
     const hpRatio = p.maxHp > 0 ? p.hp / p.maxHp : 0;
     this.drawTexCropX(ctx, 'hud/giaodientrong/thanhhp.png', 165, 580, 132, 20, hpRatio);
-    this.drawText(ctx, `${formatNroNum(p.hp)}/${formatNroNum(p.maxHp)}`, 231, 585, {
-      size: 10, color: '#ffffff', stroke: '#000000', strokeWidth: 2.2, align: 'center'
+    this.drawText(ctx, `${formatNroNum(p.hp)}/${formatNroNum(p.maxHp)}`, 231, 586, {
+      size: 10, color: '#ffffff', stroke: '#000000', strokeWidth: 2, align: 'center'
     });
 
     // Thanh KI (thanhki.png: 119x12 tại 165, 560)
     const kiRatio = p.maxKi > 0 ? p.ki / p.maxKi : 0;
     this.drawTexCropX(ctx, 'hud/giaodientrong/thanhki.png', 165, 560, 119, 12, kiRatio);
-    this.drawText(ctx, `${formatNroNum(p.ki)}/${formatNroNum(p.maxKi)}`, 224, 562, {
-      size: 9, color: '#e0f2fe', stroke: '#000000', strokeWidth: 2, align: 'center'
+    this.drawText(ctx, `${formatNroNum(p.ki)}/${formatNroNum(p.maxKi)}`, 224.5, 562, {
+      size: 9, color: '#e0f2fe', stroke: '#000000', strokeWidth: 1.8, align: 'center'
     });
 
     // Vàng & Ngọc hiển thị gọn ngay dưới thanh KI của Scouter
-    this.drawTex(ctx, 'hud/giaodientrong/vang.png', 165, 538, 16, 16);
-    this.drawText(ctx, formatNroNum(p.gold), 184, 541, { size: 10, color: '#fde047' });
-    this.drawTex(ctx, 'hud/giaodientrong/ngoc.png', 242, 538, 15, 15);
-    this.drawText(ctx, formatNroNum(p.gem), 260, 541, { size: 10, color: '#67e8f9' });
+    this.drawTex(ctx, 'hud/giaodientrong/vang.png', 165, 538, 15, 15);
+    this.drawText(ctx, formatNroNum(p.gold), 183, 541, { size: 10, color: '#fde047' });
+    this.drawTex(ctx, 'hud/giaodientrong/ngoc.png', 240, 538, 14, 14);
+    this.drawText(ctx, formatNroNum(p.gem), 257, 541, { size: 10, color: '#67e8f9' });
 
     // Hàng biểu tượng Buff đang kích hoạt
     let bx = 8;
@@ -1325,18 +1338,24 @@ export class NroHudRenderer {
       );
 
       if (skill) {
-        this.drawTex(ctx, skill.icon, sx + 6, sy + 6, 38, 38);
+        // Icon nằm lọt gọn bên trong khung bo góc oskill.png chuẩn VeHUD.java dòng 1058 (x + 6.9, y + 6.9, 36.2x36.2)
+        this.drawTex(ctx, skill.icon, sx + 6.9, sy + 6.9, 36.2, 36.2);
         const cdRem = p.cooldowns[skill.id] || 0;
         if (cdRem > 0.05) {
           const ratio = Math.min(1, cdRem / Math.max(0.1, skill.cd));
-          this.fillRectGdx(ctx, sx + 5, sy + 5, 40, 40 * ratio, 'rgba(0,0,0,0.68)', null);
+          this.fillRectGdx(ctx, sx + 6.9, sy + 6.9, 36.2, 36.2 * ratio, 'rgba(0,0,0,0.62)', null);
           this.drawText(ctx, cdRem.toFixed(1), sx + 25, sy + 21, {
-            size: 11, color: '#fde047', align: 'center'
+            size: 11, color: '#ffffff', align: 'center'
           });
         }
       }
 
-      this.drawText(ctx, `${i + 1}`, sx + 9, sy + 38, { size: 9.5, color: skill ? '#fef08a' : '#94a3b8' });
+      // Phím tắt 1..5 chỉ vẽ phía trên ô khi tắt điều khiển ảo (chế độ PC) chuẩn VeHUD.java dòng 1110-1115
+      if (!this.showVirtualControls) {
+        this.drawText(ctx, `${i + 1}`, sx + 25, sy + oskillH + 6, {
+          size: 11, color: '#ffffff', align: 'center'
+        });
+      }
 
       this.addHit(`skill_slot_${i}`, sx, sy, oskillW, oskillH, () => {
         if (!skill) {
@@ -1349,56 +1368,36 @@ export class NroHudRenderer {
     }
 
     if (this.showVirtualControls) {
-      // === A. JOYSTICK ẢO KÉO THẢ 360 ĐỘ BÊN TRÁI DƯỚI DÙNG TEXTURE GỐC DragonBoy (myTexture2danalog1 & 2) ===
+      // === A. JOYSTICK ẢO KÉO THẢ GÓC TRÁI DƯỚI VẼ VECTOR SẮC NÉT 1:1 CHUẨN VeHUD.java dòng 1146-1161 ===
       if (!this.popupOpen) {
         const jcx = JOYSTICK_CX;
         const jcy = VIRTUAL_H - JOYSTICK_CY;
 
         ctx.save();
-        ctx.globalAlpha = this.joystickActive ? 0.82 : 0.58;
-        this.drawTex(
-          ctx,
-          'hud/giaodientrong/myTexture2danalog1.png',
-          JOYSTICK_CX - JOYSTICK_R_NGOAI,
-          JOYSTICK_CY - JOYSTICK_R_NGOAI,
-          JOYSTICK_R_NGOAI * 2,
-          JOYSTICK_R_NGOAI * 2
-        );
-        ctx.globalAlpha = 1;
-
         ctx.beginPath();
         ctx.arc(jcx, jcy, JOYSTICK_R_NGOAI, 0, Math.PI * 2);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = this.joystickActive ? 'rgba(253, 224, 71, 0.85)' : 'rgba(255, 255, 255, 0.45)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.30)';
+        ctx.fill();
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.62)';
         ctx.stroke();
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('▲', jcx, jcy - JOYSTICK_R_NGOAI + 11);
-        ctx.fillText('▼', jcx, jcy + JOYSTICK_R_NGOAI - 11);
-        ctx.fillText('◄', jcx - JOYSTICK_R_NGOAI + 11, jcy);
-        ctx.fillText('►', jcx + JOYSTICK_R_NGOAI - 11, jcy);
+        ctx.beginPath();
+        ctx.arc(jcx + this.joystickDx, jcy - this.joystickDy, JOYSTICK_R_TRONG, 0, Math.PI * 2);
+        ctx.fillStyle = this.joystickActive ? 'rgba(255, 82, 5, 1.0)' : 'rgba(255, 82, 5, 0.72)';
+        ctx.fill();
         ctx.restore();
-
-        this.drawTex(
-          ctx,
-          'hud/giaodientrong/myTexture2danalog2.png',
-          JOYSTICK_CX + this.joystickDx - JOYSTICK_R_TRONG,
-          JOYSTICK_CY + this.joystickDy - JOYSTICK_R_TRONG,
-          JOYSTICK_R_TRONG * 2,
-          JOYSTICK_R_TRONG * 2
-        );
       }
 
-      // === B. CỤM TAM GIÁC GÓC PHẢI DƯỚI CHUẨN VeHUD.java dòng 1168-1185 ===
-      // 1. Ô Đậu Thần thu nhỏ (848, 15, 55x55)
+      // === B. CỤM TAM GIÁC GÓC PHẢI DƯỚI CHUẨN 1:1 VeHUD.java dòng 974-982 & 1125-1186 ===
+      // 1. Ô Đậu Thần thu nhỏ (848, 15, 55x55): Vẽ nền trắng lấp đầy khung trái tim TRƯỚC odauthan.png, sau đó chỉ vẽ chữ số màu nâu #532905!
       const szScale = this.senzuClickTimer > 0 ? 1 - 0.14 * (this.senzuClickTimer / 0.2) : 1;
       const szW = NUT_DAUTHAN_W * szScale;
       const szH = NUT_DAUTHAN_H * szScale;
       const szX = NUT_DAUTHAN_X + (NUT_DAUTHAN_W - szW) / 2;
       const szY = NUT_DAUTHAN_Y + (NUT_DAUTHAN_H - szH) / 2;
+      const tiLeDau = szW / 75;
+      this.fillRectGdx(ctx, szX + 10 * tiLeDau, szY + 10 * tiLeDau, 53 * tiLeDau, this.senzuFillH * tiLeDau, '#ffffff', null);
       this.drawTex(
         ctx,
         this.senzuClickTimer > 0 ? 'hud/giaodientrong/odauthanclick.png' : 'hud/giaodientrong/odauthan.png',
@@ -1407,16 +1406,15 @@ export class NroHudRenderer {
         szW,
         szH
       );
-      this.drawTex(ctx, 'map/traidat/chung/trangtri/hatdau2.png', NUT_DAUTHAN_X + 14, NUT_DAUTHAN_Y + 14, 27, 27);
-      this.drawText(ctx, `${p.senzuCount}`, NUT_DAUTHAN_X + 27.5, NUT_DAUTHAN_Y + 8, {
-        size: 11, color: '#fef08a', align: 'center'
+      this.drawText(ctx, `${p.senzuCount}`, szX + szW / 2, szY + szH * (32 / 75), {
+        size: 12, color: '#532905', stroke: null, strokeWidth: 0, align: 'center'
       });
       this.addHit('btn_eat_senzu', NUT_DAUTHAN_X, NUT_DAUTHAN_Y, NUT_DAUTHAN_W, NUT_DAUTHAN_H, () => {
         this.senzuClickTimer = 0.2;
         this.engine.eatSenzu();
       });
 
-      // 2. Nút Tấn Công / Giao Tiếp chính (915, 25, 90x90) có hiệu ứng nảy chuẩn VeHUD.java
+      // 2. Nút Tấn Công / Giao Tiếp chính (915, 25, 90x90): CHỈ vẽ bg_attack.png (đã có nắm đấm tròn kem chính chủ ở tâm), KHÔNG đè icon vuông lên trên!
       const atkScale = this.attackClickTimer > 0 ? 1 - 0.15 * (this.attackClickTimer / 0.2) : 1;
       const atkW = NUT_ATTACK_W * atkScale;
       const atkH = NUT_ATTACK_H * atkScale;
@@ -1432,10 +1430,6 @@ export class NroHudRenderer {
       );
       const curSlotSkIdx = loadout[p.activeSkillSlot || 0];
       const curSlotSk = typeof curSlotSkIdx === 'number' && curSlotSkIdx >= 0 ? allSkills[curSlotSkIdx] : null;
-      const activeSkill = curSlotSk && ((p.skillLevels?.[curSlotSk.id] || 0) >= 1) ? curSlotSk : allSkills[0];
-      if (activeSkill) {
-        this.drawTex(ctx, activeSkill.icon, NUT_ATTACK_X + 25, NUT_ATTACK_Y + 25, 40, 40);
-      }
       this.addHit('btn_attack_main', NUT_ATTACK_X, NUT_ATTACK_Y, NUT_ATTACK_W, NUT_ATTACK_H, () => {
         this.attackClickTimer = 0.2;
         if (!curSlotSk || (p.skillLevels?.[curSlotSk.id] || 0) < 1) {
@@ -1463,9 +1457,10 @@ export class NroHudRenderer {
         this.engine.cycleTarget();
       });
     } else {
-      // Chế độ PC truyền thống (tắt nút ảo): Ô Đậu Thần lớn 75x75 góc phải dưới chuẩn VeHUD.java dòng 1125-1128
+      // Chế độ PC truyền thống (tắt nút ảo): Ô Đậu Thần lớn 75x75 góc phải dưới chuẩn VeHUD.java dòng 981 & 1125-1135
       const odX = VIRTUAL_W - 85;
       const odY = 10;
+      this.fillRectGdx(ctx, odX + 10, odY + 10, 53, this.senzuFillH, '#ffffff', null);
       this.drawTex(
         ctx,
         this.senzuClickTimer > 0 ? 'hud/giaodientrong/odauthanclick.png' : 'hud/giaodientrong/odauthan.png',
@@ -1474,8 +1469,9 @@ export class NroHudRenderer {
         75,
         75
       );
-      this.drawTex(ctx, 'map/traidat/chung/trangtri/hatdau2.png', odX + 20, odY + 22, 35, 35);
-      this.drawText(ctx, `${p.senzuCount}`, odX + 37.5, odY + 12, { size: 12, color: '#fef08a', align: 'center' });
+      this.drawText(ctx, `${p.senzuCount}`, odX + 37.5, odY + 32, {
+        size: 14, color: '#532905', stroke: null, strokeWidth: 0, align: 'center'
+      });
       this.addHit('btn_eat_senzu_pc', odX, odY, 75, 75, () => {
         this.senzuClickTimer = 0.2;
         this.engine.eatSenzu();

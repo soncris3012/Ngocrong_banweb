@@ -60,6 +60,8 @@ const CORE_PRELOAD_PATHS = [
   'nhanvat/quai/khung_long_2.png',
   'nhanvat/quai/lon_loi_1.png',
   'nhanvat/quai/lon_loi_2.png',
+  'nhanvat/quai/quy_dat_1.png',
+  'nhanvat/quai/quy_dat_2.png',
   'nhanvat/quai/tau_pay_pay.png',
   'nhanvat/quai/fide_dai_de.png',
   'nhanvat/quai/xen_hoan_thien.png',

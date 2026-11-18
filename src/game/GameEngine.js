@@ -469,7 +469,12 @@ export class GameEngine {
       this.hud.pushBanner('Đã hết Đậu Thần! Hãy về Nhà Gôhan thu hoạch trên Cây Đậu Thần!', '#fca5a5');
       return;
     }
+    if (this.hud.senzuFillH < 52.5) {
+      this.hud.pushBanner('Đậu Thần đang hồi chiêu, vui lòng chờ giây lát!', '#fde047');
+      return;
+    }
     p.senzuCount--;
+    this.hud.senzuFillH = 0;
     const healHp = Math.round(p.maxHp * 0.65);
     const healKi = Math.round(p.maxKi * 0.65);
     p.hp = Math.min(p.maxHp, p.hp + healHp);
@@ -747,6 +752,8 @@ export class GameEngine {
         targetY: this.player.y,
         timer: -0.62
       };
+    } else {
+      this.spaceshipAnim = null;
     }
 
     this.loadMapEntities(targetMapId, true);
@@ -2284,32 +2291,28 @@ export class GameEngine {
     if (mapCfg.key === 'lang_aru') {
       this.drawWorldTex(ctx, 'map/traidat/lang_aru/maparusau.png', -96, -38, 2544, 1008);
       ctx.save();
-      ctx.globalAlpha = 0.28;
+      ctx.globalAlpha = 0.2;
       for (let i = 0; i < 3; i++) {
         this.drawWorldTex(ctx, 'hieuung/hieuungmap/light.png', 150 + i * 840, 420, 560, 480);
       }
       ctx.restore();
     } else if (mapCfg.key === 'doi_hoa_cuc') {
       this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacucsau.png', 0, -134, 2976, 960);
-      // Lớp cỏ hoa tiền cảnh parallax nhanh hơn camera chuẩn ManHinhDoiHoaCuc.java
-      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacuctruoc.png', -camOffX * 0.35 - 100, -184, 3408, 960);
+      // Lớp cỏ hoa tiền cảnh parallax nhanh hơn camera chuẩn ManHinhDoiHoaCuc.java dòng 342
+      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacuctruoc.png', -camOffX * 0.5 - 100, -184, 3408, 960);
+      // Làn sương dưới đáy vực Đồi Hoa Cúc trong toạ độ WORLD y=-134 chuẩn ManHinhDoiHoaCuc.java dòng 357 (KHÔNG phủ mờ HUD màn hình!)
+      const cloudShift = (this.animClock * 18) % 287;
+      for (let i = -1; i < 12; i++) {
+        this.drawWorldTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift, -134, 288, 200);
+      }
     } else if (mapCfg.key === 'nha_gohan') {
       ctx.save();
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.22;
       this.drawWorldTex(ctx, 'hieuung/hieuungmap/light.png', 140, 310, 560, 460);
       ctx.restore();
       this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi2_traidat.png', 510, -115, 190, 190);
       this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi2_traidat.png', 860, -120, 190, 190);
     }
-
-    // Làn sương mây trôi nhẹ sát đáy màn hình (khoimay.png chuẩn LibGDX)
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    const cloudShift = (this.animClock * 18) % 287;
-    for (let i = -1; i < 5; i++) {
-      this.hud.drawTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift, -32, 288, 128);
-    }
-    ctx.restore();
   }
 
   // ==================== BẢNG TÊN QUA MAP CHUẨN 100% ManHinhNhaGohan & ManHinhLangAru ====================
