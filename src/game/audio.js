@@ -1,28 +1,86 @@
-// Trình quản lý âm thanh kết hợp Web Audio API (Hiệu ứng đòn đánh) và Real MP3 Music gốc NRO
+// Trình quản lý âm thanh chuẩn 100% file WAV gốc Ngọc Rồng Online (Teamobi DragonBoy SoundMn)
+// Đã xoá hoàn toàn nhạc remix ngoài luồng — chỉ phát hiệu ứng âm thanh & âm nền tự nhiên chuẩn game gốc!
+
+const SOUND_PATHS = {
+  getItem: '/assets/amthanh/sound/0.wav',
+  move: '/assets/amthanh/sound/1.wav',
+  lowPunch: '/assets/amthanh/sound/2.wav',
+  lowKick: '/assets/amthanh/sound/3.wav',
+  fly: '/assets/amthanh/sound/4.wav',
+  panelOpen: '/assets/amthanh/sound/6.wav',
+  buttonClose: '/assets/amthanh/sound/7.wav',
+  buttonClick: '/assets/amthanh/sound/8.wav',
+  medPunch: '/assets/amthanh/sound/9.wav',
+  medKick: '/assets/amthanh/sound/10.wav',
+  eatPean: '/assets/amthanh/sound/12.wav',
+  openDialog: '/assets/amthanh/sound/13.wav',
+  normalKame: '/assets/amthanh/sound/14.wav',
+  namekKame: '/assets/amthanh/sound/15.wav',
+  xaydaKame: '/assets/amthanh/sound/16.wav',
+  explode1: '/assets/amthanh/sound/17.wav',
+  explode2: '/assets/amthanh/sound/18.wav',
+  traidatKame: '/assets/amthanh/sound/19.wav',
+  hpUp: '/assets/amthanh/sound/20.wav',
+  solarFlare: '/assets/amthanh/sound/21.wav',
+  revive: '/assets/amthanh/sound/22.wav',
+  gong: '/assets/amthanh/sound/23.wav',
+  khiChay: '/assets/amthanh/sound/24.wav',
+  bigExplode: '/assets/amthanh/sound/25.wav',
+  airship: '/assets/amthanh/music/0.wav',
+  ambientNature: '/assets/amthanh/music/1.wav',
+  chargeLoop: '/assets/amthanh/music/2.wav'
+};
+
 class SoundManager {
   constructor() {
-    this.ctx = null;
-    this.isMuted = false;
+    this.isMuted = localStorage.getItem('nro_sound_muted') === 'true';
     this.bgmAudio = null;
+    this.pool = new Map();
+    this.punchCycle = 0;
+    this.lastStepAt = 0;
+    this.lastFlyAt = 0;
   }
 
   init() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
+    // Giữ tương thích API cũ
+  }
+
+  _playWav(key, volume = 0.45, playbackRate = 1.0) {
+    if (this.isMuted) return;
+    const src = SOUND_PATHS[key];
+    if (!src) return;
+    try {
+      let list = this.pool.get(key);
+      if (!list) {
+        list = [];
+        this.pool.set(key, list);
       }
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      let audio = list.find((a) => a.paused || a.ended);
+      if (!audio) {
+        if (list.length < 4) {
+          audio = new Audio(src);
+          list.push(audio);
+        } else {
+          audio = list[0];
+          audio.currentTime = 0;
+        }
+      }
+      audio.volume = Math.max(0, Math.min(1, volume));
+      audio.playbackRate = playbackRate;
+      audio.play().catch(() => {});
+    } catch {
+      // Bỏ qua nếu trình duyệt chặn trước khi chạm màn hình
     }
   }
 
   toggleMute() {
     this.isMuted = !this.isMuted;
+    localStorage.setItem('nro_sound_muted', String(this.isMuted));
     if (this.bgmAudio) {
       this.bgmAudio.muted = this.isMuted;
-      if (!this.isMuted && this.bgmAudio.paused) {
+      if (this.isMuted) {
+        this.bgmAudio.pause();
+      } else {
         this.bgmAudio.play().catch(() => {});
       }
     }
@@ -30,232 +88,122 @@ class SoundManager {
   }
 
   startBGM() {
-    if (this.bgmAudio) return;
-    try {
-      this.bgmAudio = new Audio('/assets/nhacnen/2a678803b231fa974dca1c7ab108a264.mp3');
-      this.bgmAudio.loop = true;
-      this.bgmAudio.volume = 0.35;
+    // Chỉ phát tiếng gió / thiên nhiên rất nhẹ gốc của DragonBoy (music/1.wav), TUYỆT ĐỐI không phát nhạc remix!
+    if (this.bgmAudio) {
       this.bgmAudio.muted = this.isMuted;
-      
-      const playPromise = this.bgmAudio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Autoplay policy chặn, sẽ play khi user tương tác lần đầu
-          const unlockAudio = () => {
-            if (this.bgmAudio) this.bgmAudio.play().catch(() => {});
-            window.removeEventListener('click', unlockAudio);
-            window.removeEventListener('keydown', unlockAudio);
-          };
-          window.addEventListener('click', unlockAudio);
-          window.addEventListener('keydown', unlockAudio);
-        });
+      if (!this.isMuted && this.bgmAudio.paused) {
+        this.bgmAudio.play().catch(() => {});
       }
-    } catch (e) {
-      console.warn('Không thể nạp file BGM:', e);
+      return;
+    }
+    try {
+      this.bgmAudio = new Audio(SOUND_PATHS.ambientNature);
+      this.bgmAudio.loop = true;
+      this.bgmAudio.volume = 0.14;
+      this.bgmAudio.muted = this.isMuted;
+
+      if (!this.isMuted) {
+        const p = this.bgmAudio.play();
+        if (p !== undefined) {
+          p.catch(() => {
+            const unlock = () => {
+              if (this.bgmAudio && !this.isMuted) {
+                this.bgmAudio.play().catch(() => {});
+              }
+              window.removeEventListener('pointerdown', unlock);
+              window.removeEventListener('keydown', unlock);
+            };
+            window.addEventListener('pointerdown', unlock, { once: true });
+            window.addEventListener('keydown', unlock, { once: true });
+          });
+        }
+      }
+    } catch {
+      // Ignore
     }
   }
 
-  // Tiếng đấm trúng mục tiêu (Punch Hit)
+  stopBGM() {
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
+    }
+  }
+
+  playStep() {
+    const now = performance.now();
+    if (now - this.lastStepAt < 270) return;
+    this.lastStepAt = now;
+    this._playWav('move', 0.24);
+  }
+
+  playClick() {
+    this._playWav('buttonClick', 0.36);
+  }
+
+  playPanelOpen() {
+    this._playWav('panelOpen', 0.36);
+  }
+
+  playClose() {
+    this._playWav('buttonClose', 0.35);
+  }
+
+  playDialog() {
+    this._playWav('openDialog', 0.38);
+  }
+
+  playAirship() {
+    this._playWav('airship', 0.42);
+  }
+
   playPunch() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const now = this.ctx.currentTime;
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(35, now + 0.12);
-
-    gain.gain.setValueAtTime(0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.12);
+    const seq = ['lowPunch', 'lowKick', 'medPunch', 'medKick'];
+    const key = seq[this.punchCycle % seq.length];
+    this.punchCycle += 1;
+    this._playWav(key, 0.48);
   }
 
-  // Tiếng bắn chưởng Kamehameha / Beam Blast
-  playBeam() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const now = this.ctx.currentTime;
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(950, now);
-    osc.frequency.linearRampToValueAtTime(150, now + 0.5);
-
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.55);
+  playBeam(planet = 0) {
+    if (planet === 1) this._playWav('xaydaKame', 0.5);
+    else if (planet === 2) this._playWav('namekKame', 0.5);
+    else this._playWav('traidatKame', 0.5);
   }
 
-  // Tiếng nổ tung (Monster Explosion)
-  playExplosion() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const bufferSize = this.ctx.sampleRate * 0.35;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(900, this.ctx.currentTime);
-    filter.frequency.linearRampToValueAtTime(60, this.ctx.currentTime + 0.35);
-
-    const gain = this.ctx.createGain();
-    const now = this.ctx.currentTime;
-    gain.gain.setValueAtTime(0.6, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    noise.start(now);
-    noise.stop(now + 0.35);
+  playSolarFlare() {
+    this._playWav('solarFlare', 0.5);
   }
 
-  // Tiếng bay / nhảy
+  playExplosion(big = false) {
+    this._playWav(big ? 'bigExplode' : 'explode1', big ? 0.55 : 0.45);
+  }
+
   playJump() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const now = this.ctx.currentTime;
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
-
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.15);
+    this._playWav('fly', 0.34, 1.22);
   }
 
-  // Tiếng ăn Đậu thần Karin
+  playFly() {
+    const now = performance.now();
+    if (now - this.lastFlyAt < 450) return;
+    this.lastFlyAt = now;
+    this._playWav('fly', 0.34, 1.0);
+  }
+
   playHeal() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const notes = [320, 480, 640, 900];
-    notes.forEach((freq, idx) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const now = this.ctx.currentTime + idx * 0.06;
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, now);
-
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.12);
-    });
+    this._playWav('eatPean', 0.46);
+    setTimeout(() => this._playWav('hpUp', 0.38), 140);
   }
 
-  // Tiếng nhặt vàng / ngọc
   playCoin() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const now = this.ctx.currentTime;
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1046.50, now); // C6
-    osc.frequency.setValueAtTime(1396.91, now + 0.08); // F6
-
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.25);
+    this._playWav('getItem', 0.45);
   }
 
-  // Tiếng Biến hình Super Saiyan / Aura Charge
   playSuperSaiyan() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const now = this.ctx.currentTime;
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(100, now);
-    osc.frequency.exponentialRampToValueAtTime(600, now + 0.6);
-
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.7);
+    this._playWav('gong', 0.5);
+    setTimeout(() => this._playWav('khiChay', 0.44), 220);
   }
 
   playAuraCharge() {
-    if (this.isMuted) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const now = this.ctx.currentTime;
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(90, now);
-    osc.frequency.linearRampToValueAtTime(300, now + 0.4);
-
-    gain.gain.setValueAtTime(0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.4);
+    this._playWav('gong', 0.42);
   }
 }
 

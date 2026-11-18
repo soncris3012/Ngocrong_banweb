@@ -15,6 +15,7 @@ import {
   STORY_QUESTS,
   MONSTER_TEMPLATES,
   MAPS_CONFIG,
+  createStarterSkillLevels,
   formatNroNum
 } from './nroData';
 import {
@@ -93,7 +94,24 @@ export class GameEngine {
       startY = mapDef.defaultSpawn.y;
     }
 
+    // Chuẩn hóa kỹ năng khởi đầu chuẩn 100% Ngọc Rồng Online:
+    // Tân thủ mới vào game (chưa bái sư Quy Lão ở NV 4) CHỈ mở khóa duy nhất Chiêu 1 (Đấm cơ bản Cấp 1) ở Ô số 1, các ô 2..5 để trống (-1)!
+    const questIdInit = Number(initialPlayer.questId) || 1;
+    const isLegacySave = initialPlayer.saveVersion !== 3;
+    let initSkillLevels = initialPlayer.skillLevels && typeof initialPlayer.skillLevels === 'object'
+      ? { ...initialPlayer.skillLevels }
+      : createStarterSkillLevels(planetIdx);
+    let initSkillLoadout = Array.isArray(initialPlayer.skillLoadout) && initialPlayer.skillLoadout.length === 5
+      ? [...initialPlayer.skillLoadout]
+      : [0, -1, -1, -1, -1];
+
+    if (isLegacySave && questIdInit < 4) {
+      initSkillLevels = createStarterSkillLevels(planetIdx);
+      initSkillLoadout = [0, -1, -1, -1, -1];
+    }
+
     this.player = {
+      saveVersion: 3,
       name: initialPlayer.name || 'SonGoku',
       planet: planetIdx,
       characterIndex: Number(initialPlayer.characterIndex) || 0,
@@ -108,11 +126,11 @@ export class GameEngine {
       attackAnimTimer: 0,
       attackFrame: 0,
 
-      baseMaxHp: Number(initialPlayer.baseMaxHp || initialPlayer.maxHp) || planetDef.baseStats.maxHp,
-      baseMaxKi: Number(initialPlayer.baseMaxKi || initialPlayer.maxKi) || planetDef.baseStats.maxKi,
-      baseAttack: Number(initialPlayer.baseAttack || initialPlayer.attack) || planetDef.baseStats.attack,
-      baseDefense: Number(initialPlayer.baseDefense || initialPlayer.defense) || planetDef.baseStats.defense,
-      baseCrit: Number(initialPlayer.baseCrit || initialPlayer.crit) || planetDef.baseStats.crit,
+      baseMaxHp: isLegacySave && questIdInit < 2 ? planetDef.baseStats.maxHp : (Number(initialPlayer.baseMaxHp || initialPlayer.maxHp) || planetDef.baseStats.maxHp),
+      baseMaxKi: isLegacySave && questIdInit < 2 ? planetDef.baseStats.maxKi : (Number(initialPlayer.baseMaxKi || initialPlayer.maxKi) || planetDef.baseStats.maxKi),
+      baseAttack: isLegacySave && questIdInit < 2 ? planetDef.baseStats.attack : (Number(initialPlayer.baseAttack || initialPlayer.attack) || planetDef.baseStats.attack),
+      baseDefense: isLegacySave && questIdInit < 2 ? planetDef.baseStats.defense : (Number(initialPlayer.baseDefense || initialPlayer.defense) || planetDef.baseStats.defense),
+      baseCrit: isLegacySave && questIdInit < 2 ? planetDef.baseStats.crit : (Number(initialPlayer.baseCrit || initialPlayer.crit) || planetDef.baseStats.crit),
 
       maxHp: Number(initialPlayer.maxHp) || planetDef.baseStats.maxHp,
       hp: Number(initialPlayer.hp) || planetDef.baseStats.hp,
@@ -129,12 +147,11 @@ export class GameEngine {
       senzuCount: Number(initialPlayer.senzuCount) ?? 5,
       senzuLevel: Number(initialPlayer.senzuLevel) || 1,
 
-      questId: Number(initialPlayer.questId) || 1,
+      questId: questIdInit,
       questStep: Number(initialPlayer.questStep) || 0,
       questProgress: Number(initialPlayer.questProgress) || 0,
       mapId: startMapId,
 
-      // Mới tạo nhân vật mặc đồ cơ bản chuẩn ManHinhNhaGohan.java dòng 110; nhiệm vụ 2 Ông Gôhan tặng Áo Võ Phục!
       equipped: initialPlayer.equipped || {
         ao: null,
         quan: null,
@@ -147,15 +164,13 @@ export class GameEngine {
         pet: null,
         aura: null
       },
-      bag: Array.isArray(initialPlayer.bag) ? initialPlayer.bag : [
-        { id: 've_quay', stars: 0, sockets: 0 }
-      ],
+      bag: Array.isArray(initialPlayer.bag) ? initialPlayer.bag : [],
       chest: Array.isArray(initialPlayer.chest) ? initialPlayer.chest : [],
       redeemedCodes: Array.isArray(initialPlayer.redeemedCodes) ? initialPlayer.redeemedCodes : [],
       claimedStarterGift: Boolean(initialPlayer.claimedStarterGift),
 
-      skillLoadout: Array.isArray(initialPlayer.skillLoadout) ? initialPlayer.skillLoadout : [0, 1, 2, 3, 4],
-      skillLevels: initialPlayer.skillLevels || {},
+      skillLoadout: initSkillLoadout,
+      skillLevels: initSkillLevels,
       activeSkillSlot: 0,
       cooldowns: {},
 
@@ -442,7 +457,81 @@ export class GameEngine {
     this.spawnFloatingText(p.x, p.y + 72, `+${formatNroNum(healHp)} HP  +${formatNroNum(healKi)} KI`, '#4ade80');
   }
 
-  // ==================== CỐT TRUYỆN NHIỀU BƯỚC & CHUYỂN BẢN ĐỒ CHUẨN GAME GỐC ====================
+  // ==================== MỞ KHÓA BÍ KÍP VÕ CÔNG & CỐT TRUYỆN CHUẨN NRO ====================
+  unlockSkill(skillIdx, preferredSlot = -1) {
+    const p = this.player;
+    const planetKey = PLANET_DEFS[p.planet]?.key || 'traidat';
+    const skills = PLANET_SKILLS[planetKey] || PLANET_SKILLS.traidat;
+    const sk = skills[skillIdx];
+    if (!sk) return null;
+
+    if (!p.skillLevels) p.skillLevels = {};
+    if ((p.skillLevels[sk.id] || 0) < 1) {
+      p.skillLevels[sk.id] = 1;
+    }
+
+    if (!Array.isArray(p.skillLoadout) || p.skillLoadout.length !== 5) {
+      p.skillLoadout = [0, -1, -1, -1, -1];
+    }
+    if (!p.skillLoadout.includes(skillIdx)) {
+      if (preferredSlot >= 0 && preferredSlot < 5 && p.skillLoadout[preferredSlot] < 0) {
+        p.skillLoadout[preferredSlot] = skillIdx;
+      } else {
+        const emptyIdx = p.skillLoadout.findIndex((v) => v === null || v === undefined || v < 0);
+        if (emptyIdx >= 0) p.skillLoadout[emptyIdx] = skillIdx;
+      }
+    }
+    return sk;
+  }
+
+  spawnKorinChallengeBoss() {
+    if (this.currentMapId !== 6) return;
+    const existing = this.monsters.find((m) => m.templateId === 'boss_than_meo' && !m.dead);
+    if (existing) {
+      this.selectedTarget = existing;
+      return;
+    }
+    const tpl = MONSTER_TEMPLATES.boss_than_meo;
+    const boss = {
+      uid: `mob_6_korin_${Date.now()}`,
+      targetKind: 'monster',
+      templateId: 'boss_than_meo',
+      name: tpl.name,
+      renderType: tpl.renderType,
+      frames: tpl.frames,
+      nativeLeft: Boolean(tpl.nativeLeft),
+      frameCount: 1,
+      drawW: 64,
+      drawH: 64,
+      flyOffset: 0,
+      scale: tpl.scale || 0.54,
+      isBoss: true,
+      noAutoRespawn: true,
+      x: 800,
+      y: 220,
+      spawnX: 800,
+      minX: 460,
+      maxX: 930,
+      dir: -1,
+      speed: tpl.speed,
+      maxHp: tpl.hp,
+      hp: tpl.hp,
+      attack: tpl.attack,
+      exp: tpl.exp,
+      gold: tpl.gold,
+      dead: false,
+      respawnTimer: 9999,
+      respawnSec: 9999,
+      stunTimer: 0,
+      hurtTimer: 0,
+      atkCooldown: 1.2
+    };
+    this.monsters.push(boss);
+    this.selectedTarget = boss;
+    sound.playSuperSaiyan();
+    this.hud.pushBanner('Thần Mèo Karin bước ra tỷ thí! Hãy đánh bại Thần Mèo!', '#fde047');
+  }
+
   advanceQuestEvent(eventType, targetId, amount = 1) {
     const p = this.player;
     const quest = STORY_QUESTS.find((q) => q.id === p.questId);
@@ -452,6 +541,16 @@ export class GameEngine {
     if (!curStep) return false;
 
     if (curStep.type !== eventType || curStep.targetId !== targetId) return false;
+
+    // Nếu bước nhiệm vụ này truyền thụ tuyệt kỹ Chưởng Khí số 2 (Quy Lão Kame dạy Kamejoko / Antomic / Masenko!)
+    if (curStep.unlockSkill2) {
+      const learned = this.unlockSkill(1, 1);
+      this.addItemToBag('ao_cam');
+      if (learned) {
+        sound.playSuperSaiyan();
+        this.hud.pushBanner(`Quy Lão truyền thụ tuyệt kỹ [${learned.name} Cấp 1] vào Ô số 2 & tặng Áo Võ Phục!`, '#fde047');
+      }
+    }
 
     p.questProgress = Math.min(curStep.count, (p.questProgress || 0) + amount);
     if (p.questProgress >= curStep.count) {
@@ -496,10 +595,12 @@ export class GameEngine {
   onMonsterKilled(m) {
     this.advanceQuestEvent('kill', m.templateId, 1);
 
-    const groundY = this.getGroundTopAt(m.x);
+    const rawGround = this.getGroundTopAt(m.x);
+    const groundY = rawGround > -100 ? rawGround : m.y;
+
     this.groundDrops.push({
       kind: 'gold',
-      amount: m.gold + Math.floor(Math.random() * 80),
+      amount: m.gold + Math.floor(Math.random() * 50),
       icon: 'hud/giaodientrong/vang.png',
       x: m.x - 10,
       y: groundY,
@@ -508,20 +609,35 @@ export class GameEngine {
 
     if (m.templateId === 'moc_nhan') return;
 
+    // Khủng Long rơi Đùi Gà chuẩn nhiệm vụ "Thu thập 10 Đùi Gà" của Ngọc Rồng Online!
+    if (MONSTER_TEMPLATES[m.templateId]?.dropsMeat) {
+      const meatCount = pQuestNeedsMeat(this.player) ? 2 : 1;
+      for (let k = 0; k < meatCount; k++) {
+        this.groundDrops.push({
+          kind: 'meat_drop',
+          icon: 'map/traidat/chung/trangtri/duiga.png',
+          label: 'Đùi Gà',
+          x: m.x + 12 + k * 18,
+          y: groundY,
+          ttl: 35
+        });
+      }
+    }
+
     const roll = Math.random();
-    if (m.isBoss || roll < 0.14) {
-      const dbStars = m.isBoss ? [1, 2, 3, 5] : [5, 6, 7];
+    if (m.isBoss || roll < 0.12) {
+      const dbStars = m.isBoss ? [1, 2, 3, 5] : [5, 6];
       const star = dbStars[Math.floor(Math.random() * dbStars.length)];
       this.groundDrops.push({
         kind: 'item',
         itemId: `nr_${star}s`,
         icon: `vatpham/vatphamgame/ngocrong/nr${star}s.png`,
         label: `Ngọc Rồng ${star} Sao`,
-        x: m.x + 16,
+        x: m.x + 18,
         y: groundY,
         ttl: 35
       });
-    } else if (roll < 0.30) {
+    } else if (roll < 0.26) {
       const crystals = ['da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki'];
       const cid = crystals[Math.floor(Math.random() * crystals.length)];
       this.groundDrops.push({
@@ -542,7 +658,8 @@ export class GameEngine {
     p.vx = 0;
     p.vy = 0;
     p.moveTargetX = null;
-    sound.playJump();
+    p.moveTargetY = null;
+    sound.playAirship();
     this.spaceshipAnim = {
       phase: 'takeoff',
       x: p.x,
@@ -695,14 +812,16 @@ export class GameEngine {
 
   getGroundTopAt(wx, mapCfgOverride = null) {
     const mapCfg = mapCfgOverride || MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
-    let bestTop = 175;
+    let found = false;
+    let bestTop = -500;
     for (let i = 0; i < mapCfg.hitboxes.length; i++) {
       const hb = mapCfg.hitboxes[i];
       if (wx >= hb.x && wx <= hb.x + hb.w) {
-        bestTop = hb.y + hb.h;
+        bestTop = Math.max(bestTop, hb.y + hb.h);
+        found = true;
       }
     }
-    return bestTop;
+    return found ? bestTop : -500;
   }
 
   // ==================== CHIẾN ĐẤU & KỸ NĂNG ====================
@@ -776,14 +895,24 @@ export class GameEngine {
     const p = this.player;
     const planetKey = PLANET_DEFS[p.planet]?.key || 'traidat';
     const skills = PLANET_SKILLS[planetKey] || PLANET_SKILLS.traidat;
-    const skIdx = p.skillLoadout[slotIdx] ?? slotIdx;
-    const skill = skills[skIdx] || skills[0];
+    const skIdx = p.skillLoadout?.[slotIdx];
+    if (skIdx === undefined || skIdx === null || skIdx < 0) {
+      this.hud.pushBanner('Ô kỹ năng đang trống! Hãy bái sư Quy Lão Kame hoặc mở Tab Kỹ Năng để học chiêu!', '#fde047');
+      return;
+    }
+    const skill = skills[skIdx];
     if (!skill) return;
+
+    const skillLv = p.skillLevels?.[skill.id] || 0;
+    if (skillLv < 1) {
+      this.hud.pushBanner(`Bạn chưa mở khóa [${skill.name}]! Hãy học trong Tab Kỹ Năng!`, '#fca5a5');
+      return;
+    }
 
     if ((p.cooldowns[skill.id] || 0) > 0.02) return;
 
     if (p.ki < skill.kiCost) {
-      this.hud.pushBanner('Không đủ KI! Hãy ăn Đậu Thần [phím 6] hoặc dùng Tái Tạo Năng Lượng!', '#fca5a5');
+      this.hud.pushBanner('Không đủ KI! Hãy ăn Đậu Thần hoặc dùng Tái Tạo Năng Lượng!', '#fca5a5');
       return;
     }
 
@@ -813,7 +942,6 @@ export class GameEngine {
 
     p.ki -= skill.kiCost;
     p.cooldowns[skill.id] = skill.cd;
-    const skillLv = p.skillLevels?.[skill.id] || 1;
     const lvMult = 1 + (skillLv - 1) * 0.15;
 
     if (targetMob) {
@@ -835,7 +963,7 @@ export class GameEngine {
       });
     } else if (skill.type === 'beam') {
       p.attackAnimTimer = 0.42;
-      sound.playBeam();
+      sound.playBeam(p.planet);
       const tx = targetMob ? targetMob.x : p.x + p.dir * 420;
       const ty = targetMob ? targetMob.y + 28 : p.y + 30;
       const angle = Math.atan2(ty - (p.y + 30), tx - (p.x + p.dir * 24));
@@ -854,7 +982,7 @@ export class GameEngine {
         hitSet: new Set()
       });
     } else if (skill.type === 'solar') {
-      sound.playSuperSaiyan();
+      sound.playSolarFlare();
       this.skillEffects.push({ type: 'SolarFlash', x: p.x, y: p.y + 42, timer: 0, duration: 0.6 });
       this.monsters.forEach((m) => {
         if (!m.dead && Math.hypot(m.x - p.x, m.y - p.y) <= skill.range) {
@@ -864,7 +992,7 @@ export class GameEngine {
         }
       });
     } else if (skill.type === 'spirit') {
-      sound.playBeam();
+      sound.playBeam(p.planet);
       const tx = targetMob ? targetMob.x : p.x + p.dir * 260;
       const ty = targetMob ? targetMob.y + 24 : p.y + 24;
       this.projectiles.push({
@@ -1086,50 +1214,151 @@ export class GameEngine {
       p.vx = 0;
     }
 
-    // Nhảy & Bay lượn chuẩn NRO (Kéo Joystick lên / bấm Lên trên mặt đất -> Nhảy; giữ kéo lên -> Bay 360 độ!)
-    if (inputY > 0.22) {
-      this.joystickUpHoldTime += dt;
-      if (p.onGround) {
-        p.vy = 430;
+    // ==================== VẬT LÝ TRỌNG LỰC & VA CHẠM VÁCH ĐẤT CHUẨN 100% NhanVat.java + HitboxDat.java ====================
+    const hasMount = Boolean(p.equipped?.vanbay);
+    const hasFlyKi = hasMount || p.ki > 1.5;
+    const holdingHoriz = Math.abs(inputX) > 0.18;
+    const holdingUp = inputY > 0.24;
+
+    if (typeof this.flyIdleTimer !== 'number') this.flyIdleTimer = 0;
+
+    if (p.onGround) {
+      this.flyIdleTimer = 0;
+      if (holdingUp && holdingHoriz && hasFlyKi) {
+        // Đứng đất giữ Trái/Phải + Lên -> cất cánh bay chéo chuẩn NhanVat.java dòng 737!
+        p.vy = 260;
         p.onGround = false;
-        sound.playJump();
-      } else if ((p.vy < 150 || this.joystickUpHoldTime > 0.16) && p.ki > 5) {
         p.isFlying = true;
-        p.vy = inputY * 255;
-        p.ki = Math.max(0, p.ki - 7 * dt);
+        sound.playFly();
+      } else if (holdingUp) {
+        // Đứng đất chỉ bấm Lên -> Nhảy cao rồi rơi xuống có trọng lực chuẩn NhanVat.java dòng 746!
+        p.vy = 540;
+        p.onGround = false;
+        p.isFlying = false;
+        sound.playJump();
       }
     } else {
-      this.joystickUpHoldTime = 0;
-      if (p.isFlying) {
-        if (inputY < -0.18) {
-          p.vy = inputY * 260;
-        } else if (p.moveTargetY !== null && Math.abs(p.moveTargetY - p.y) > 12) {
-          p.vy = Math.sign(p.moveTargetY - p.y) * 210;
+      // Đang ở trên không trung (!p.onGround)
+      if (holdingUp && hasFlyKi && (p.vy < 180 || this.joystickUpHoldTime > 0.14 || p.isFlying)) {
+        this.joystickUpHoldTime += dt;
+        p.isFlying = true;
+        p.vy = inputY * 270;
+        this.flyIdleTimer = 0;
+        sound.playFly();
+      } else if (p.moveTargetY !== null && hasFlyKi) {
+        // Đang tự bay tới điểm click trên cao
+        p.isFlying = true;
+        this.flyIdleTimer = 0;
+        const dyTarget = p.moveTargetY - p.y;
+        if (Math.abs(dyTarget) > 14) {
+          p.vy = Math.sign(dyTarget) * 235;
         } else {
           p.vy = 0;
+          if (p.moveTargetX === null) {
+            p.moveTargetY = null;
+          }
         }
+      } else if (holdingHoriz && p.vy <= 0 && hasFlyKi) {
+        // Đang rơi trên không mà giữ Trái/Phải -> lướt bay ngang chuẩn NhanVat.java dòng 752!
+        p.isFlying = true;
+        this.flyIdleTimer = 0;
+        p.vy = inputY < -0.18 ? inputY * 270 : 0;
+      } else if (p.isFlying) {
+        if (inputY < -0.2) {
+          // Kéo xuống -> hạ độ cao nhanh, buông bay để đáp đất
+          p.vy = inputY * 320;
+          this.flyIdleTimer += dt * 1.5;
+          if (this.flyIdleTimer > 0.18) p.isFlying = false;
+        } else {
+          // KHÔNG giữ phím di chuyển/bay nữa -> đếm 0.2s (12 frame giống delayRoi=15 trong NhanVat.java dòng 774) rồi NGẮT BAY để TRỌNG LỰC kéo rơi xuống đất!
+          p.vy = 0;
+          if (!holdingHoriz && p.moveTargetX === null) {
+            this.flyIdleTimer += dt;
+            if (this.flyIdleTimer >= 0.2 || !hasFlyKi) {
+              p.isFlying = false;
+            }
+          }
+        }
+      }
+
+      if (!holdingUp) {
+        this.joystickUpHoldTime = 0;
       }
     }
 
-    if (!p.onGround && !p.isFlying) {
-      p.vy -= 980 * dt; // Trọng lực
+    // Tiêu hao KI khi bay (nếu không cưỡi Cân Đẩu Vân / Phượng Hoàng chuẩn NhanVat.java dòng 1060)
+    if (p.isFlying && !hasMount) {
+      p.ki = Math.max(0, p.ki - 11 * dt);
+      if (p.ki <= 0) {
+        p.isFlying = false;
+      }
     }
 
-    p.x += p.vx * dt;
+    // TRỌNG LỰC LUÔN TÁC ĐỘNG KHI KHÔNG ĐỨNG ĐẤT VÀ KHÔNG BAY!
+    if (!p.onGround && !p.isFlying) {
+      p.vy = Math.max(-920, p.vy - 1380 * dt);
+    }
+
+    // Sub-step va chạm vách đá ngang & mặt đất bậc thang chuẩn HitboxDat.java!
+    const nextX = p.x + p.vx * dt;
+    const groundAtNextX = this.getGroundTopAt(nextX, mapCfg);
+    if (groundAtNextX > p.y + 20) {
+      // Đụng vách đá cao hơn chân (vd bậc vách đá x=1728 ở Đồi Hoa Cúc): chặn đi xuyên đá; nếu đang click-to-move thì tự nhảy vượt bậc!
+      if (p.moveTargetX !== null && p.onGround) {
+        p.vy = 560;
+        p.onGround = false;
+        sound.playJump();
+      } else {
+        p.vx = 0;
+      }
+    } else {
+      p.x = nextX;
+    }
+
+    const prevY = p.y;
     p.y += p.vy * dt;
 
-    // Chạm mặt đất bậc thang (như Đồi Hoa Cúc 3 tầng cao độ!)
-    const newGroundY = this.getGroundTopAt(p.x, mapCfg);
-    if (p.y <= newGroundY) {
-      p.y = newGroundY;
+    const curGroundY = this.getGroundTopAt(p.x, mapCfg);
+    if (curGroundY > -200 && p.vy <= 0 && prevY >= curGroundY - 32 && p.y <= curGroundY) {
+      p.y = curGroundY;
       p.vy = 0;
       p.onGround = true;
       p.isFlying = false;
-    } else if (p.onGround && p.y > newGroundY + 4) {
+      p.moveTargetY = null;
+      this.flyIdleTimer = 0;
+    } else if (p.onGround && (curGroundY < p.y - 4 || curGroundY <= -200)) {
+      // Bước hụt khỏi gờ vách đá / mép Đài Tháp Karin -> rơi tự do theo trọng lực!
       p.onGround = false;
     }
 
-    // Giới hạn trần bản đồ
+    // Tiếng bước chân chạy trên mặt đất chuẩn DragonBoy (sound/1.wav)
+    if (p.onGround && Math.abs(p.vx) > 35) {
+      sound.playStep();
+    }
+
+    // Rơi xuống vực sâu ở Đỉnh Tháp Karin -> rơi thẳng về chân Tháp Karin ở giữa Rừng Karin!
+    if (mapCfg.key === 'thap_karin' && p.y < 30 && this.mapTransitionTimer <= 0) {
+      this.changeMap(5, 1000, 340);
+      return;
+    }
+    // Khỏi lọt đáy ở các bản đồ mặt đất thường
+    if (mapCfg.key !== 'thap_karin' && p.y < 80) {
+      const safeTop = Math.max(127, curGroundY);
+      p.y = safeTop;
+      p.vy = 0;
+      p.onGround = true;
+      p.isFlying = false;
+    }
+
+    // Giới hạn trần bản đồ & Leo cột Tháp Karin ở chính giữa Rừng Karin lên Đỉnh Tháp Karin!
+    for (let i = 0; i < mapCfg.waypoints.length; i++) {
+      const wp = mapCfg.waypoints[i];
+      if (wp.towerClimbX && wp.towerClimbY && p.x >= wp.towerClimbX[0] && p.x <= wp.towerClimbX[1] && p.y >= wp.towerClimbY && this.mapTransitionTimer <= 0) {
+        this.changeMap(wp.targetMapId, wp.targetX, wp.targetY);
+        return;
+      }
+    }
+
     if (p.y > mapCfg.height - 95) {
       p.y = mapCfg.height - 95;
       p.vy = 0;
@@ -1198,6 +1427,7 @@ export class GameEngine {
     for (let i = 0; i < this.monsters.length; i++) {
       const m = this.monsters[i];
       if (m.dead) {
+        if (m.noAutoRespawn) continue;
         m.respawnTimer -= dt;
         if (m.respawnTimer <= 0) {
           m.dead = false;
@@ -1268,6 +1498,13 @@ export class GameEngine {
           p.gold += d.amount;
           sound.playCoin();
           this.spawnFloatingText(d.x, d.y + 28, `+${formatNroNum(d.amount)} Vàng`, '#fde047');
+          this.groundDrops.splice(i, 1);
+        } else if (d.kind === 'meat_drop') {
+          sound.playCoin();
+          p.hp = Math.min(p.maxHp, p.hp + Math.round(p.maxHp * 0.15));
+          p.ki = Math.min(p.maxKi, p.ki + Math.round(p.maxKi * 0.15));
+          this.advanceQuestEvent('pickup_meat', 'duiga_drop', 1);
+          this.spawnFloatingText(d.x, d.y + 32, '+1 Đùi Gà', '#86efac');
           this.groundDrops.splice(i, 1);
         } else if (d.kind === 'item') {
           if (this.addItemToBag(d.itemId)) {
@@ -1515,6 +1752,27 @@ export class GameEngine {
     }
 
     // Trái Đất chuẩn ManHinhNhaGohan / ManHinhLangAru / ManHinhDoiHoaCuc
+    if (mapCfg.key === 'thap_karin') {
+      // Bầu trời thượng giới trên tầng mây của Đỉnh Tháp Karin
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, VIRTUAL_H);
+      skyGrad.addColorStop(0, '#0284c7');
+      skyGrad.addColorStop(0.65, '#7dd3fc');
+      skyGrad.addColorStop(1, '#e0f2fe');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+
+      const cloudShift1 = (this.animClock * 16) % 287;
+      const cloudShift2 = (this.animClock * 26) % 287;
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      for (let i = -1; i < 6; i++) {
+        this.hud.drawTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift1, 75 - camOffY * 0.25, 290, 145);
+        this.hud.drawTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift2, -15 - camOffY * 0.35, 290, 165);
+      }
+      ctx.restore();
+      return;
+    }
+
     ctx.fillStyle = '#19b0f8';
     ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
 
@@ -1526,28 +1784,38 @@ export class GameEngine {
       this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nui_traidat.png', i * 510 - (camOffX * 0.18) % 510, 250 - camOffY * 0.22, 512, 170);
     }
 
+    // Đồi Hoa Cúc & Thung Lũng Tre: Vẽ bóng Tháp Karin + Đài Tháp Karin ở lớp núi xa (ĐẰNG SAU nuicay & nuithap đúng chuẩn ManHinhDoiHoaCuc.java dòng 275!)
+    if (mapCfg.key === 'doi_hoa_cuc' || mapCfg.key === 'thung_lung_tre') {
+      const karinImg = assets.tex('map/traidat/doi_hoa_cuc/thapkirin.png');
+      if (karinImg) {
+        const kw = 18;
+        const kh = 72;
+        const baseScreenX = mapCfg.key === 'doi_hoa_cuc' ? 610 - camOffX * 0.08 : 340 - camOffX * 0.08;
+        const baseY = 235 - camOffY * 0.22;
+        for (let s = 0; s < 4; s++) {
+          this.hud.drawTex(ctx, 'map/traidat/doi_hoa_cuc/thapkirin.png', baseScreenX - kw / 2, baseY + s * (kh - 3), kw, kh);
+        }
+        // Đài Tháp Karin thu nhỏ trên đỉnh cột phía chân trời — liền mạch 100%, không bao giờ bị cụt ngọn!
+        this.hud.drawTex(
+          ctx,
+          'map/traidat/doi_hoa_cuc/dai_thap_karin.png',
+          baseScreenX - 38,
+          baseY + 4 * (kh - 3) - 6,
+          76,
+          82
+        );
+      }
+    }
+
     // Dải đồi xanh nối liền không hở khe
     this.hud.fillRectGdx(ctx, 0, 0, VIRTUAL_W, Math.max(0, 260 - camOffY * 0.35), '#167615', null);
     for (let i = -1; i < 5; i++) {
       this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuicay_traidat.png', i * 340 - (camOffX * 0.28) % 340, 195 - camOffY * 0.35, 342, 190);
     }
 
-    this.hud.fillRectGdx(ctx, 0, 0, VIRTUAL_W, Math.max(0, 200 - camOffY * 0.5), '#175e1c', null);
+    this.hud.fillRectGdx(ctx, 0, 0, VIRTUAL_W, Math.max(0, 200 - camOffY * 0.5), mapCfg.key === 'dao_kame' ? '#0284c7' : '#175e1c', null);
     for (let i = -1; i < 5; i++) {
       this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuithap_traidat.png', i * 340 - (camOffX * 0.42) % 340, 135 - camOffY * 0.5, 342, 190);
-    }
-
-    // Riêng Đồi Hoa Cúc (Map 2): Vẽ Tháp Karin sừng sững xuyên tầng mây chuẩn ManHinhDoiHoaCuc.java!
-    if (mapCfg.key === 'doi_hoa_cuc') {
-      const karinImg = assets.tex('map/traidat/doi_hoa_cuc/thapkirin.png');
-      if (karinImg) {
-        const kw = karinImg.naturalWidth * 0.5;
-        const kh = karinImg.naturalHeight * 0.5;
-        const kx = 540 - camOffX * 0.12;
-        for (let s = 0; s < 9; s++) {
-          this.hud.drawTex(ctx, 'map/traidat/doi_hoa_cuc/thapkirin.png', kx, 165 - camOffY * 0.25 + s * (kh - 2), kw, kh);
-        }
-      }
     }
   }
 
@@ -1557,6 +1825,8 @@ export class GameEngine {
 
     if (mapCfg.key === 'lang_aru') {
       // Làng Aru dùng bức tranh vẽ tay nguyên bản maparu.png (5088x2016 -> 2544x1008 tại -96, -38)
+      const wv = this.worldToView(780, 120);
+      this.hud.fillRectGdx(ctx, wv.vx, 0, 560, Math.max(0, wv.vy), '#0e7490', null);
       this.drawWorldTex(ctx, 'map/traidat/lang_aru/maparu.png', -96, -38, 2544, 1008);
       this.drawWorldTex(ctx, 'map/traidat/chung/trangtri/cuinuongduiga.png', 240, 170, 66, 48);
       this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 255, 186, 36, 42);
@@ -1564,8 +1834,83 @@ export class GameEngine {
     }
 
     if (mapCfg.key === 'doi_hoa_cuc') {
+      // Dòng suối xanh mát bên dưới các nhịp cầu đá ở giữa Đồi Hoa Cúc (x = 200..1730)
+      const rv = this.worldToView(180, 118);
+      this.hud.fillRectGdx(ctx, rv.vx, 0, 1580, Math.max(0, rv.vy), '#0e7490', null);
       // Đồi Hoa Cúc dùng bức tranh vẽ tay nguyên bản doihoacuc.png (5952x1920 -> 2976x960 tại 0, -134)
       this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacuc.png', 0, -134, 2976, 960);
+      return;
+    }
+
+    if (mapCfg.key === 'rung_karin') {
+      // RỪNG KARIN: CHÂN THÁP KARIN SỪNG SỮNG Ở CHÍNH GIỮA BẢN ĐỒ (x = 1000)!
+      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 180, 172, 220, 224);
+      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 540, 172, 225, 228);
+      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1360, 172, 225, 228);
+      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1760, 172, 220, 224);
+
+      // Cột Tháp Karin khổng lồ liền mạch từ bệ đá x=1000 xuyên thẳng lên tầng mây!
+      const colW = 56;
+      const colH = 204;
+      for (let s = 0; s < 6; s++) {
+        this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/thapkirin.png', 1000 - colW / 2, 168 + s * (colH - 6), colW, colH);
+      }
+      // Bệ đá cổ dưới chân Tháp Karin
+      const ped = this.worldToView(936, 173);
+      this.hud.fillRectGdx(ctx, ped.vx, ped.vy, 128, 16, '#d6b370', '#78350f', 2);
+      this.hud.fillRectGdx(ctx, ped.vx + 14, ped.vy + 16, 100, 10, '#e7cba0', '#78350f', 1.5);
+
+      const maxTiles = Math.ceil(mapCfg.width / 50) + 2;
+      for (let i = -2; i < maxTiles; i++) {
+        const tx = i * 50;
+        const mIdx = ((i + 50) % 5) + 1;
+        const dIdx = ((i + 30) % 3) + 1;
+        if (i % 2 === 0 && (tx < 880 || tx > 1100)) {
+          this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco3_traidat.png', tx, 172, 50, 50);
+        }
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/matdat_traidat${mIdx}.png`, tx, 125, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/dat_traidat${dIdx}.png`, tx, 75, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, 25, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, -25, 51, 51);
+        this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco5_traidat.png', tx, 173, 51, 12);
+      }
+      return;
+    }
+
+    if (mapCfg.key === 'thap_karin') {
+      // ĐỈNH THÁP KARIN: Trụ tháp nối liền từ biển mây lên thẳng Đài Tháp Karin uy nghiêm tại tâm x=700!
+      const colW = 58;
+      const colH = 204;
+      for (let s = 0; s < 3; s++) {
+        this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/thapkirin.png', 700 - colW / 2, -210 + s * (colH - 6), colW, colH);
+      }
+      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/dai_thap_karin.png', 410, 148, 580, 445);
+      return;
+    }
+
+    if (mapCfg.key === 'dao_kame') {
+      // ĐẢO KAMÊ: Biển xanh bao quanh đảo Quy Lão Tiên Sinh (Kame House nhacua1_earth.png)
+      const seaV = this.worldToView(-200, 0);
+      this.hud.fillRectGdx(ctx, seaV.vx, 0, 2600, Math.max(0, seaV.vy + 168), '#0284c7', null);
+
+      this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua1_earth.png', 180, 172, 242, 220);
+      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 820, 172, 215, 220);
+      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1480, 172, 215, 220);
+
+      const maxTiles = Math.ceil(mapCfg.width / 50) + 2;
+      for (let i = -2; i < maxTiles; i++) {
+        const tx = i * 50;
+        const mIdx = ((i + 50) % 5) + 1;
+        const dIdx = ((i + 30) % 3) + 1;
+        if (i % 3 === 0) {
+          this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco3_traidat.png', tx, 172, 50, 50);
+        }
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/matdat_traidat${mIdx}.png`, tx, 125, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/dat_traidat${dIdx}.png`, tx, 75, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, 25, 51, 51);
+        this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, -25, 51, 51);
+        this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco5_traidat.png', tx, 173, 51, 12);
+      }
       return;
     }
 
@@ -1595,13 +1940,12 @@ export class GameEngine {
     }
 
     if (mapCfg.key === 'vach_nui_aru' || mapCfg.key === 'thung_lung_tre') {
-      // Hai bản đồ Trái Đất mở rộng: Vách núi Aru (Trạm Tàu Vũ Trụ) & Thung lũng tre (Đảo Kame)
       if (mapCfg.key === 'thung_lung_tre') {
-        this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua1_earth.png', 200, 172, 236, 214);
-        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 760, 172, 220, 224);
-        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1420, 172, 220, 224);
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 260, 172, 225, 228);
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 860, 172, 225, 228);
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1520, 172, 225, 228);
       } else {
-        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 420, 172, 215, 220);
+        this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 480, 172, 215, 220);
         this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1120, 172, 220, 224);
         this.drawWorldTex(ctx, 'map/traidat/chung/dat/doc_traidat.png', 1460, 0, 400, 165);
       }
@@ -1767,6 +2111,14 @@ export class GameEngine {
         const ih = img ? img.naturalHeight * 1.45 : 82;
         this.drawWorldTex(ctx, npc.tex, npc.x - iw / 2, npc.y, iw, ih);
         headTopY = npc.y + ih + 8;
+      } else if (npc.kind === 'sprite') {
+        const img = assets.tex(npc.tex);
+        const sc = npc.scale || 0.55;
+        const iw = img ? img.naturalWidth * sc : 64;
+        const ih = img ? img.naturalHeight * sc : 82;
+        const flipNpc = this.player.x > npc.x;
+        this.drawWorldTex(ctx, npc.tex, npc.x - iw / 2, npc.y + bob * 0.5, iw, ih, flipNpc);
+        headTopY = npc.y + ih + 6;
       } else if (npc.kind === 'chest' || npc.kind === 'meat') {
         const img = assets.tex(npc.tex);
         const iw = img ? img.naturalWidth * 0.55 : 42;
@@ -2433,18 +2785,24 @@ export class GameEngine {
     }
 
     // 4. Click xuống mặt đất / bầu trời để di chuyển tới điểm chỉ định (click_di_chuyen)
-    let allowMinX = 28;
-    let allowMaxX = mapCfg.width - 28;
+    let allowMinX = mapCfg.key === 'thap_karin' ? 380 : 28;
+    let allowMaxX = mapCfg.key === 'thap_karin' ? 1020 : mapCfg.width - 28;
     if (mapCfg.waypoints.some((w) => w.kind === 'left_edge')) allowMinX = -45;
     if (mapCfg.waypoints.some((w) => w.kind === 'right_edge')) allowMaxX = mapCfg.width + 45;
     this.player.moveTargetX = Math.max(allowMinX, Math.min(allowMaxX, wx));
-    const gTop = this.getGroundTopAt(this.player.moveTargetX, mapCfg);
-    if (wy > gTop + 65 && this.player.ki > 10) {
+    const rawTop = this.getGroundTopAt(this.player.moveTargetX, mapCfg);
+    const gTop = rawTop > -100 ? rawTop : 175;
+    const hasFlyCap = Boolean(this.player.equipped?.vanbay) || this.player.ki > 10;
+    if (wy > gTop + 145 && hasFlyCap) {
+      // Chỉ bay lên khi người chơi chủ động chạm thật cao trên bầu trời (vd leo Tháp Karin!)
       this.player.isFlying = true;
       this.player.onGround = false;
       this.player.moveTargetY = Math.min(mapCfg.height - 95, wy);
     } else {
       this.player.moveTargetY = null;
+      if (this.player.isFlying && wy <= gTop + 65) {
+        this.player.isFlying = false;
+      }
     }
     this.clickMarker = { x: wx, y: Math.max(gTop, wy), timer: 0 };
   }
@@ -2629,4 +2987,11 @@ export class GameEngine {
 
 function pInRange(x, range) {
   return Array.isArray(range) && x >= range[0] && x <= range[1];
+}
+
+function pQuestNeedsMeat(player) {
+  if (!player) return false;
+  const q = STORY_QUESTS.find((it) => it.id === player.questId);
+  const st = q?.steps?.[player.questStep || 0];
+  return Boolean(st && st.type === 'pickup_meat');
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sound } from '../../game/audio';
-import { PLANET_DEFS } from '../../game/nroData';
+import { PLANET_DEFS, createStarterSkillLevels } from '../../game/nroData';
 
 export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSelectCharacter, onClose }) => {
   const [planetIndex, setPlanetIndex] = useState(0); // 0: Trái Đất, 1: Xayda, 2: Namếc
@@ -49,7 +49,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
   }, []);
 
   const handlePlanetChange = (index) => {
-    sound.playPunch();
+    sound.playClick();
     setPlanetIndex(index);
     setCharacterIndex(0);
     setFocusGroup('planet');
@@ -57,7 +57,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
   };
 
   const handleCharacterChange = (index) => {
-    sound.playPunch();
+    sound.playClick();
     setCharacterIndex(index);
     setFocusGroup('char');
     setCharacterName(currentConfig.characters[index]);
@@ -75,10 +75,11 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
       return;
     }
 
-    sound.playHeal();
+    sound.playClick();
     const baseStats = PLANET_DEFS[planetIndex].baseStats;
 
     onSelectCharacter({
+      saveVersion: 3,
       name,
       planet: planetIndex,
       characterIndex,
@@ -95,6 +96,21 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
       gem: 20,
       senzuCount: 5,
       senzuLevel: 1,
+      skillLoadout: [0, -1, -1, -1, -1],
+      skillLevels: createStarterSkillLevels(planetIndex),
+      bag: [],
+      equipped: {
+        ao: null,
+        quan: null,
+        gang: null,
+        giay: null,
+        rada: null,
+        caitrang: null,
+        vanbay: null,
+        deolung: null,
+        pet: null,
+        aura: null
+      },
       isNewCharacter: true,
       ...baseStats
     });

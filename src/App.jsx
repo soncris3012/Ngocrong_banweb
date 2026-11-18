@@ -28,26 +28,30 @@ export function App() {
 
   const [savedCharacter, setSavedCharacter] = useState(null);
   const [playerState, setPlayerState] = useState({
+    saveVersion: 3,
     name: 'SonGoku',
     planet: 0,
     characterIndex: 0,
     mapId: 0,
     x: 325,
     y: 175,
-    hp: 1500,
-    maxHp: 1500,
-    ki: 1400,
-    maxKi: 1400,
-    attack: 75,
-    defense: 15,
-    crit: 8,
-    power: 2000,
-    potential: 2500,
-    gold: 15000,
-    gem: 50,
-    senzuCount: 10,
+    hp: 360,
+    maxHp: 360,
+    ki: 360,
+    maxKi: 360,
+    attack: 26,
+    defense: 4,
+    crit: 3,
+    power: 1200,
+    potential: 1200,
+    gold: 2000,
+    gem: 20,
+    senzuCount: 5,
     senzuLevel: 1,
+    skillLoadout: [0, -1, -1, -1, -1],
+    skillLevels: { td_1: 1 },
     questId: 1,
+    questStep: 0,
     questProgress: 0
   });
 
@@ -104,7 +108,7 @@ export function App() {
     if (lastCharName) {
       loadCharacterData(lastCharName).then((data) => {
         if (data) {
-          const validMap = typeof data.mapId === 'number' && data.mapId >= 0 && data.mapId <= 6 ? data.mapId : 0;
+          const validMap = typeof data.mapId === 'number' && data.mapId >= 0 && data.mapId <= 9 ? data.mapId : 0;
           const validY = data.y && data.y >= 100 && data.y <= 350 ? data.y : 175;
           const validX = data.x && data.x >= 40 ? data.x : 260;
           const normalized = { ...data, mapId: validMap, x: validX, y: validY };
