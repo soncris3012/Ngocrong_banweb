@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 
-export const SplashScreen = ({ onFinish }) => {
+export const SplashScreen = ({ onFinish, message = 'Đang tải bản đồ...' }) => {
   const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
     const rotInterval = setInterval(() => {
-      setRotation((prev) => (prev + 15) % 360);
+      setRotation((prev) => (prev + 18) % 360);
     }, 25);
 
     const timer = setTimeout(() => {
       if (onFinish) onFinish();
-    }, 680);
+    }, 600);
 
     return () => {
       clearInterval(rotInterval);
@@ -23,17 +23,18 @@ export const SplashScreen = ({ onFinish }) => {
       <img
         src="/assets/hud/giaodienngoai/chung/chuberong.png"
         alt="Chú Bé Rồng"
-        className="w-[300px] sm:w-[340px] object-contain mb-4"
+        className="w-[280px] sm:w-[320px] object-contain mb-6 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
       />
       <img
         src="/assets/vatpham/vatphamgame/ngocrong/nr5s.png"
         alt=""
-        className="w-7 h-7 object-contain mb-2"
+        className="w-8 h-8 object-contain mb-3"
         style={{ transform: `rotate(${rotation}deg)` }}
       />
-      <span className="font-dragon text-white text-sm tracking-wide">
-        Xin chờ...
+      <span className="font-dragon text-[#fde047] text-sm tracking-wide font-bold drop-shadow">
+        {message}
       </span>
     </div>
   );
 };
+export default SplashScreen;

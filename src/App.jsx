@@ -15,7 +15,9 @@ export function App() {
   const hiddenInputRef = useRef(null);
 
   const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [loadPercent, setLoadPercent] = useState(12);
+  const [loadPercent, setLoadPercent] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   // 'MENU' | 'CHAR_CREATE' | 'SPLASH' | 'GAME'
   const [screenView, setScreenView] = useState('MENU');
@@ -91,17 +93,34 @@ export function App() {
   const landH = isPortrait ? viewport.winW : viewport.winH;
   const fitScale = Math.max(0.1, Math.min(landW / 1020, landH / 610));
 
-  // Nạp toàn bộ tài nguyên cốt lõi của repo DANG-PH/ngoc-rong-online
+  // Nạp 100% tài nguyên cốt lõi (Menu + HUD + Starter World) bất đồng bộ thực sự (không fake timeout)
   useEffect(() => {
-    assets.init();
-    assets.onProgress((loaded, total) => {
-      const pct = Math.min(100, Math.round((loaded / Math.max(1, total)) * 100));
-      setLoadPercent(pct);
-    });
-    assets.waitForReady(4000).then(() => {
-      setLoadPercent(100);
-      setTimeout(() => setAssetsLoaded(true), 200);
-    });
+    let active = true;
+
+    async function startPreload() {
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (_) {}
+      }
+
+      await assets.preloadAllCore((loaded, total, pct) => {
+        if (!active) return;
+        setLoadedCount(loaded);
+        setTotalCount(total);
+        setLoadPercent(pct);
+      });
+
+      if (!active) return;
+      // Nghỉ 200ms để người chơi nhìn thấy mốc 100% hoàn tất thực sự trước khi vào Game Menu
+      setTimeout(() => {
+        if (active) setAssetsLoaded(true);
+      }, 200);
+    }
+
+    startPreload();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Tự động đọc nhân vật đã lưu trên máy hoặc Supabase
@@ -239,16 +258,28 @@ export function App() {
             <img
               src="/assets/hud/giaodienngoai/chung/chuberong.png"
               alt="Ngọc Rồng Online"
-              className="w-72 object-contain mb-6"
+              className="w-72 object-contain mb-6 drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)]"
             />
             <img
               src="/assets/vatpham/vatphamgame/ngocrong/nr5s.png"
               alt=""
-              className="w-10 h-10 object-contain animate-spin mb-3"
+              className="w-9 h-9 object-contain animate-spin mb-3"
             />
-            <p className="font-dragon text-[#fde047] text-sm font-bold">
+            <p className="font-dragon text-[#fde047] text-sm font-bold tracking-wide mb-2">
               Đang tải dữ liệu trò chơi... {loadPercent}%
             </p>
+            {/* Thanh tiến trình chuẩn Dragon Boy */}
+            <div className="w-64 h-3.5 bg-[#2a1303] border border-[#78350f] rounded-full p-0.5 overflow-hidden shadow-inner">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 rounded-full transition-all duration-75 ease-out"
+                style={{ width: `${loadPercent}%` }}
+              />
+            </div>
+            {totalCount > 0 && (
+              <p className="text-[11px] text-gray-400 mt-2 font-mono">
+                {loadedCount} / {totalCount} tệp tin
+              </p>
+            )}
           </div>
         )}
 

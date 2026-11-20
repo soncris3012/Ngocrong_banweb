@@ -1,12 +1,72 @@
 // Trình nạp và quản lý Texture chuẩn LibGDX cho Ngọc Rồng Online Web Edition
-// Hỗ trợ cả Preload danh sách cốt lõi lẫn Lazy-load + Cache mọi file trong /assets/
+// Kiến trúc Preload phân tầng bất đồng bộ thực sự 100% (Real Decoding GPU - Không fake timeout)
 
-const CORE_PRELOAD_PATHS = [
-  // HUD Trong Game (VeHUD & HUDPopupRenderer)
+// ============================================================================
+// 1. MENU PRELOAD PATHS: Bắt buộc nạp đủ 100% trước khi mở Main Menu
+// ============================================================================
+export const MENU_PRELOAD_PATHS = [
+  // Logo & Icon loading
+  'hud/giaodienngoai/chung/chuberong.png',
+  'vatpham/vatphamgame/ngocrong/nr5s.png',
+
+  // Giao diện nút bấm & khung thông báo
+  'hud/giaodienngoai/chung/nutdangnhap2.png',
+  'hud/giaodienngoai/chung/nutclick.png',
+  'hud/giaodienngoai/chung/muitenvang.png',
+  'hud/giaodienngoai/chung/input.png',
+  'hud/giaodienngoai/chung/khungchat.png',
+  'hud/giaodienngoai/chung/khungdangnhap.png',
+  'hud/giaodienngoai/chung/khungthongbao.png',
+  'hud/giaodienngoai/chung/maychubutton.png',
+  'hud/giaodienngoai/chung/maychuclickbutton.png',
+
+  // Parallax 5 lớp Menu Chính Trái Đất (Chuẩn ManHinhMenu.java)
+  'hud/giaodienngoai/traidat/sky_traidat.png',
+  'hud/giaodienngoai/traidat/nuixa_traidat.png',
+  'hud/giaodienngoai/traidat/nui_traidat.png',
+  'hud/giaodienngoai/traidat/nuicay_traidat.png',
+  'hud/giaodienngoai/traidat/nuithap_traidat.png',
+
+  // Tạo nhân vật: Preview 3 hành tinh
+  'hud/giaodienngoai/traidat/dau_traidat_1.png',
+  'hud/giaodienngoai/traidat/dau_traidat_2.png',
+  'hud/giaodienngoai/traidat/dau_traidat_3.png',
+  'hud/giaodienngoai/traidat/thantraidat.png',
+  'hud/giaodienngoai/traidat/chantraidat.png',
+  'hud/giaodienngoai/namek/dau_namek_1.png',
+  'hud/giaodienngoai/namek/dau_namek_2.png',
+  'hud/giaodienngoai/namek/dau_namek_3.png',
+  'hud/giaodienngoai/namek/thannamek.png',
+  'hud/giaodienngoai/namek/channamek.png',
+  'hud/giaodienngoai/xayda/dau_xayda_1.png',
+  'hud/giaodienngoai/xayda/dau_xayda_2.png',
+  'hud/giaodienngoai/xayda/dau_xayda_3.png',
+  'hud/giaodienngoai/xayda/thanxayda.png',
+  'hud/giaodienngoai/xayda/chanxayda.png',
+  'hud/giaodienngoai/xayda/matrang.png'
+];
+
+// ============================================================================
+// 2. GAME CORE PRELOAD PATHS: Tài nguyên cốt lõi trong game (HUD, Tân thủ, Mobs)
+// ============================================================================
+export const GAME_CORE_PRELOAD_PATHS = [
+  // HUD VeHUD trong game chuẩn 1:1
   'hud/giaodientrong/thanhhp1.png',
   'hud/giaodientrong/thanhhp2.png',
   'hud/giaodientrong/thanhhp.png',
   'hud/giaodientrong/thanhki.png',
+  'hud/giaodientrong/bg_attack.png',
+  'hud/giaodientrong/bg_attack_click.png',
+  'hud/giaodientrong/odauthan.png',
+  'hud/giaodientrong/odauthanclick.png',
+  'hud/giaodientrong/change.png',
+  'hud/giaodientrong/change_click.png',
+  'hud/giaodientrong/oskill.png',
+  'hud/giaodientrong/oskillclick.png',
+  'hud/giaodientrong/myTexture2dnut.png',
+  'hud/giaodientrong/myTexture2dnutF.png',
+  'hud/giaodientrong/myTexture2danalog1.png',
+  'hud/giaodientrong/myTexture2danalog2.png',
   'hud/giaodientrong/nutpopup.png',
   'hud/giaodientrong/popupnhanvat.jpg',
   'hud/giaodientrong/nutX.png',
@@ -14,24 +74,6 @@ const CORE_PRELOAD_PATHS = [
   'hud/giaodientrong/nutchucnangclick.png',
   'hud/giaodientrong/nutvuong.png',
   'hud/giaodientrong/nutvuongclick.png',
-  'hud/giaodientrong/oskill.png',
-  'hud/giaodientrong/oskillclick.png',
-  'hud/giaodientrong/odauthan.png',
-  'hud/giaodientrong/odauthanclick.png',
-  'hud/giaodientrong/ochat.png',
-  'hud/giaodientrong/ochatclick.png',
-  'hud/giaodientrong/bg_attack.png',
-  'hud/giaodientrong/bg_attack_click.png',
-  'hud/giaodientrong/change.png',
-  'hud/giaodientrong/change_click.png',
-  'hud/giaodientrong/myTexture2dnut.png',
-  'hud/giaodientrong/myTexture2dnutF.png',
-  'hud/giaodientrong/myTexture2danalog1.png',
-  'hud/giaodientrong/myTexture2danalog2.png',
-  'hud/giaodientrong/ochiso1.jpg',
-  'hud/giaodientrong/ochisoclick1.jpg',
-  'hud/giaodientrong/dauhoicham.png',
-  'hud/giaodientrong/clicknpc.png',
   'hud/giaodientrong/ohanhtrang.jpg',
   'hud/giaodientrong/ohanhtrangclick.jpg',
   'hud/giaodientrong/ohanhtrangdangmac.jpg',
@@ -44,86 +86,31 @@ const CORE_PRELOAD_PATHS = [
   'hud/giaodientrong/saoden.png',
   'hud/giaodientrong/saoxanh.png',
   'hud/giaodientrong/ochiso.png',
-  'hud/giaodientrong/ochisoclick.png',
-  'hud/giaodienngoai/chung/khungchat.png',
-  'hud/giaodienngoai/chung/nutdangnhap2.png',
-  'hud/giaodienngoai/chung/nutclick.png',
-  'hud/giaodienngoai/chung/muitenvang.png',
-  'hud/giaodienngoai/chung/chuberong.png',
-  'vatpham/taubay/myTexture2dmaybay2.png',
-  'vatpham/taubay/myTexture2dmaybay3.png',
-  'vatpham/taubay/myTexture2dmaybay4a.png',
-  'vatpham/taubay/myTexture2dmaybay4b.png',
-  'nhanvat/quai/moc_nhan_1.png',
-  'nhanvat/quai/moc_nhan_2.png',
-  'nhanvat/quai/khung_long_1.png',
-  'nhanvat/quai/khung_long_2.png',
-  'nhanvat/quai/lon_loi_1.png',
-  'nhanvat/quai/lon_loi_2.png',
-  'nhanvat/quai/quy_dat_1.png',
-  'nhanvat/quai/quy_dat_2.png',
-  'nhanvat/quai/tau_pay_pay.png',
-  'nhanvat/quai/fide_dai_de.png',
-  'nhanvat/quai/xen_hoan_thien.png',
-  'nhanvat/quai/cooler_boss.png',
-  'nhanvat/quai/cumber_boss.png',
-  'nhanvat/npc/than_meo_karin.png',
-  'nhanvat/npc/quy_lao_kame.png',
-  'nhanvat/npc/npc_calich.png',
-  'nhanvat/npc/npc_whis.png',
-  'map/traidat/doi_hoa_cuc/dai_thap_karin.png',
-  'map/traidat/chung/trangtri/duiga.png',
-  'map/ban_do/map0.png',
-  'map/ban_do/map1.png',
-  'map/ban_do/map2.png',
-  'hieuung/hieuungkynang/e_0.png',
-  'hieuung/hieuungkynang/e_1.png',
-  'hieuung/hieuungkynang/e_2.png',
-  'hieuung/hieuunggame/bien_khi/bom1.png',
-  'hieuung/hieuunggame/bien_khi/bom2.png',
+  'hud/giaodientrong/ochiso1.jpg',
+  'hud/giaodientrong/dauhoicham.png',
+  'hud/giaodientrong/clicknpc.png',
 
-  // Parallax & Tiles Trái Đất (Nhà Gôhan, Làng Aru, Đồi Hoa Cúc)
-  'hud/giaodienngoai/traidat/sky_traidat.png',
-  'hud/giaodienngoai/traidat/nuixa_traidat.png',
-  'hud/giaodienngoai/traidat/nui_traidat.png',
-  'hud/giaodienngoai/traidat/nuicay_traidat.png',
-  'hud/giaodienngoai/traidat/nuithap_traidat.png',
-  'map/traidat/chung/nhacua/nhacua2_earth.png',
-  'map/traidat/chung/nhacua/nhacua1_earth.png',
-  'map/traidat/chung/caycoi/caycoi1_traidat.png',
-  'map/traidat/chung/caycoi/caycoi2_traidat.png',
-  'map/traidat/chung/cayco/cayco1_traidat.png',
-  'map/traidat/chung/cayco/cayco3_traidat.png',
-  'map/traidat/chung/cayco/cayco4_traidat.png',
-  'map/traidat/chung/cayco/cayco5_traidat.png',
-  'map/traidat/chung/dat/matdat_traidat1.png',
-  'map/traidat/chung/dat/matdat_traidat2.png',
-  'map/traidat/chung/dat/matdat_traidat3.png',
-  'map/traidat/chung/dat/matdat_traidat4.png',
-  'map/traidat/chung/dat/matdat_traidat5.png',
-  'map/traidat/chung/dat/dat_traidat1.png',
-  'map/traidat/chung/dat/dat_traidat2.png',
-  'map/traidat/chung/dat/dat_traidat3.png',
-  'map/traidat/chung/dat/longdat_traidat1.png',
-  'map/traidat/chung/dat/longdat_traidat2.png',
-  'map/traidat/chung/dat/longdat_traidat3.png',
-  'map/traidat/chung/dat/doc_traidat.png',
-  'map/traidat/chung/trangtri/cuinuongduiga.png',
-  'map/traidat/chung/trangtri/hatdau2.png',
-  'map/traidat/lang_aru/maparu.png',
-  'map/traidat/lang_aru/maparusau.png',
-  'map/traidat/doi_hoa_cuc/doihoacuc.png',
-  'map/traidat/doi_hoa_cuc/doihoacucsau.png',
-  'map/traidat/doi_hoa_cuc/doihoacuctruoc.png',
-  'map/traidat/doi_hoa_cuc/thapkirin.png',
-  'hieuung/hieuungmap/light.png',
-  'hieuung/hieuungmap/khoimay.png',
-  'hieuung/hieuungmap/lua1.png',
-  'hieuung/hieuungmap/lua2.png',
-  'hieuung/hieuungmap/lua3.png',
-  'hieuung/hieuungmap/lua4.png',
+  // Nhân vật Tân thủ Trái Đất (Goku base & set cam võ phục)
+  'nhanvat/traidat/avatar/Goku_base/avt.png',
+  'nhanvat/traidat/avatar/Goku_base/daudung.png',
+  'nhanvat/traidat/avatar/Goku_base/dauchay.png',
+  'nhanvat/traidat/do/set_cam/thandung.png',
+  'nhanvat/traidat/do/set_cam/thannhay.png',
+  'nhanvat/traidat/do/set_cam/thanroi.png',
+  'nhanvat/traidat/do/set_cam/thanchay (1).png',
+  'nhanvat/traidat/do/set_cam/thanchay (2).png',
+  'nhanvat/traidat/do/set_cam/thanchay (3).png',
+  'nhanvat/traidat/do/set_cam/chandung.png',
+  'nhanvat/traidat/do/set_cam/channhay.png',
+  'nhanvat/traidat/do/set_cam/chanroi.png',
+  'nhanvat/traidat/do/set_cam/chanbay.png',
+  'nhanvat/traidat/do/set_cam/chanchay (1).png',
+  'nhanvat/traidat/do/set_cam/chanchay (2).png',
+  'nhanvat/traidat/do/set_cam/chanchay (3).png',
+  'nhanvat/traidat/do/set_base/thandung.png',
+  'nhanvat/traidat/do/set_base/chandung.png',
 
-  // NPCs chuẩn bản gốc
+  // NPC Tân Thủ chuẩn NRO
   'nhanvat/npc/ong_gohan/avt.png',
   'nhanvat/npc/ong_gohan/dau.png',
   'nhanvat/npc/ong_gohan/than.png',
@@ -136,14 +123,6 @@ const CORE_PRELOAD_PATHS = [
   'nhanvat/npc/admin_thanhle/dau.png',
   'nhanvat/npc/admin_thanhle/than.png',
   'nhanvat/npc/admin_thanhle/chan.png',
-  'nhanvat/npc/admin_haidang/avt.png',
-  'nhanvat/npc/admin_haidang/dau.png',
-  'nhanvat/npc/admin_haidang/than.png',
-  'nhanvat/npc/admin_haidang/chan.png',
-  'nhanvat/npc/admin_huykhoi/avt.png',
-  'nhanvat/npc/admin_huykhoi/dau.png',
-  'nhanvat/npc/admin_huykhoi/than.png',
-  'nhanvat/npc/admin_huykhoi/chan.png',
   'nhanvat/npc/thay_hieu/avt.png',
   'nhanvat/npc/thay_hieu/dau.png',
   'nhanvat/npc/thay_hieu/than.png',
@@ -155,156 +134,61 @@ const CORE_PRELOAD_PATHS = [
   'nhanvat/npc/ruong_do/avt_ruong.png',
   'nhanvat/npc/dui_ga/1.png',
 
-  // Nhân vật cơ bản 3 hành tinh
-  'nhanvat/traidat/avatar/Goku_base/avt.png',
-  'nhanvat/traidat/avatar/Goku_base/daudung.png',
-  'nhanvat/traidat/avatar/Goku_base/dauchay.png',
-  'nhanvat/traidat/do/set_base/thandung.png',
-  'nhanvat/traidat/do/set_base/thannhay.png',
-  'nhanvat/traidat/do/set_base/thanroi.png',
-  'nhanvat/traidat/do/set_base/thanthu.png',
-  'nhanvat/traidat/do/set_base/thanchay (1).png',
-  'nhanvat/traidat/do/set_base/thanchay (2).png',
-  'nhanvat/traidat/do/set_base/thanchay (3).png',
-  'nhanvat/traidat/do/set_base/thanchay (4).png',
-  'nhanvat/traidat/do/set_base/thanchay (5).png',
-  'nhanvat/traidat/do/set_base/chandung.png',
-  'nhanvat/traidat/do/set_base/channhay.png',
-  'nhanvat/traidat/do/set_base/chanroi.png',
-  'nhanvat/traidat/do/set_base/chanbay.png',
-  'nhanvat/traidat/do/set_base/changong.png',
-  'nhanvat/traidat/do/set_base/chanchay (1).png',
-  'nhanvat/traidat/do/set_base/chanchay (2).png',
-  'nhanvat/traidat/do/set_base/chanchay (3).png',
-  'nhanvat/traidat/do/set_base/chanchay (4).png',
-  'nhanvat/traidat/do/set_base/chanchay (5).png',
-  'nhanvat/traidat/do/set_base/588.png',
-  'nhanvat/traidat/do/set_base/589.png',
-  'nhanvat/traidat/do/set_base/590.png',
-  'nhanvat/traidat/do/set_base/591.png',
-  'nhanvat/traidat/do/set_base/592.png',
+  // Quái vật Tân thủ
+  'nhanvat/quai/moc_nhan_1.png',
+  'nhanvat/quai/moc_nhan_2.png',
+  'nhanvat/quai/khung_long_1.png',
+  'nhanvat/quai/khung_long_2.png',
+  'nhanvat/quai/lon_loi_1.png',
+  'nhanvat/quai/lon_loi_2.png',
 
-  // Hiệu ứng bay, gồng KI, đòn đánh, ngọc rồng
+  // Tiles bản đồ Nhà Gôhan & Làng Aru
+  'map/traidat/chung/dat/matdat_traidat1.png',
+  'map/traidat/chung/dat/matdat_traidat2.png',
+  'map/traidat/chung/dat/matdat_traidat3.png',
+  'map/traidat/chung/dat/dat_traidat1.png',
+  'map/traidat/chung/dat/dat_traidat2.png',
+  'map/traidat/chung/dat/longdat_traidat1.png',
+  'map/traidat/chung/dat/longdat_traidat2.png',
+  'map/traidat/chung/nhacua/nhacua1_earth.png',
+  'map/traidat/chung/nhacua/nhacua2_earth.png',
+  'map/traidat/chung/caycoi/caycoi1_traidat.png',
+  'map/traidat/chung/caycoi/caycoi2_traidat.png',
+  'map/traidat/chung/cayco/cayco1_traidat.png',
+  'map/traidat/chung/cayco/cayco3_traidat.png',
+  'map/traidat/chung/trangtri/cuinuongduiga.png',
+  'map/traidat/chung/trangtri/hatdau2.png',
+
+  // Hiệu ứng chiến đấu cơ bản
+  'hieuung/hieuungkynang/e_0.png',
+  'hieuung/hieuungkynang/e_1.png',
+  'hieuung/hieuungkynang/e_2.png',
   'hieuung/hieuunggame/aura_bay/1.png',
   'hieuung/hieuunggame/aura_bay/2.png',
-  'hieuung/hieuunggame/aura_bay/3.png',
-  'hieuung/hieuunggame/aura_bay/4.png',
-  'hieuung/hieuunggame/bien_khi/ttnl1.png',
-  'hieuung/hieuunggame/bien_khi/ttnl2.png',
-  'hieuung/hieuunggame/bien_khi/ttnl3.png',
-  'hieuung/hieuunggame/bien_khi/ttnl4.png',
   'hieuung/hieuunggame/click_di_chuyen/1.png',
   'hieuung/hieuunggame/click_di_chuyen/2.png',
   'hieuung/hieuunggame/click_di_chuyen/3.png',
   'hieuung/hieuunggame/click_di_chuyen/4.png',
-  'vatpham/vatphamgame/ngocrong/nr1s.png',
-  'vatpham/vatphamgame/ngocrong/nr2s.png',
-  'vatpham/vatphamgame/ngocrong/nr3s.png',
-  'vatpham/vatphamgame/ngocrong/nr4s.png',
-  'vatpham/vatphamgame/ngocrong/nr5s.png',
-  'vatpham/vatphamgame/ngocrong/nr6s.png',
-  'vatpham/vatphamgame/ngocrong/nr7s.png',
-  'hieuung/hieuunggame/rong_than/r1.png',
-  'hieuung/hieuunggame/rong_than/r2.png',
-  'hieuung/hieuunggame/rong_than/r3.png',
-  'hieuung/hieuunggame/rong_than/r4.png',
-  'hieuung/hieuunggame/rong_than/r5.png',
-  'hieuung/hieuunggame/rong_than/r6.png',
-  'hieuung/hieuunggame/rong_than/r7.png',
-  'hieuung/hieuunggame/rong_than/r8.png',
-  'hieuung/hieuunggame/rong_than/r9.png',
-  'hieuung/hieuunggame/rong_than/lua_1.png',
-  'hieuung/hieuunggame/rong_than/lua_2.png',
-  'nhanvat/traidat/do/set_cam/thandung.png',
-  'nhanvat/traidat/do/set_cam/thannhay.png',
-  'nhanvat/traidat/do/set_cam/thanroi.png',
-  'nhanvat/traidat/do/set_cam/thanchay (1).png',
-  'nhanvat/traidat/do/set_cam/thanchay (2).png',
-  'nhanvat/traidat/do/set_cam/thanchay (3).png',
-  'nhanvat/traidat/do/set_cam/thanchay (4).png',
-  'nhanvat/traidat/do/set_cam/thanchay (5).png',
-  'nhanvat/traidat/do/set_cam/chandung.png',
-  'nhanvat/traidat/do/set_cam/channhay.png',
-  'nhanvat/traidat/do/set_cam/chanroi.png',
-  'nhanvat/traidat/do/set_cam/chanbay.png',
-  'nhanvat/traidat/do/set_cam/chanchay (1).png',
-  'nhanvat/traidat/do/set_cam/chanchay (2).png',
-  'nhanvat/traidat/do/set_cam/chanchay (3).png',
-  'nhanvat/traidat/do/set_cam/chanchay (4).png',
-  'nhanvat/traidat/do/set_cam/chanchay (5).png',
 
-  // Quái vật thật (Pet / Mount / Cải trang sprites)
-  'vatpham/vatphamgame/pet/cho_vang/6156.png',
-  'vatpham/vatphamgame/pet/cho_vang/6157.png',
-  'vatpham/vatphamgame/pet/cho_vang/6158.png',
-  'vatpham/vatphamgame/pet/cho_vang/6159.png',
-  'vatpham/vatphamgame/pet/meo_den/10877.png',
-  'vatpham/vatphamgame/pet/meo_den/10878.png',
-  'vatpham/vatphamgame/pet/meo_den/10879.png',
-  'vatpham/vanbay/khunglong/myTexture2drong.png',
-  'vatpham/vanbay/xenxanh/mount_16_0.png',
-  'vatpham/vanbay/rua/mount_9_0.png',
-  'vatpham/vanbay/xenvang/mount_17_0.png',
-
-  // Kỹ năng & Vật phẩm chuẩn gốc ElectroHeavenVN/DataNRO (x4 TeaMobi Icons)
+  // Tàu bay & Kỹ năng sơ cấp
+  'vatpham/taubay/myTexture2dmaybay4b.png',
   'kynang/datanro/539.png',
   'kynang/datanro/540.png',
-  'kynang/datanro/711.png',
-  'kynang/datanro/716.png',
-  'kynang/datanro/717.png',
-  'kynang/datanro/718.png',
-  'kynang/datanro/720.png',
-  'kynang/datanro/722.png',
-  'kynang/datanro/723.png',
-  'kynang/datanro/724.png',
-  'kynang/datanro/2248.png',
-  'kynang/datanro/3778.png',
-  'kynang/datanro/3779.png',
-  'kynang/datanro/3780.png',
-  'kynang/datanro/3781.png',
-  'kynang/datanro/3782.png',
-  'kynang/datanro/3783.png',
-  'kynang/datanro/3784.png',
-  'kynang/datanro/11162.png',
-  'kynang/datanro/11193.png',
-  'kynang/datanro/11194.png',
-  'vatpham/datanro/1088.png',
-  'vatpham/datanro/4133.png',
-  'vatpham/datanro/6314.png',
-  'vatpham/datanro/9067.png',
-  'vatpham/datanro/10165.png',
-  'vatpham/datanro/10166.png',
-  'vatpham/datanro/10168.png',
-
-  // Kỹ năng Trái Đất, Xayda, Namek fallback
   'kynang/iconkynang/traidat/skill1_traidat.png',
-  'kynang/iconkynang/traidat/skill2_traidat.png',
-  'kynang/iconkynang/traidat/skill3_traidat.png',
-  'kynang/iconkynang/traidat/skill4_traidat.png',
-  'kynang/iconkynang/traidat/skill5_traidat.png',
-  'kynang/iconkynang/xayda/skill1_xayda.png',
-  'kynang/iconkynang/xayda/skill2_xayda.png',
-  'kynang/iconkynang/xayda/skill3_xayda.png',
-  'kynang/iconkynang/xayda/skill4_xayda.png',
-  'kynang/iconkynang/xayda/skill5_xayda.png',
-  'kynang/iconkynang/namek/skill1_namek.png',
-  'kynang/iconkynang/namek/skill2_namek.png',
-  'kynang/iconkynang/namek/skill3_namek.png',
-  'kynang/iconkynang/namek/skill4_namek.png',
-  'kynang/iconkynang/namek/skill5_namek.png'
+  'kynang/iconkynang/traidat/skill2_traidat.png'
 ];
 
-class AssetLoader {
+export class AssetLoader {
   constructor() {
     this.cache = new Map();
-    // Bảng băm O(1) ánh xạ trực tiếp từ relPath -> HTMLImageElement đã sẵn sàng (bỏ qua normalizeUrl/encodeURI mỗi frame!)
+    // Bảng băm O(1) ánh xạ trực tiếp từ relPath -> HTMLImageElement đã giải mã GPU
     this.readyRawCache = new Map();
     this.status = new Map();
-    this.initialized = false;
+    this.menuReady = false;
+    this.gameCoreReady = false;
     this.preloadLoaded = 0;
-    this.preloadTotal = CORE_PRELOAD_PATHS.length;
+    this.preloadTotal = 0;
     this.progressListeners = [];
-    this.readyCallbacks = [];
   }
 
   normalizeUrl(path) {
@@ -325,55 +209,137 @@ class AssetLoader {
     return encodeURI('/assets/' + clean);
   }
 
-  init() {
-    if (this.initialized) return;
-    this.initialized = true;
-    this.preloadLoaded = 0;
-    this.preloadTotal = CORE_PRELOAD_PATHS.length;
+  // Tải và decode 1 hình ảnh thật sự lên bộ nhớ GPU (async decode)
+  async loadSingle(relPath) {
+    if (!relPath) return null;
+    if (this.readyRawCache.has(relPath)) {
+      return this.readyRawCache.get(relPath);
+    }
 
-    CORE_PRELOAD_PATHS.forEach((relPath) => {
-      this._loadSingle(relPath, true);
-    });
-  }
-
-  _loadSingle(relPath, countPreload = false) {
     const url = this.normalizeUrl(relPath);
     if (!url) return null;
 
     if (this.cache.has(url)) {
-      return this.cache.get(url);
+      const existing = this.cache.get(url);
+      if (existing.complete && existing.naturalWidth > 0) {
+        this.readyRawCache.set(relPath, existing);
+        return existing;
+      }
     }
 
-    const img = new Image();
-    img.decoding = 'async';
-    this.cache.set(url, img);
-    this.status.set(url, 'loading');
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = 'async';
+      this.cache.set(url, img);
+      this.status.set(url, 'loading');
 
-    const finish = (ok) => {
-      this.status.set(url, ok ? 'ok' : 'err');
-      if (countPreload) {
-        this.preloadLoaded++;
-        this.progressListeners.forEach((cb) => cb(this.preloadLoaded, this.preloadTotal));
-        if (this.preloadLoaded >= this.preloadTotal) {
-          this._flushReady();
+      const onDone = (success) => {
+        this.status.set(url, success ? 'ok' : 'err');
+        if (success) {
+          this.readyRawCache.set(relPath, img);
         }
-      }
-    };
+        resolve(success ? img : null);
+      };
 
-    img.onload = () => {
-      // Giải mã trước bất đồng bộ lên bộ nhớ Bitmap GPU để tránh khựng khung hình lần đầu vẽ!
-      if (typeof img.decode === 'function') {
-        img.decode().catch(() => {});
-      }
-      this.readyRawCache.set(relPath, img);
-      finish(true);
-    };
-    img.onerror = () => finish(false);
-    img.src = url;
-    return img;
+      img.onload = () => {
+        if (typeof img.decode === 'function') {
+          img.decode()
+            .then(() => onDone(true))
+            .catch(() => onDone(true));
+        } else {
+          onDone(true);
+        }
+      };
+
+      img.onerror = () => {
+        console.warn(`[AssetLoader] Không thể tải: ${url}`);
+        onDone(false);
+      };
+
+      img.src = url;
+    });
   }
 
-  // Trả về HTMLImageElement đã load thành công (O(1) lookup, KHÔNG tạo chuỗi/encodeURI lặp lại 60 FPS!)
+  // Tải danh sách mảng tài nguyên với kiểm soát tiến trình % THẬT (hàng đợi song song 12 luồng, không fake timeout)
+  async preloadList(paths, onProgress) {
+    if (!Array.isArray(paths) || paths.length === 0) {
+      if (onProgress) onProgress(0, 0, 100);
+      return;
+    }
+
+    const total = paths.length;
+    let completed = 0;
+
+    const report = () => {
+      completed++;
+      const pct = Math.min(100, Math.floor((completed / total) * 100));
+      if (onProgress) onProgress(completed, total, pct);
+    };
+
+    const concurrency = 12;
+    let index = 0;
+
+    const worker = async () => {
+      while (index < paths.length) {
+        const curIdx = index++;
+        const p = paths[curIdx];
+        await this.loadSingle(p);
+        report();
+      }
+    };
+
+    const pool = [];
+    for (let i = 0; i < Math.min(concurrency, paths.length); i++) {
+      pool.push(worker());
+    }
+
+    await Promise.all(pool);
+  }
+
+  // Preload giai đoạn 1: Menu chính (100% thật trước khi mở Menu)
+  async preloadMenu(onProgress) {
+    await this.preloadList(MENU_PRELOAD_PATHS, onProgress);
+    this.menuReady = true;
+  }
+
+  // Preload giai đoạn 2: In-Game Core
+  async preloadGameCore(onProgress) {
+    await this.preloadList(GAME_CORE_PRELOAD_PATHS, onProgress);
+    this.gameCoreReady = true;
+  }
+
+  // Tải toàn bộ Core trước khi vào game (Menu + HUD + Starter World)
+  async preloadAllCore(onProgress) {
+    const combined = [...new Set([...MENU_PRELOAD_PATHS, ...GAME_CORE_PRELOAD_PATHS])];
+    this.preloadTotal = combined.length;
+    this.preloadLoaded = 0;
+
+    await this.preloadList(combined, (loaded, total, pct) => {
+      this.preloadLoaded = loaded;
+      if (onProgress) onProgress(loaded, total, pct);
+      this.progressListeners.forEach(cb => cb(loaded, total));
+    });
+
+    this.menuReady = true;
+    this.gameCoreReady = true;
+  }
+
+  onProgress(cb) {
+    this.progressListeners.push(cb);
+    if (this.preloadTotal > 0) {
+      cb(this.preloadLoaded, this.preloadTotal);
+    }
+  }
+
+  isMenuReady() {
+    return this.menuReady;
+  }
+
+  isGameCoreReady() {
+    return this.gameCoreReady;
+  }
+
+  // Lấy HTMLImageElement đồng bộ O(1) cho render loop Canvas LibGDX 60 FPS
   tex(relPath) {
     if (!relPath) return null;
     const fast = this.readyRawCache.get(relPath);
@@ -382,7 +348,9 @@ class AssetLoader {
     const url = this.normalizeUrl(relPath);
     let img = this.cache.get(url);
     if (!img) {
-      img = this._loadSingle(relPath, false);
+      // Kích hoạt nạp ngầm nếu chưa có
+      this.loadSingle(relPath);
+      return null;
     }
     if (img && img.complete && img.naturalWidth > 0) {
       this.readyRawCache.set(relPath, img);
@@ -391,41 +359,19 @@ class AssetLoader {
     return null;
   }
 
-  // Tải trước một mảng các đường dẫn (ví dụ khi chuyển sang map mới)
+  // Tải trước một mảng các đường dẫn khi chuyển cảnh / chuyển map
   preloadBatch(paths) {
     if (!Array.isArray(paths)) return;
-    for (let i = 0; i < paths.length; i++) {
-      this._loadSingle(paths[i], false);
-    }
+    paths.forEach(p => this.loadSingle(p));
   }
 
-  onProgress(cb) {
-    this.progressListeners.push(cb);
-    cb(this.preloadLoaded, this.preloadTotal);
-  }
-
-  _flushReady() {
-    while (this.readyCallbacks.length > 0) {
-      const cb = this.readyCallbacks.shift();
-      cb();
-    }
+  // Tương thích ngược với GameEngine
+  init() {
+    // Không gọi hàng loạt 275 ảnh dồn dập nữa
   }
 
   waitForReady(timeoutMs = 4500) {
-    this.init();
-    if (this.preloadLoaded >= this.preloadTotal) {
-      return Promise.resolve();
-    }
-    return new Promise((resolve) => {
-      let done = false;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        resolve();
-      };
-      this.readyCallbacks.push(finish);
-      setTimeout(finish, timeoutMs);
-    });
+    return this.preloadAllCore();
   }
 }
 
