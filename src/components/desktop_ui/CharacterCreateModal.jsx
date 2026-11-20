@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { sound } from '../../game/audio';
 import { PLANET_DEFS, createStarterSkillLevels, createStarterEquipment } from '../../game/nroData';
 
-export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSelectCharacter, onClose }) => {
+export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSelectCharacter, onClose, virtualW = 1020 }) => {
   const [planetIndex, setPlanetIndex] = useState(0); // 0: Trái Đất, 1: Xayda, 2: Namếc
   const [characterIndex, setCharacterIndex] = useState(0); // 0, 1, 2
   const [focusGroup, setFocusGroup] = useState('char'); // 'planet' | 'char'
   const [characterName, setCharacterName] = useState(PLANET_DEFS[0].defaultPlayerName);
   const [error, setError] = useState('');
   const [bobOffset, setBobOffset] = useState(0);
+
+  const centerOffX = Math.max(0, Math.round((virtualW - 1020) / 2));
 
   const planetConfigs = [
     {
@@ -114,26 +116,26 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
   // Tọa độ mũi tên vàng nhảy chuẩn ManHinhChoiMoi.java
   const arrowIndex = focusGroup === 'planet' ? planetIndex : characterIndex;
-  const arrowLeft = 294 + arrowIndex * 155 + (135 - 28) / 2;
+  const arrowLeft = centerOffX + 294 + arrowIndex * 155 + (135 - 28) / 2;
   const arrowBottom = (focusGroup === 'planet' ? 385 : 300) + 52 + bobOffset;
 
   return (
     <div
-      className="absolute inset-0 z-40 w-[1020px] h-[610px] overflow-hidden select-none"
+      className="absolute inset-0 z-40 w-full h-full overflow-hidden select-none"
       style={{ backgroundColor: currentConfig.groundColor }}
     >
-      {/* 1. PARALLAX NỀN THEO TỌA ĐỘ GỐC ManHinhChoiMoi.java (1020x610) */}
+      {/* 1. PARALLAX NỀN TRẢI RỘNG TOÀN MÀN HÌNH KHÔNG VIỀN ĐEN */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Bầu trời nửa trên */}
         <div
-          className="absolute left-0 top-0 w-[1020px]"
+          className="absolute left-0 top-0 right-0 w-full"
           style={{ height: '330px', backgroundColor: currentConfig.skyColor }}
         />
 
         {planetIndex === 1 ? (
           <>
             <div
-              className="absolute left-0 w-[1020px]"
+              className="absolute left-0 right-0 w-full"
               style={{
                 bottom: '455px',
                 height: '155px',
@@ -146,10 +148,10 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
               src="/assets/hud/giaodienngoai/xayda/matrang.png"
               alt="Mặt Trăng"
               className="absolute object-contain"
-              style={{ left: '750px', bottom: '490px', width: '64px', height: '64px' }}
+              style={{ left: `${centerOffX + 750}px`, bottom: '490px', width: '64px', height: '64px' }}
             />
             <div
-              className="absolute left-0 w-[1020px]"
+              className="absolute left-0 right-0 w-full"
               style={{
                 bottom: '310px',
                 height: '150px',
@@ -162,7 +164,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
           </>
         ) : (
           <div
-            className="absolute left-0 w-[1020px]"
+            className="absolute left-0 right-0 w-full"
             style={{
               bottom: '310px',
               height: '150px',
@@ -176,7 +178,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Núi xa: y=310 */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '310px',
             height: '150px',
@@ -189,7 +191,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Núi giữa: y=280 */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '280px',
             height: '170px',
@@ -202,7 +204,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Đồi cây: y=205 */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '205px',
             height: '170px',
@@ -215,7 +217,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Núi thấp: y=125 */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '125px',
             height: '180px',
@@ -228,7 +230,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Cỏ trên mặt đất: y=125, h=50 */}
         <div
-          className="absolute left-0 w-[1050px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '125px',
             height: '50px',
@@ -240,7 +242,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Mặt đất: y=75, h=50 */}
         <div
-          className="absolute left-0 w-[1050px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '75px',
             height: '50px',
@@ -252,7 +254,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Đất giữa: y=25, h=50 */}
         <div
-          className="absolute left-0 w-[1050px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '25px',
             height: '50px',
@@ -264,7 +266,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
 
         {/* Lòng đất sát đáy y=0, h=50 */}
         <div
-          className="absolute left-0 bottom-0 w-[1050px]"
+          className="absolute left-0 right-0 bottom-0 w-full"
           style={{
             height: '50px',
             backgroundImage: `url('/assets/hud/giaodienngoai/${folder}/longdat_${folder}1.png')`,
@@ -307,11 +309,11 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         </div>
       </div>
 
-      {/* 3. Ô NHẬP TÊN NHÂN VẬT — (362, 480, 320, 50) */}
+      {/* 3. Ô NHẬP TÊN NHÂN VẬT */}
       <form
         onSubmit={handleCreate}
         className="absolute z-20 flex items-center justify-center px-3"
-        style={{ left: '362px', bottom: '480px', width: '320px', height: '50px' }}
+        style={{ left: `${centerOffX + 362}px`, bottom: '480px', width: '320px', height: '50px' }}
       >
         <img
           src="/assets/hud/giaodienngoai/chung/input.png"
@@ -334,7 +336,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
       {error && (
         <div
           className="absolute z-30 text-center w-[360px]"
-          style={{ left: '342px', bottom: '452px' }}
+          style={{ left: `${centerOffX + 342}px`, bottom: '452px' }}
         >
           <span className="text-red-300 font-dragon text-xs bg-black/80 px-3 py-0.5 rounded-full border border-red-400/50">
             {error}
@@ -355,7 +357,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         }}
       />
 
-      {/* 5. HÀNG NÚT CHỌN HÀNH TINH — x = 294 + i * 155, y = 385, w = 135, h = 50 */}
+      {/* 5. HÀNG NÚT CHỌN HÀNH TINH */}
       {planetConfigs.map((p, idx) => {
         const isSelected = planetIndex === idx;
         return (
@@ -365,7 +367,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
             onClick={() => handlePlanetChange(idx)}
             className="absolute z-20 flex items-center justify-center transition active:scale-95"
             style={{
-              left: `${294 + idx * 155}px`,
+              left: `${centerOffX + 294 + idx * 155}px`,
               bottom: '385px',
               width: '135px',
               height: '50px'
@@ -383,7 +385,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         );
       })}
 
-      {/* 6. HÀNG NÚT CHỌN NHÂN VẬT — x = 294 + idx * 155, y = 300, w = 135, h = 50 */}
+      {/* 6. HÀNG NÚT CHỌN NHÂN VẬT */}
       {currentConfig.characters.map((charName, idx) => {
         const isSelected = characterIndex === idx;
         return (
@@ -393,7 +395,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
             onClick={() => handleCharacterChange(idx)}
             className="absolute z-20 flex items-center justify-center transition active:scale-95"
             style={{
-              left: `${294 + idx * 155}px`,
+              left: `${centerOffX + 294 + idx * 155}px`,
               bottom: '300px',
               width: '135px',
               height: '50px'
@@ -411,10 +413,10 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         );
       })}
 
-      {/* 7. NHÂN VẬT ĐỨNG TRÊN THẢM CỎ — veNhanVatDung(batch, 205, 105) */}
+      {/* 7. NHÂN VẬT ĐỨNG TRÊN THẢM CỎ */}
       <div
         className="absolute z-20 flex flex-col items-center pointer-events-none"
-        style={{ left: '190px', bottom: '122px', width: '96px' }}
+        style={{ left: `${centerOffX + 190}px`, bottom: '122px', width: '96px' }}
       >
         <img
           src={`/assets/hud/giaodienngoai/${folder}/dau_${folder}_${characterIndex + 1}.png`}
@@ -433,7 +435,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         />
       </div>
 
-      {/* 8. NÚT ĐÓNG GÓC TRÁI DƯỚI (20, 20, 135, 50) & TẠO MỚI GIỮA DƯỚI (442.5, 20, 135, 50) */}
+      {/* 8. NÚT ĐÓNG GÓC TRÁI DƯỚI & TẠO MỚI GIỮA DƯỚI */}
       <button
         type="button"
         onClick={() => {
@@ -457,7 +459,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
         type="button"
         onClick={handleCreate}
         className="absolute z-20 flex items-center justify-center transition active:scale-95"
-        style={{ left: '442px', bottom: '20px', width: '135px', height: '50px' }}
+        style={{ left: `${centerOffX + 442}px`, bottom: '20px', width: '135px', height: '50px' }}
       >
         <img
           src="/assets/hud/giaodienngoai/chung/nutdangnhap2.png"

@@ -175,7 +175,28 @@ export const GAME_CORE_PRELOAD_PATHS = [
   'kynang/datanro/539.png',
   'kynang/datanro/540.png',
   'kynang/iconkynang/traidat/skill1_traidat.png',
-  'kynang/iconkynang/traidat/skill2_traidat.png'
+  'kynang/iconkynang/traidat/skill2_traidat.png',
+
+  // Đậu thần chính chủ NRO
+  'icon/241.png',
+
+  // Đảo Kame chuẩn gốc NRO (Kame House, Cây Dừa, Bãi Biển, Nền Đại Dương)
+  'nhanvat/npc/quy_lao_kame.png',
+  'bgItem/143.png',
+  'bgItem/6.png',
+  'bgItem/11.png',
+  'bgItem/12.png',
+  'bgItem/13.png',
+  'bgItem/14.png',
+  'bgItem/184.png',
+  'bgItem/197.png',
+  'bgItem/204.png',
+  'bg/b02.png',
+  'bg/b02-1.png',
+  'bg/b02-2.png',
+  'bg/b02-3.png',
+  'bg/b02-4.png',
+  'bg/b02-5.png'
 ];
 
 export class AssetLoader {

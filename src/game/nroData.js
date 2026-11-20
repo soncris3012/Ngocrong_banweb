@@ -353,7 +353,7 @@ export const ITEM_CATALOG = {
     id: 'da_pha_le_dame', name: 'Đá Pha Lê Đỏ (+Sức Đánh)', slot: 'crystal', crystalStat: 'attack', crystalVal: 45,
     icon: 'vatpham/vatphamgame/phu_tro/dame.png',
     gold: 12000, gem: 5,
-    desc: 'Đem tới Bà Hạt Mít / Thầy Hiếu (Đảo Kame) ép vào Sao Pha Lê (+45 SĐ).'
+    desc: 'Đem tới Bà Hạt Mít / Thầy Quyết (Đảo Kame) ép vào Sao Pha Lê (+45 SĐ).'
   },
   da_pha_le_hp: {
     id: 'da_pha_le_hp', name: 'Đá Pha Lê Hồng (+HP)', slot: 'crystal', crystalStat: 'maxHp', crystalVal: 550,

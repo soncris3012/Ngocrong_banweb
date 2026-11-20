@@ -76,13 +76,16 @@ export class GameEngine {
     this.onReturnToMenu = callbacks.onReturnToMenu || null;
     this.onTextInputToggle = callbacks.onTextInputToggle || null;
 
+    this.virtualW = initialPlayer.virtualW || VIRTUAL_W;
+    this.virtualH = initialPlayer.virtualH || VIRTUAL_H;
+
     // Cache kích thước Viewport & Gradient Bầu Trời để KHÔNG gọi layout read (innerWidth/createLinearGradient) 60 lần/giây!
-    this._winW = VIRTUAL_W;
-    this._winH = VIRTUAL_H;
+    this._winW = this.virtualW;
+    this._winH = this.virtualH;
     this._isPortrait = false;
     this._fitScale = 1;
-    this._targetW = VIRTUAL_W;
-    this._targetH = VIRTUAL_H;
+    this._targetW = this.virtualW;
+    this._targetH = this.virtualH;
     this._skyGradCache = new Map();
     this._syncCanvasResolution();
 
@@ -1795,34 +1798,54 @@ export class GameEngine {
 
   updateCamera(dt) {
     const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
+    const halfW = this.vw / 2;
+    const halfH = this.vh / 2;
     if (this.camDragging) {
-      this.camX = Math.max(510, Math.min(mapCfg.width - 510, this.camX));
-      this.camY = Math.max(305, Math.min(mapCfg.height - 305, this.camY));
+      this.camX = Math.max(halfW, Math.min(mapCfg.width - halfW, this.camX));
+      this.camY = Math.max(halfH, Math.min(mapCfg.height - halfH, this.camY));
       return;
     }
-    const targetCamX = Math.max(510, Math.min(mapCfg.width - 510, this.player.x));
-    const targetCamY = Math.max(305, Math.min(mapCfg.height - 305, this.player.y + 95));
+    const targetCamX = Math.max(halfW, Math.min(mapCfg.width - halfW, this.player.x));
+    const targetCamY = Math.max(halfH, Math.min(mapCfg.height - halfH, this.player.y + 95));
     const lerp = Math.min(1, dt * 8.5);
     this.camX += (targetCamX - this.camX) * lerp;
     this.camY += (targetCamY - this.camY) * lerp;
   }
 
   // ==================== KẾT XUẤT WORLD & BẢN ĐỒ CHUẨN LIBGDX ====================
+  updateDimensions(virtualW, virtualH) {
+    if (virtualW) this.virtualW = virtualW;
+    if (virtualH) this.virtualH = virtualH;
+    if (this.hud) {
+      this.hud.virtualW = this.virtualW;
+      this.hud.virtualH = this.virtualH;
+    }
+    this._syncCanvasResolution();
+  }
+
+  get vw() {
+    return this.virtualW || VIRTUAL_W;
+  }
+
+  get vh() {
+    return this.virtualH || VIRTUAL_H;
+  }
+
   worldToView(wx, wy) {
     return {
-      vx: wx - (this.camX - 510),
-      vy: wy - (this.camY - 305)
+      vx: wx - (this.camX - this.vw / 2),
+      vy: wy - (this.camY - this.vh / 2)
     };
   }
 
   _syncCanvasResolution() {
     if (typeof window === 'undefined' || !this.canvas) return;
-    const winW = window.innerWidth || VIRTUAL_W;
-    const winH = window.innerHeight || VIRTUAL_H;
+    const winW = window.innerWidth || this.vw;
+    const winH = window.innerHeight || this.vh;
     const isPortrait = winH > winW;
     const landW = isPortrait ? winH : winW;
     const landH = isPortrait ? winW : winH;
-    const fitScale = Math.max(0.1, Math.min(landW / VIRTUAL_W, landH / VIRTUAL_H));
+    const fitScale = Math.max(0.1, Math.min(landW / this.vw, landH / this.vh));
 
     this._winW = winW;
     this._winH = winH;
@@ -1832,8 +1855,8 @@ export class GameEngine {
     // Giới hạn độ phân giải nội bộ tối đa 1.35x chuẩn HD sắc nét, giảm tới ~3.8x gánh nặng tô pixel (fillrate) trên màn Retina/Mobile!
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const renderScale = Math.min(1.35, Math.max(1, fitScale * dpr));
-    const targetW = Math.max(1, Math.round(VIRTUAL_W * renderScale));
-    const targetH = Math.max(1, Math.round(VIRTUAL_H * renderScale));
+    const targetW = Math.max(1, Math.round(this.vw * renderScale));
+    const targetH = Math.max(1, Math.round(this.vh * renderScale));
 
     if (this.canvas.width !== targetW || this.canvas.height !== targetH) {
       this.canvas.width = targetW;
@@ -1847,7 +1870,7 @@ export class GameEngine {
   _getSkyGradient(ctx, style) {
     let grad = this._skyGradCache.get(style);
     if (grad) return grad;
-    grad = ctx.createLinearGradient(0, 0, 0, VIRTUAL_H);
+    grad = ctx.createLinearGradient(0, 0, 0, this.vh);
     if (style === 'than_dien') {
       grad.addColorStop(0, '#1e1b4b');
       grad.addColorStop(0.55, '#4338ca');
@@ -1868,15 +1891,15 @@ export class GameEngine {
   drawWorldTex(ctx, relPath, wx, wy, ww, wh, flipX = false) {
     const img = assets.tex(relPath);
     if (!img) return;
-    const vx = wx - (this.camX - 510);
-    const vy = wy - (this.camY - 305);
+    const vx = wx - (this.camX - this.vw / 2);
+    const vy = wy - (this.camY - this.vh / 2);
     const absW = ww || img.naturalWidth * 0.5;
     const absH = wh || img.naturalHeight * 0.5;
 
     // 2D Frustum Culling cả trục X lẫn trục Y
-    if (vx + absW < -80 || vx > VIRTUAL_W + 80 || vy + absH < -80 || vy > VIRTUAL_H + 80) return;
+    if (vx + absW < -80 || vx > this.vw + 80 || vy + absH < -80 || vy > this.vh + 80) return;
 
-    const cy = VIRTUAL_H - vy - absH;
+    const cy = this.vh - vy - absH;
     if (flipX) {
       ctx.save();
       ctx.translate(vx + absW, cy);
@@ -1886,12 +1909,12 @@ export class GameEngine {
       return;
     }
 
-    // Thuật toán Viewport Sub-Rect Source Clipping: Cắt đúng lát cắt [0..1020]x[0..610] cho ảnh nền khổng lồ (2976x960, 3408x960), giảm 75-80% băng thông GPU!
-    if (absW > VIRTUAL_W + 64 || absH > VIRTUAL_H + 64) {
+    // Thuật toán Viewport Sub-Rect Source Clipping: Cắt đúng lát cắt cho ảnh nền khổng lồ, giảm 75-80% băng thông GPU!
+    if (absW > this.vw + 64 || absH > this.vh + 64) {
       const x0 = vx < 0 ? 0 : vx;
       const y0 = cy < 0 ? 0 : cy;
-      const x1 = vx + absW > VIRTUAL_W ? VIRTUAL_W : vx + absW;
-      const y1 = cy + absH > VIRTUAL_H ? VIRTUAL_H : cy + absH;
+      const x1 = vx + absW > this.vw ? this.vw : vx + absW;
+      const y1 = cy + absH > this.vh ? this.vh : cy + absH;
       const dw = x1 - x0;
       const dh = y1 - y0;
       if (dw <= 0.5 || dh <= 0.5) return;
@@ -1918,7 +1941,7 @@ export class GameEngine {
     const ctx = this.ctx;
     if (!ctx) return;
 
-    ctx.setTransform(this._targetW / VIRTUAL_W, 0, 0, this._targetH / VIRTUAL_H, 0, 0);
+    ctx.setTransform(this._targetW / this.vw, 0, 0, this._targetH / this.vh, 0, 0);
     ctx.imageSmoothingEnabled = true;
 
     const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
@@ -1926,17 +1949,17 @@ export class GameEngine {
     // NẾU ĐANG CHUYỂN MAP -> VẼ MÀN HÌNH ĐEN TUYỆT ĐỐI CHUẨN ManHinhSplash.java (chuberong.png + "Xin chờ..." + nr5s xoay)
     if (this.mapTransitionTimer > 0) {
       ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+      ctx.fillRect(0, 0, this.vw, this.vh);
 
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/chung/chuberong.png', VIRTUAL_W / 2 - 156, VIRTUAL_H / 2 + 8, 320, 195);
-      this.hud.drawText(ctx, 'Xin chờ...', VIRTUAL_W / 2, VIRTUAL_H / 2 - 36, {
+      this.hud.drawTex(ctx, 'hud/giaodienngoai/chung/chuberong.png', this.vw / 2 - 156, this.vh / 2 + 8, 320, 195);
+      this.hud.drawText(ctx, 'Xin chờ...', this.vw / 2, this.vh / 2 - 36, {
         size: 13.5, color: '#ffffff', stroke: null, strokeWidth: 0, align: 'center'
       });
 
       const dbImg = assets.tex('vatpham/vatphamgame/ngocrong/nr5s.png');
       if (dbImg) {
         ctx.save();
-        ctx.translate(VIRTUAL_W / 2, VIRTUAL_H - VIRTUAL_H / 2);
+        ctx.translate(this.vw / 2, this.vh - this.vh / 2);
         ctx.rotate(performance.now() * 0.012);
         ctx.drawImage(dbImg, -13, -13, 26, 26);
         ctx.restore();
@@ -2019,9 +2042,44 @@ export class GameEngine {
       return;
     }
 
+    // Đảo Kame (bầu trời nhiệt đới, mây xa trôi chậm, chân trời biển và sóng vỗ gốc NRO TORI b02*.png)
+    if (style === 'dao_kame' || mapCfg.key === 'dao_kame' || mapCfg.key === 'nam_kame' || mapCfg.key === 'ban_do_kho_bau') {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, this.vh);
+      skyGrad.addColorStop(0, '#0284c7');
+      skyGrad.addColorStop(0.35, '#38bdf8');
+      skyGrad.addColorStop(0.72, '#bae6fd');
+      skyGrad.addColorStop(1, '#e0f2fe');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, this.vw, this.vh);
+
+      // Mây tầng cao trôi chậm (b02-3.png: 336x146)
+      const cloudW = 336;
+      const cloudShift = (camOffX * 0.08 + this.animClock * 4) % cloudW;
+      for (let i = -1; i < Math.ceil(this.vw / cloudW) + 2; i++) {
+        this.hud.drawTex(ctx, 'bg/b02-3.png', i * cloudW - cloudShift, 360 - camOffY * 0.15, cloudW, 146);
+      }
+
+      // Đường chân trời biển xa & rạn đảo (b02-1.png & b02-2.png: 528x154)
+      const horizW = 528;
+      const horizShift = (camOffX * 0.16) % horizW;
+      for (let i = -1; i < Math.ceil(this.vw / horizW) + 2; i++) {
+        const tex = i % 2 === 0 ? 'bg/b02-1.png' : 'bg/b02-2.png';
+        this.hud.drawTex(ctx, tex, i * horizW - horizShift, 205 - camOffY * 0.28, horizW, 154);
+      }
+
+      // Mặt nước biển & sóng vỗ lớp trung cảnh (b02.png / b02-4.png: 510x154)
+      const waveW = 510;
+      const waveShift = (camOffX * 0.32) % waveW;
+      for (let i = -1; i < Math.ceil(this.vw / waveW) + 2; i++) {
+        const tex = i % 2 === 0 ? 'bg/b02-4.png' : 'bg/b02.png';
+        this.hud.drawTex(ctx, tex, i * waveW - waveShift, 145 - camOffY * 0.42, waveW, 154);
+      }
+      return;
+    }
+
     // 2. Thế Giới Tương Lai (Đổ nát u ám) & Hành Tinh Ngục Tù / Khí Gas
     if (style === 'future_ruins' || style === 'prison_planet') {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, VIRTUAL_H);
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, this.vh);
       if (style === 'future_ruins') {
         skyGrad.addColorStop(0, '#1f2937');
         skyGrad.addColorStop(0.55, '#4c1d24');
@@ -2032,7 +2090,7 @@ export class GameEngine {
         skyGrad.addColorStop(1, '#450a0a');
       }
       ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+      ctx.fillRect(0, 0, this.vw, this.vh);
       for (let i = -1; i < 4; i++) {
         this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/nui_xayda.png', i * 510 - (camOffX * 0.2) % 510, 210 - camOffY * 0.25, 512, 175);
       }
@@ -2044,22 +2102,22 @@ export class GameEngine {
 
     // 3. Hành Tinh Cold (Băng Tuyết)
     if (style === 'cold_planet') {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, VIRTUAL_H);
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, this.vh);
       skyGrad.addColorStop(0, '#0c4a6e');
       skyGrad.addColorStop(0.55, '#38bdf8');
       skyGrad.addColorStop(1, '#e0f2fe');
       ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+      ctx.fillRect(0, 0, this.vw, this.vh);
       for (let i = -1; i < 6; i++) {
         this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuixa_traidat.png', i * 255 - (camOffX * 0.12) % 255, 260 - camOffY * 0.18, 256, 170);
       }
-      this.hud.fillRectGdx(ctx, 0, 0, VIRTUAL_W, Math.max(0, 220 - camOffY * 0.4), '#bae6fd', null);
+      this.hud.fillRectGdx(ctx, 0, 0, this.vw, Math.max(0, 220 - camOffY * 0.4), '#bae6fd', null);
       return;
     }
 
     if (theme === 'xayda') {
       ctx.fillStyle = '#c26219';
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+      ctx.fillRect(0, 0, this.vw, this.vh);
       for (let i = -1; i < 6; i++) {
         this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/bautroixayda.jpg', i * 255 - (camOffX * 0.05) % 255, 330 - camOffY * 0.08, 256, 280);
       }
@@ -2079,7 +2137,7 @@ export class GameEngine {
 
     if (theme === 'namek') {
       ctx.fillStyle = '#05c2a8';
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+      ctx.fillRect(0, 0, this.vw, this.vh);
       for (let i = -1; i < 6; i++) {
         this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/sky_namek.png', i * 255 - (camOffX * 0.05) % 255, 330 - camOffY * 0.08, 256, 170);
         this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/nuixa_namek.png', i * 255 - (camOffX * 0.12) % 255, 290 - camOffY * 0.15, 256, 155);
@@ -2095,7 +2153,7 @@ export class GameEngine {
     }
 
     ctx.fillStyle = '#19b0f8';
-    ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+    ctx.fillRect(0, 0, this.vw, this.vh);
 
     for (let i = -1; i < 6; i++) {
       this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/sky_traidat.png', i * 255 - (camOffX * 0.05) % 255, 325 - camOffY * 0.1, 256, 155);
@@ -2127,12 +2185,12 @@ export class GameEngine {
       }
     }
 
-    this.hud.fillRectGdx(ctx, 0, 0, VIRTUAL_W, Math.max(0, 260 - camOffY * 0.35), '#167615', null);
+    this.hud.fillRectGdx(ctx, 0, 0, this.vw, Math.max(0, 260 - camOffY * 0.35), '#167615', null);
     for (let i = -1; i < 5; i++) {
       this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuicay_traidat.png', i * 340 - (camOffX * 0.28) % 340, 195 - camOffY * 0.35, 342, 190);
     }
 
-    this.hud.fillRectGdx(ctx, 0, 0, VIRTUAL_W, Math.max(0, 200 - camOffY * 0.5), style === 'dao_kame' ? '#0284c7' : '#175e1c', null);
+    this.hud.fillRectGdx(ctx, 0, 0, this.vw, Math.max(0, 200 - camOffY * 0.5), style === 'dao_kame' ? '#0284c7' : '#175e1c', null);
     for (let i = -1; i < 5; i++) {
       this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuithap_traidat.png', i * 340 - (camOffX * 0.42) % 340, 135 - camOffY * 0.5, 342, 190);
     }
@@ -2212,14 +2270,40 @@ export class GameEngine {
     }
 
     if (style === 'dao_kame') {
+      // 1. Biển xanh bao quanh đảo Kame về 2 phía mép bản đồ
       const seaV = this.worldToView(-200, 0);
-      this.hud.fillRectGdx(ctx, seaV.vx, 0, mapCfg.width + 400, Math.max(0, seaV.vy + 168), '#0284c7', null);
-      if (mapCfg.key === 'dao_kame') {
-        this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua1_earth.png', 180, 172, 242, 220);
-      }
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 820, 172, 215, 220);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1480, 172, 215, 220);
-      this._drawEarthGroundTiles(ctx, mapCfg.width, true);
+      this.hud.fillRectGdx(ctx, seaV.vx, 0, mapCfg.width + 400, Math.max(0, seaV.vy + 172), '#0284c7', null);
+
+      // 2. Sóng biển vỗ rìa đảo 2 bên trái & phải
+      const wavePhase = (this.animClock * 16) % 510;
+      this.drawWorldTex(ctx, 'bg/b02-5.png', -160 + wavePhase * 0.1, 158, 480, 48);
+      this.drawWorldTex(ctx, 'bg/b02-5.png', 1840 - wavePhase * 0.1, 158, 480, 48);
+
+      // 3. Rạn đá bờ biển tự nhiên từ TORI (bgItem 11, 14, 204)
+      this.drawWorldTex(ctx, 'bgItem/11.png', 170, 170, 98, 74);
+      this.drawWorldTex(ctx, 'bgItem/204.png', 240, 170, 104, 86);
+      this.drawWorldTex(ctx, 'bgItem/14.png', 1800, 172, 112, 28);
+      this.drawWorldTex(ctx, 'bgItem/204.png', 1880, 170, 104, 86);
+      this.drawWorldTex(ctx, 'bgItem/11.png', 1960, 170, 98, 74);
+
+      // 4. Hàng dừa biển rợp bóng mát chuẩn Dragon Boy (bgItem 12, 13, 6)
+      this.drawWorldTex(ctx, 'bgItem/13.png', 290, 172, 136, 172);
+      this.drawWorldTex(ctx, 'bgItem/12.png', 380, 172, 198, 286);
+      this.drawWorldTex(ctx, 'bgItem/6.png', 1190, 172, 204, 239);
+      this.drawWorldTex(ctx, 'bgItem/13.png', 1620, 172, 136, 172);
+      this.drawWorldTex(ctx, 'bgItem/12.png', 1700, 172, 198, 286);
+
+      // 5. Ô dù bãi biển & Ghế nằm nghỉ mát chuẩn NRO (bgItem 184, 197)
+      this.drawWorldTex(ctx, 'bgItem/197.png', 590, 172, 96, 50);
+      this.drawWorldTex(ctx, 'bgItem/184.png', 640, 172, 70, 88);
+      this.drawWorldTex(ctx, 'bgItem/184.png', 1280, 172, 70, 88);
+      this.drawWorldTex(ctx, 'bgItem/197.png', 1340, 172, 96, 50);
+
+      // 6. Tòa nhà KAME HOUSE huyền thoại tại trung tâm đảo (bgItem/143.png: 376x190)
+      this.drawWorldTex(ctx, 'bgItem/143.png', 760, 172, 376, 190);
+
+      // 7. Mặt cát vàng biển Đảo Kame mịn màng không cắt khuyết
+      this._drawSandGroundTiles(ctx, mapCfg.width, 180, 1880);
       return;
     }
 
@@ -2333,11 +2417,17 @@ export class GameEngine {
   }
 
   _drawEarthGroundTiles(ctx, mapWidth, withGrass = true, skipGrassMinX = -9999, skipGrassMaxX = -9999) {
-    const camOffX = this.camX - 510;
+    const camOffX = this.camX - this.vw / 2;
     const maxTiles = Math.ceil(mapWidth / 50) + 3;
-    // O(1) Spatial Frustum Indexing: Chỉ duyệt đúng các cột tile nằm trong khung hình [camOffX .. camOffX + 1020]!
+    // O(1) Spatial Frustum Indexing: Chỉ duyệt đúng các cột tile nằm trong khung hình [camOffX .. camOffX + vw]!
     const startI = Math.max(-2, Math.floor((camOffX - 60) / 50));
-    const endI = Math.min(maxTiles, Math.ceil((camOffX + VIRTUAL_W + 60) / 50));
+    const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 50));
+
+    // Lớp đất sâu che kín hoàn toàn lòng đất bên dưới wy <= 25 (không lộ nền hay cây xuyên lòng đất)
+    const deepV = this.worldToView(startI * 50, 25);
+    const totalW = (endI - startI) * 50 + 60;
+    this.hud.fillRectGdx(ctx, deepV.vx, 0, totalW, Math.max(0, deepV.vy), '#451a03', null);
+
     for (let i = startI; i < endI; i++) {
       const tx = i * 50;
       const mIdx = ((i + 50) % 5) + 1;
@@ -2349,13 +2439,46 @@ export class GameEngine {
       this.drawWorldTex(ctx, `map/traidat/chung/dat/dat_traidat${dIdx}.png`, tx, 75, 51, 51);
       this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, 25, 51, 51);
       this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, -25, 51, 51);
+      this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, -75, 51, 51);
       this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco5_traidat.png', tx, 173, 51, 12);
+    }
+  }
+
+  _drawSandGroundTiles(ctx, mapWidth, minX = 180, maxX = 1880) {
+    const camOffX = this.camX - this.vw / 2;
+    const maxTiles = Math.ceil(mapWidth / 48) + 3;
+    const startI = Math.max(-2, Math.floor((camOffX - 60) / 48));
+    const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 48));
+
+    // Lớp cát sâu dưới nước
+    const sandDeepV = this.worldToView(startI * 48, 125);
+    const totalW = (endI - startI) * 48 + 60;
+    this.hud.fillRectGdx(ctx, sandDeepV.vx, 0, totalW, Math.max(0, sandDeepV.vy), '#ca8a04', null);
+
+    for (let i = startI; i < endI; i++) {
+      const tx = i * 48;
+      if (tx < minX || tx > maxX) continue;
+      const gv = this.worldToView(tx, 172);
+
+      // Mặt cát bờ biển vàng óng ánh
+      this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 16, 49, 16, '#fde047', '#eab308', 1);
+      this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 48, 49, 32, '#eab308', null);
+      this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 96, 49, 48, '#ca8a04', null);
+
+      // Bọt sóng trắng ở 2 rìa bãi biển
+      if (tx <= minX + 72 || tx >= maxX - 72) {
+        const waveFoam = 0.65 + Math.sin(this.animClock * 6 + i) * 0.25;
+        ctx.save();
+        ctx.globalAlpha = waveFoam;
+        this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 6, 49, 7, '#ffffff', '#bae6fd', 1);
+        ctx.restore();
+      }
     }
   }
 
   // ==================== VẼ LỚP TIỀN CẢNH CHE PHỦ TRƯỚC NHÂN VẬT ====================
   renderMapForegroundLayer(ctx, mapCfg) {
-    const camOffX = this.camX - 510;
+    const camOffX = this.camX - this.vw / 2;
 
     if (mapCfg.key === 'lang_aru') {
       this.drawWorldTex(ctx, 'map/traidat/lang_aru/maparusau.png', -96, -38, 2544, 1008);
@@ -2370,10 +2493,10 @@ export class GameEngine {
       // Lớp cỏ hoa tiền cảnh parallax nhanh hơn camera chuẩn ManHinhDoiHoaCuc.java dòng 342
       this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacuctruoc.png', -camOffX * 0.5 - 100, -184, 3408, 960);
       // Làn sương dưới đáy vực Đồi Hoa Cúc trong toạ độ WORLD y=-134 chuẩn ManHinhDoiHoaCuc.java dòng 357 (chỉ vẽ khi camera hạ xuống thấy đáy vực!)
-      if (this.camY - 305 < 110) {
+      if (this.camY - this.vh / 2 < 110) {
         const cloudShift = (this.animClock * 18) % 287;
         const startK = Math.max(-1, Math.floor((camOffX + cloudShift - 290) / 287));
-        const endK = Math.min(12, Math.ceil((camOffX + cloudShift + VIRTUAL_W + 290) / 287));
+        const endK = Math.min(12, Math.ceil((camOffX + cloudShift + this.vw + 290) / 287));
         for (let i = startK; i < endK; i++) {
           this.drawWorldTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift, -134, 288, 200);
         }
@@ -2383,8 +2506,6 @@ export class GameEngine {
       ctx.globalAlpha = 0.22;
       this.drawWorldTex(ctx, 'hieuung/hieuungmap/light.png', 140, 310, 560, 460);
       ctx.restore();
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi2_traidat.png', 510, -115, 190, 190);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi2_traidat.png', 860, -120, 190, 190);
     }
   }
 
@@ -3044,7 +3165,7 @@ export class GameEngine {
         const alpha = 1 - ef.timer / ef.duration;
         ctx.save();
         ctx.fillStyle = `rgba(254, 249, 195, ${alpha * 0.72})`;
-        ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+        ctx.fillRect(0, 0, this.vw, this.vh);
         ctx.restore();
       }
     }
@@ -3060,21 +3181,21 @@ export class GameEngine {
   // ==================== BẮT SỰ KIỆN KÉO JOYSTICK, KÉO CAMERA, CHẠM ĐÔI & BÀN PHÍM CHUẨN ThaoTac.java ====================
   clientToVirtual(clientX, clientY) {
     // Đọc từ giá trị đã cache (_winW, _winH, _fitScale, _isPortrait) tránh layout thrashing khi kéo Joystick 120Hz!
-    const winW = this._winW || VIRTUAL_W;
-    const winH = this._winH || VIRTUAL_H;
+    const winW = this._winW || this.vw;
+    const winH = this._winH || this.vh;
     const fitScale = this._fitScale || 1;
     const dx = clientX - winW * 0.5;
     const dy = clientY - winH * 0.5;
 
     if (this._isPortrait) {
       return {
-        gx: VIRTUAL_W * 0.5 + dy / fitScale,
-        gy: VIRTUAL_H * 0.5 + dx / fitScale
+        gx: this.vw * 0.5 + dy / fitScale,
+        gy: this.vh * 0.5 + dx / fitScale
       };
     }
     return {
-      gx: VIRTUAL_W * 0.5 + dx / fitScale,
-      gy: VIRTUAL_H * 0.5 - dy / fitScale
+      gx: this.vw * 0.5 + dx / fitScale,
+      gy: this.vh * 0.5 - dy / fitScale
     };
   }
 
@@ -3099,8 +3220,8 @@ export class GameEngine {
   }
 
   _handleWorldTap(gx, gy) {
-    const wx = gx + (this.camX - 510);
-    const wy = gy + (this.camY - 305);
+    const wx = gx + (this.camX - this.vw / 2);
+    const wy = gy + (this.camY - this.vh / 2);
     const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
 
     // 1. Click vào bảng tên Waypoint khi đang đứng gần cửa / rìa map

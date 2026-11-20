@@ -8,13 +8,15 @@ export const MainMenu = ({
   onEnterGame,
   onOpenCharacterCreate,
   onOpenLogin,
-  onOpenServerSelect
+  onOpenServerSelect,
+  onClearData,
+  virtualW = 1020
 }) => {
   const [scrollCay, setScrollCay] = useState(0);
   const [scrollThap, setScrollThap] = useState(0);
   const [pressedIdx, setPressedIdx] = useState(-1);
 
-  // Cuộn mượt 2 lớp đồi cây (-30px/s) & trụ đá cỏ (-60px/s) chuẩn ManHinhMenu.java (1020x610)
+  // Cuộn mượt 2 lớp đồi cây (-30px/s) & trụ đá cỏ (-60px/s) chuẩn ManHinhMenu.java
   useEffect(() => {
     let animId;
     let lastTime = performance.now();
@@ -58,18 +60,18 @@ export const MainMenu = ({
       ];
 
   return (
-    <div className="absolute inset-0 z-30 w-[1020px] h-[610px] overflow-hidden select-none bg-[#175e1c]">
-      {/* 1. PARALLAX 5 LỚP TỌA ĐỘ GỐC 100% TỪ ManHinhMenu.java (1020x610) — KHÔNG LỘ DẢI XANH DƯỚI ĐÁY */}
+    <div className="absolute inset-0 z-30 w-full h-full overflow-hidden select-none bg-[#175e1c]">
+      {/* 1. PARALLAX 5 LỚP TRẢI RỘNG 100% TOÀN MÀN HÌNH KHÔNG VIỀN ĐEN */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Bầu trời trên cùng: rect(0, 460, 1020, 150) */}
+        {/* Bầu trời trên cùng: rect(0, 460, w, 150) */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{ bottom: '310px', height: '300px', backgroundColor: '#19b0f8' }}
         />
 
         {/* Sky mây: y=310, w=255, h=150 */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '310px',
             height: '150px',
@@ -82,7 +84,7 @@ export const MainMenu = ({
 
         {/* Núi xa: y=310, w=255, h=150 */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '310px',
             height: '150px',
@@ -95,7 +97,7 @@ export const MainMenu = ({
 
         {/* Dãy núi xanh giữa: y=280, w=510, h=170 */}
         <div
-          className="absolute left-0 w-[1020px]"
+          className="absolute left-0 right-0 w-full"
           style={{
             bottom: '280px',
             height: '170px',
@@ -108,7 +110,7 @@ export const MainMenu = ({
 
         {/* Đồi cây cuộn chậm: y=140, w=340, h=220 */}
         <div
-          className="absolute left-0 w-[1700px]"
+          className="absolute left-[-340px] right-[-340px] w-[3400px]"
           style={{
             bottom: '140px',
             height: '220px',
@@ -122,7 +124,7 @@ export const MainMenu = ({
 
         {/* Trụ đá & thảm cỏ chạm sát đáy y=0: w=340, h=280 */}
         <div
-          className="absolute left-0 bottom-0 w-[1700px]"
+          className="absolute left-[-340px] right-[-340px] bottom-0 w-[3400px]"
           style={{
             height: '280px',
             backgroundImage: `url('/assets/hud/giaodienngoai/traidat/nuithap_traidat.png')`,
@@ -134,20 +136,19 @@ export const MainMenu = ({
         />
       </div>
 
-      {/* 2. LOGO CHÚ BÉ RỒNG ONLINE — Tọa độ gốc batch.draw(logo, 355, 360, 320, 200) */}
+      {/* 2. LOGO CHÚ BÉ RỒNG ONLINE — CĂN GIỮA MÀN HÌNH CHUẨN */}
       <img
         src="/assets/hud/giaodienngoai/chung/chuberong.png"
         alt="Chú Bé Rồng Online"
-        className="absolute z-10 pointer-events-none object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.65)]"
+        className="absolute z-10 pointer-events-none object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.65)] left-1/2 -translate-x-1/2"
         style={{
-          left: '355px',
           bottom: '360px',
           width: '320px',
           height: '200px'
         }}
       />
 
-      {/* 3. CỤM NÚT GỖ ĐĂNG NHẬP — Tọa độ gốc batch.draw(tex, 352, ys[i], 325, 50) */}
+      {/* 3. CỤM NÚT GỖ ĐĂNG NHẬP — CĂN GIỮA MÀN HÌNH */}
       {buttons.map((btn, idx) => {
         const isActive = pressedIdx === idx;
         return (
@@ -161,9 +162,8 @@ export const MainMenu = ({
               sound.playPunch();
               btn.onClick();
             }}
-            className="absolute z-20 flex items-center justify-center transition-transform active:scale-[0.98]"
+            className="absolute z-20 flex items-center justify-center transition-transform active:scale-[0.98] left-1/2 -translate-x-1/2"
             style={{
-              left: '352px',
               bottom: `${btn.bottom}px`,
               width: '325px',
               height: '50px'

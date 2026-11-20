@@ -89,9 +89,29 @@ export function App() {
   }, []);
 
   const isPortrait = viewport.winH > viewport.winW;
-  const landW = isPortrait ? viewport.winH : viewport.winW;
-  const landH = isPortrait ? viewport.winW : viewport.winH;
-  const fitScale = Math.max(0.1, Math.min(landW / 1020, landH / 610));
+  const screenW = isPortrait ? viewport.winH : viewport.winW;
+  const screenH = isPortrait ? viewport.winW : viewport.winH;
+  const screenRatio = screenW / Math.max(1, screenH);
+
+  // Tính toán Virtual Viewport linh hoạt chuẩn LibGDX FitViewport không viền đen (Zero Black Bars)
+  // Trên màn hình dài (19.5:9, 20:9, 21:9): Giữ chiều cao 610, mở rộng chiều rộng (vd 1220, 1340, 1420)
+  // Trên màn hình vuông/gập (Fold, iPad 4:3): Giữ chiều rộng 1020, mở rộng chiều cao (vd 765, 850)
+  let virtualW = 1020;
+  let virtualH = 610;
+  if (screenRatio >= 1020 / 610) {
+    virtualW = Math.round(610 * screenRatio);
+    virtualH = 610;
+  } else {
+    virtualW = 1020;
+    virtualH = Math.round(1020 / screenRatio);
+  }
+  const fitScale = screenW / virtualW;
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.updateDimensions(virtualW, virtualH);
+    }
+  }, [virtualW, virtualH]);
 
   // Nạp 100% tài nguyên cốt lõi (Menu + HUD + Starter World) bất đồng bộ thực sự (không fake timeout)
   useEffect(() => {
@@ -149,7 +169,7 @@ export function App() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new GameEngine(canvas, { ...playerState, serverId: currentServer }, {
+    const engine = new GameEngine(canvas, { ...playerState, serverId: currentServer, virtualW, virtualH }, {
       // KHÔNG gọi setPlayerState mỗi giây trong lúc đang chơi trên Canvas để triệt tiêu hoàn toàn hiện tượng React Re-render gây khựng 1Hz!
       onStateSync: null,
       onReturnToMenu: () => {
@@ -187,7 +207,36 @@ export function App() {
     };
   }, [screenView]);
 
+  const requestFullscreenSafe = () => {
+    try {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const el = document.documentElement;
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        }
+      }
+    } catch (_) {}
+  };
+
+  const toggleFullscreen = (e) => {
+    if (e) e.stopPropagation();
+    try {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        requestFullscreenSafe();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    } catch (_) {}
+  };
+
   const tryLockLandscape = () => {
+    requestFullscreenSafe();
     try {
       window.screen?.orientation?.lock?.('landscape')?.catch?.(() => {});
     } catch {
@@ -238,13 +287,26 @@ export function App() {
   };
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black select-none touch-none">
-      {/* KHUNG CHUẨN TỈ LỆ FitViewport(1020, 610) + TỰ ĐỘNG XOAY NGANG 90° TRÊN ĐIỆN THOẠI DỌC */}
+    <div
+      onClick={requestFullscreenSafe}
+      className="fixed inset-0 overflow-hidden bg-black select-none touch-none"
+    >
+      {/* NÚT BẬT/TẮT TOÀN MÀN HÌNH NỔI TRÊN GÓC (TỰ ĐỘNG CHUẨN TRÊN MỌI THIẾT BỊ) */}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        className="fixed top-2.5 right-3.5 z-50 px-2.5 py-1 rounded bg-black/60 hover:bg-black/85 border border-yellow-500/50 text-[#fde047] font-dragon text-[11px] font-bold tracking-wide backdrop-blur-sm transition-transform active:scale-95 shadow-md flex items-center gap-1.5"
+      >
+        <span>⛶</span>
+        <span>Toàn Màn Hình</span>
+      </button>
+
+      {/* KHUNG CHUẨN TỈ LỆ FitViewport DYNAMIC KHÔNG VIỀN ĐEN + TỰ ĐỘNG XOAY NGANG 90° TRÊN ĐIỆN THOẠI DỌC */}
       <div
         style={{
           position: 'absolute',
-          width: '1020px',
-          height: '610px',
+          width: `${virtualW}px`,
+          height: `${virtualH}px`,
           left: '50%',
           top: '50%',
           transformOrigin: 'center center',
@@ -288,6 +350,7 @@ export function App() {
           <MainMenu
             savedCharacter={savedCharacter}
             currentServer={currentServer}
+            virtualW={virtualW}
             onEnterGame={handleEnterGame}
             onOpenCharacterCreate={() => setScreenView('CHAR_CREATE')}
             onOpenLogin={() => setShowLoginModal(true)}
@@ -300,6 +363,7 @@ export function App() {
         {assetsLoaded && screenView === 'CHAR_CREATE' && (
           <CharacterCreateModal
             currentServer={currentServer}
+            virtualW={virtualW}
             onOpenServerSelect={() => setShowServerSelect(true)}
             onSelectCharacter={handleSelectCharacter}
             onClose={() => setScreenView('MENU')}
@@ -335,7 +399,7 @@ export function App() {
           <>
             <canvas
               ref={canvasRef}
-              className="absolute inset-0 block w-[1020px] h-[610px] cursor-pointer z-10 touch-none"
+              className="absolute inset-0 block w-full h-full cursor-pointer z-10 touch-none"
             />
 
             {/* Cầu nối bàn phím ẩn khi mở khungchat.png để gõ Tiếng Việt & Giftcode trên cả PC lẫn Mobile */}
