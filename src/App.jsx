@@ -7,7 +7,7 @@ import { CharacterCreateModal } from './components/desktop_ui/CharacterCreateMod
 import { SplashScreen } from './components/desktop_ui/SplashScreen';
 import { saveCharacterData, loadCharacterData } from './services/supabase';
 import { assets } from './game/assetLoader';
-import { MAPS_CONFIG, PLANET_DEFS } from './game/nroData';
+import { MAPS_CONFIG, PLANET_DEFS, createStarterEquipment } from './game/nroData';
 
 export function App() {
   const canvasRef = useRef(null);
@@ -49,6 +49,7 @@ export function App() {
     gem: 20,
     senzuCount: 5,
     senzuLevel: 1,
+    equipped: createStarterEquipment(0),
     skillLoadout: [0, -1, -1, -1, -1],
     skillLevels: { td_1: 1 },
     questId: 1,
@@ -130,10 +131,15 @@ export function App() {
     if (!canvas) return;
 
     const engine = new GameEngine(canvas, { ...playerState, serverId: currentServer }, {
-      onStateSync: (syncedPlayer) => {
-        setPlayerState(syncedPlayer);
-      },
+      // KHÔNG gọi setPlayerState mỗi giây trong lúc đang chơi trên Canvas để triệt tiêu hoàn toàn hiện tượng React Re-render gây khựng 1Hz!
+      onStateSync: null,
       onReturnToMenu: () => {
+        if (engineRef.current) {
+          const latest = { ...engineRef.current.player };
+          setPlayerState(latest);
+          setSavedCharacter(latest);
+          saveCharacterData(latest);
+        }
         setScreenView('MENU');
       },
       onTextInputToggle: (open, initialText = '') => {

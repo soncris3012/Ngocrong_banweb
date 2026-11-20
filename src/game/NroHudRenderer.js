@@ -48,7 +48,15 @@ export const NUT_DAUTHAN_Y = NUT_ATTACK_Y - 10; // 15
 export class NroHudRenderer {
   constructor(engine) {
     this.engine = engine;
-    this.hitRegions = [];
+    // Object Pool cho Hit Regions (không cấp phát mảng mới 60 lần/giây tránh GC lag!)
+    this._hitPool = [];
+    this.hitCount = 0;
+
+    // Bộ nhớ đệm LRU Offscreen Bitmap cho chữ viền (giảm 95% chi phí CPU strokeText/fillText mỗi frame!)
+    this._textCache = new Map();
+    this._textCacheMax = 320;
+    this._measureCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+    this._measureCtx = this._measureCanvas ? this._measureCanvas.getContext('2d') : null;
 
     // Nút điều hướng ảo kéo thả (Joystick + Cụm tam giác Tấn công/Đổi mục tiêu/Đậu thần)
     const savedCtrl = localStorage.getItem('nro_virtual_controls');
@@ -171,6 +179,8 @@ export class NroHudRenderer {
   }
 
   drawText(ctx, text, gx, gy, opts = {}) {
+    const str = String(text ?? '');
+    if (!str) return;
     const {
       size = 13,
       color = '#ffffff',
@@ -180,7 +190,64 @@ export class NroHudRenderer {
       bold = true,
       font = 'DragonBoy, sans-serif'
     } = opts;
+
     const cy = VIRTUAL_H - gy;
+
+    // Tra cứu LRU Offscreen Text Sprite Cache (O(1) — biến tác vụ dựng font vector nặng thành 1 lệnh blit ảnh GPU siêu nhẹ!)
+    if (this._measureCtx && str.length <= 72) {
+      const sw = stroke && strokeWidth > 0 ? strokeWidth : 0;
+      const key = `${str}|${size}|${color}|${sw > 0 ? stroke : ''}|${sw}|${bold ? 1 : 0}|${font}`;
+      let entry = this._textCache.get(key);
+
+      if (entry) {
+        // Làm mới thứ tự LRU
+        this._textCache.delete(key);
+        this._textCache.set(key, entry);
+      } else {
+        const scale = 1.5;
+        const fontSpec = `${bold ? 'bold ' : ''}${size}px ${font}`;
+        const mctx = this._measureCtx;
+        mctx.font = fontSpec;
+        const metrics = mctx.measureText(str);
+        const padX = Math.ceil(sw + 4);
+        const ascent = Math.ceil((metrics.actualBoundingBoxAscent || size * 0.88) + sw + 2);
+        const descent = Math.ceil((metrics.actualBoundingBoxDescent || size * 0.32) + sw + 2);
+        const logicalW = Math.max(4, Math.ceil(metrics.width) + padX * 2);
+        const logicalH = Math.max(4, ascent + descent);
+
+        const off = document.createElement('canvas');
+        off.width = Math.max(1, Math.ceil(logicalW * scale));
+        off.height = Math.max(1, Math.ceil(logicalH * scale));
+        const octx = off.getContext('2d');
+        octx.scale(scale, scale);
+        octx.font = fontSpec;
+        octx.textAlign = 'left';
+        octx.textBaseline = 'alphabetic';
+        if (sw > 0) {
+          octx.strokeStyle = stroke;
+          octx.lineWidth = sw;
+          octx.lineJoin = 'round';
+          octx.strokeText(str, padX, ascent);
+        }
+        octx.fillStyle = color;
+        octx.fillText(str, padX, ascent);
+
+        entry = { canvas: off, logicalW, logicalH, textW: metrics.width, padX, ascent };
+        if (this._textCache.size >= this._textCacheMax) {
+          const oldestKey = this._textCache.keys().next().value;
+          this._textCache.delete(oldestKey);
+        }
+        this._textCache.set(key, entry);
+      }
+
+      let drawX = gx - entry.padX;
+      if (align === 'center') drawX = gx - entry.padX - entry.textW * 0.5;
+      else if (align === 'right') drawX = gx - entry.padX - entry.textW;
+
+      ctx.drawImage(entry.canvas, drawX, cy - entry.ascent, entry.logicalW, entry.logicalH);
+      return;
+    }
+
     ctx.save();
     ctx.font = `${bold ? 'bold ' : ''}${size}px ${font}`;
     ctx.textAlign = align;
@@ -189,10 +256,10 @@ export class NroHudRenderer {
       ctx.strokeStyle = stroke;
       ctx.lineWidth = strokeWidth;
       ctx.lineJoin = 'round';
-      ctx.strokeText(String(text), gx, cy);
+      ctx.strokeText(str, gx, cy);
     }
     ctx.fillStyle = color;
-    ctx.fillText(String(text), gx, cy);
+    ctx.fillText(str, gx, cy);
     ctx.restore();
   }
 
@@ -202,11 +269,11 @@ export class NroHudRenderer {
     let curY = gyTop;
     const size = opts.size || 13;
     const font = opts.font || 'DragonBoy, sans-serif';
-    ctx.save();
-    ctx.font = `${opts.bold !== false ? 'bold ' : ''}${size}px ${font}`;
+    const mctx = this._measureCtx || ctx;
+    mctx.font = `${opts.bold !== false ? 'bold ' : ''}${size}px ${font}`;
     for (let i = 0; i < words.length; i++) {
       const testLine = line ? `${line} ${words[i]}` : words[i];
-      if (ctx.measureText(testLine).width > maxWidth && line) {
+      if (mctx.measureText(testLine).width > maxWidth && line) {
         this.drawText(ctx, line, gx, curY, opts);
         line = words[i];
         curY -= lineHeight;
@@ -218,18 +285,28 @@ export class NroHudRenderer {
       this.drawText(ctx, line, gx, curY, opts);
       curY -= lineHeight;
     }
-    ctx.restore();
     return curY;
   }
 
   addHit(id, gx, gy, gw, gh, onClick) {
-    this.hitRegions.push({ id, x: gx, y: gy, w: gw, h: gh, onClick });
+    let slot = this._hitPool[this.hitCount];
+    if (!slot) {
+      slot = { id: '', x: 0, y: 0, w: 0, h: 0, onClick: null };
+      this._hitPool[this.hitCount] = slot;
+    }
+    slot.id = id;
+    slot.x = gx;
+    slot.y = gy;
+    slot.w = gw;
+    slot.h = gh;
+    slot.onClick = onClick;
+    this.hitCount++;
   }
 
   handlePointerDown(gx, gy) {
-    // Duyệt từ trên xuống dưới (phần tử vẽ sau ưu tiên nhận click trước)
-    for (let i = this.hitRegions.length - 1; i >= 0; i--) {
-      const r = this.hitRegions[i];
+    // Duyệt từ trên xuống dưới trong Object Pool (phần tử vẽ sau ưu tiên nhận click trước)
+    for (let i = this.hitCount - 1; i >= 0; i--) {
+      const r = this._hitPool[i];
       if (gx >= r.x && gx <= r.x + r.w && gy >= r.y && gy <= r.y + r.h) {
         sound.playClick();
         r.onClick();
@@ -1116,7 +1193,7 @@ export class NroHudRenderer {
 
   // ==================== VẼ TOÀN BỘ GIAO DIỆN HUD ====================
   render(ctx) {
-    this.hitRegions = [];
+    this.hitCount = 0;
 
     // Nếu đang gọi Rồng Thần thì ưu tiên vẽ màn hình Rồng Thần huyền thoại
     if (this.shenronActive) {

@@ -297,6 +297,8 @@ const CORE_PRELOAD_PATHS = [
 class AssetLoader {
   constructor() {
     this.cache = new Map();
+    // Bảng băm O(1) ánh xạ trực tiếp từ relPath -> HTMLImageElement đã sẵn sàng (bỏ qua normalizeUrl/encodeURI mỗi frame!)
+    this.readyRawCache = new Map();
     this.status = new Map();
     this.initialized = false;
     this.preloadLoaded = 0;
@@ -358,21 +360,32 @@ class AssetLoader {
       }
     };
 
-    img.onload = () => finish(true);
+    img.onload = () => {
+      // Giải mã trước bất đồng bộ lên bộ nhớ Bitmap GPU để tránh khựng khung hình lần đầu vẽ!
+      if (typeof img.decode === 'function') {
+        img.decode().catch(() => {});
+      }
+      this.readyRawCache.set(relPath, img);
+      finish(true);
+    };
     img.onerror = () => finish(false);
     img.src = url;
     return img;
   }
 
-  // Trả về HTMLImageElement đã load thành công (naturalWidth > 0), nếu đang tải hoặc lỗi trả về null
+  // Trả về HTMLImageElement đã load thành công (O(1) lookup, KHÔNG tạo chuỗi/encodeURI lặp lại 60 FPS!)
   tex(relPath) {
     if (!relPath) return null;
+    const fast = this.readyRawCache.get(relPath);
+    if (fast !== undefined) return fast;
+
     const url = this.normalizeUrl(relPath);
     let img = this.cache.get(url);
     if (!img) {
       img = this._loadSingle(relPath, false);
     }
     if (img && img.complete && img.naturalWidth > 0) {
+      this.readyRawCache.set(relPath, img);
       return img;
     }
     return null;

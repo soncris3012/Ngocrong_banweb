@@ -2,6 +2,10 @@
 // Người chơi nhập vai Chiến Binh Hậu Bối của 3 chủng tộc (Trái Đất, Namếc, Xayda),
 // hành trình qua 5 Giai Đoạn Cốt Truyện Chính Tuyến & Mạng Lưới 36 Bản Đồ Liên Thông!
 
+import { TORI_ITEM_CATALOG, TORI_MAPS, TORI_MOBS } from './toriData';
+
+export { TORI_MAPS, TORI_MOBS };
+
 export const VIRTUAL_W = 1020;
 export const VIRTUAL_H = 610;
 
@@ -76,7 +80,7 @@ export const NPC_OFFSETS = {
   admin_haidang: { chanX: 0, chanY: 0, thanX: 0, thanY: -1.5, dauX: -0.3, dauY: -16.0, extraThanY: 0 },
   admin_thanhle: { chanX: 0, chanY: 0, thanX: 0, thanY: -1.0, dauX: -1.2, dauY: -16.0, extraThanY: 0 },
   admin_dungle: { chanX: 0, chanY: 0, thanX: 0, thanY: -0.5, dauX: 1.0, dauY: -19.0, extraThanY: 0 },
-  thay_hieu: { chanX: 0, chanY: 0, thanX: 0, thanY: -11.0, dauX: 1.0, dauY: -24.2, extraThanY: 0 },
+  thay_hieu: { chanX: 0, chanY: 0, thanX: 0, thanY: -1.5, dauX: -0.3, dauY: -16.0, extraThanY: 0 },
   admin_huykhoi: { chanX: 0, chanY: 0, thanX: 0, thanY: -3.0, dauX: -1.2, dauY: -18.0, extraThanY: 0 }
 };
 
@@ -123,37 +127,46 @@ export function createStarterSkillLevels(planetId = 0) {
   return { [list[0].id]: 1 };
 }
 
+// Bộ trang bị Tân thủ chuẩn 3 hành tinh từ TORI (không bị cởi trần/trần như nhộng)
+export function createStarterEquipment(planetIdx = 0) {
+  if (planetIdx === 1) { // Namếc
+    return {
+      ao: { id: '1', stars: 0, sockets: 1 },
+      quan: { id: '7', stars: 0, sockets: 1 },
+      gang: { id: '22', stars: 0, sockets: 1 },
+      giay: { id: '13', stars: 0, sockets: 1 },
+      rada: { id: '12', stars: 0, sockets: 1 },
+      caitrang: null, vanbay: null, deolung: null, pet: null, aura: null
+    };
+  }
+  if (planetIdx === 2) { // Xayda
+    return {
+      ao: { id: '2', stars: 0, sockets: 1 },
+      quan: { id: '8', stars: 0, sockets: 1 },
+      gang: { id: '23', stars: 0, sockets: 1 },
+      giay: { id: '14', stars: 0, sockets: 1 },
+      rada: { id: '12', stars: 0, sockets: 1 },
+      caitrang: null, vanbay: null, deolung: null, pet: null, aura: null
+    };
+  }
+  // Trái Đất (mặc định)
+  return {
+    ao: { id: '0', stars: 0, sockets: 1 },
+    quan: { id: '6', stars: 0, sockets: 1 },
+    gang: { id: '21', stars: 0, sockets: 1 },
+    giay: { id: '12', stars: 0, sockets: 1 },
+    rada: { id: '12', stars: 0, sockets: 1 },
+    caitrang: null, vanbay: null, deolung: null, pet: null, aura: null
+  };
+}
+
 export const ITEM_CATALOG = {
-  ao_cam: {
-    id: 'ao_cam', name: 'Áo Võ Phục Môn Phái', slot: 'ao', setVisual: 'set_cam',
-    icon: 'vatpham/do/traidat/set_cam/ao.png',
-    stats: { defense: 18, maxHp: 350 }, gold: 3500, gem: 0, maxSocket: 7,
-    desc: 'Võ phục chính thức do Minh Sư truyền trao.'
-  },
-  quan_cam: {
-    id: 'quan_cam', name: 'Quần Võ Phục Môn Phái', slot: 'quan', setVisual: 'set_cam',
-    icon: 'vatpham/do/traidat/set_cam/quan.png',
-    stats: { maxHp: 450, maxKi: 250 }, gold: 3200, gem: 0, maxSocket: 7,
-    desc: 'Quần võ phục bền bỉ tăng sinh lực.'
-  },
-  gang_cam: {
-    id: 'gang_cam', name: 'Găng Võ Thuật Cam', slot: 'gang',
-    icon: 'vatpham/do/traidat/set_cam/gang.png',
-    stats: { attack: 45, crit: 3 }, gold: 5000, gem: 0, maxSocket: 7,
-    desc: 'Găng tay võ đạo gia tăng sức đấm.'
-  },
-  giay_cam: {
-    id: 'giay_cam', name: 'Giày Chiến Binh', slot: 'giay',
-    icon: 'vatpham/do/traidat/set_cam/giay.png',
-    stats: { maxKi: 550, defense: 14 }, gold: 4200, gem: 0, maxSocket: 7,
-    desc: 'Giày nhẹ giúp di chuyển & bay lượn linh hoạt.'
-  },
-  rada_cap1: {
-    id: 'rada_cap1', name: 'Rađa Dò Ngọc Cấp 1', slot: 'rada',
-    icon: 'vatpham/do/rada/rada1.png',
-    stats: { crit: 8, attack: 35 }, gold: 7000, gem: 0, maxSocket: 7,
-    desc: 'Rađa Bulma chế tạo, tăng tỉ lệ chí mạng.'
-  },
+  ...TORI_ITEM_CATALOG,
+  ao_cam: { ...TORI_ITEM_CATALOG['0'], id: 'ao_cam', setVisual: 'set_cam', name: 'Áo Võ Phục Môn Phái' },
+  quan_cam: { ...TORI_ITEM_CATALOG['6'], id: 'quan_cam', setVisual: 'set_cam', name: 'Quần Võ Phục Môn Phái' },
+  gang_cam: { ...TORI_ITEM_CATALOG['21'], id: 'gang_cam', name: 'Găng Võ Thuật Cam' },
+  giay_cam: { ...TORI_ITEM_CATALOG['12'], id: 'giay_cam', name: 'Giày Chiến Binh' },
+  rada_cap1: { ...TORI_ITEM_CATALOG['12'], id: 'rada_cap1', name: 'Rađa Dò Ngọc Cấp 1', slot: 'rada' },
   ao_than_linh: {
     id: 'ao_than_linh', name: 'Áo Thần Linh (Hành Tinh Cold)', slot: 'ao', setVisual: 'set_huy_diet',
     icon: 'vatpham/do/traidat/set_than_linh/ao.png',
@@ -367,17 +380,17 @@ export const SHOP_TABS = [
   {
     key: 'AO_QUAN',
     label: 'Trang Bị',
-    items: ['ao_cam', 'quan_cam', 'gang_cam', 'giay_cam', 'rada_cap1', 'ao_than_linh', 'quan_than_linh', 'gang_than_linh', 'nhan_than_linh', 'ao_huy_diet', 'quan_huy_diet', 'gang_huy_diet', 'ao_thien_su', 'quan_thien_su', 'gang_thien_su']
+    items: ['0', '6', '21', '12', '1', '7', '22', '13', '2', '8', '23', '14', 'ao_cam', 'quan_cam', 'gang_cam', 'giay_cam', 'rada_cap1', 'ao_than_linh', 'quan_than_linh', 'gang_than_linh', 'nhan_than_linh', 'ao_huy_diet', 'quan_huy_diet', 'gang_huy_diet', 'ao_thien_su', 'quan_thien_su', 'gang_thien_su']
   },
   {
     key: 'PHU_KIEN',
     label: 'Cải Trang',
-    items: ['ct_gohan_beast', 'ct_broly_lssj', 'ct_black_rose', 'ct_xiao', 'vb_candauvan', 'vb_phuonghoang', 'dl_kiem_vip', 'dl_canh_thien_than', 'pet_cho_vang', 'pet_ky_lan', 'aura_rong']
+    items: ['2002', '2003', '2026', '2027', '2028', '2030', '1362', '1378', '1384', '282', '283', '284', '285', '290', '291', '292', 'ct_gohan_beast', 'ct_broly_lssj', 'ct_black_rose', 'ct_xiao', 'vb_candauvan', 'vb_phuonghoang', 'dl_kiem_vip', 'dl_canh_thien_than', 'pet_cho_vang', 'pet_ky_lan', 'aura_rong']
   },
   {
     key: 'DAC_BIET',
     label: 'Đặc Biệt',
-    items: ['capsule_vip', 'nhan_thoi_khong', 'bong_tai_c1', 'bong_tai_c2', 'trung_de_tu', 'cuong_no', 'bo_huyet', 'bo_khi', 've_quay', 'da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s']
+    items: ['213', '214', '215', '298', 'capsule_vip', 'nhan_thoi_khong', 'bong_tai_c1', 'bong_tai_c2', 'trung_de_tu', 'cuong_no', 'bo_huyet', 'bo_khi', 've_quay', 'da_pha_le_dame', 'da_pha_le_hp', 'da_pha_le_ki', 'nr_4s', 'nr_5s', 'nr_6s', 'nr_7s']
   }
 ];
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sound } from '../../game/audio';
-import { PLANET_DEFS, createStarterSkillLevels } from '../../game/nroData';
+import { PLANET_DEFS, createStarterSkillLevels, createStarterEquipment } from '../../game/nroData';
 
 export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSelectCharacter, onClose }) => {
   const [planetIndex, setPlanetIndex] = useState(0); // 0: Trái Đất, 1: Xayda, 2: Namếc
@@ -106,18 +106,7 @@ export const CharacterCreateModal = ({ currentServer, onOpenServerSelect, onSele
       skillLoadout: [0, -1, -1, -1, -1],
       skillLevels: createStarterSkillLevels(planetIndex),
       bag: [],
-      equipped: {
-        ao: null,
-        quan: null,
-        gang: null,
-        giay: null,
-        rada: null,
-        caitrang: null,
-        vanbay: null,
-        deolung: null,
-        pet: null,
-        aura: null
-      },
+      equipped: createStarterEquipment(planetIndex),
       isNewCharacter: true,
       ...baseStats
     });
