@@ -13,7 +13,7 @@ export const PLANET_DEFS = [
   {
     id: 0,
     key: 'traidat',
-    name: 'Trái Đất',
+    name: 'Trái Đất', toriMapId: 21, bgID: 0,
     avatars: ['Goku_base', 'Krillin_base', 'Yamcha_base'],
     charNames: ['Võ Sinh Aru', 'Thiếu Lâm TĐ', 'Kiếm Khách TĐ'],
     defaultPlayerName: 'HậuBốiTĐ',
@@ -29,7 +29,7 @@ export const PLANET_DEFS = [
   {
     id: 1,
     key: 'xayda',
-    name: 'Xayda',
+    name: 'Xayda', toriMapId: 0, bgID: 0,
     avatars: ['Cađíc_base', 'Rađíc_base', 'Kakalot_base'],
     charNames: ['Tân Binh Xayda', 'Chiến Binh Lửa', 'Hậu Duệ Xayda'],
     defaultPlayerName: 'HậuBốiXD',
@@ -45,7 +45,7 @@ export const PLANET_DEFS = [
   {
     id: 2,
     key: 'namek',
-    name: 'Namếc',
+    name: 'Namếc', toriMapId: 42, bgID: 0,
     avatars: ['namek_base', 'namek_base', 'namek_base'],
     charNames: ['Hậu Duệ Mori', 'Chiến Binh Namếc', 'Tu Sĩ Long Tộc'],
     defaultPlayerName: 'HậuBốiNM',
@@ -924,7 +924,7 @@ export const MAPS_CONFIG = [
 
   // [3] Trạm Tàu Vũ Trụ Trái Đất
   {
-    id: 3, key: 'tram_tau_traidat', name: 'Trạm Tàu Vũ Trụ Trái Đất', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'spaceport_earth',
+    id: 3, key: 'tram_tau_traidat', name: 'Trạm Tàu Vũ Trụ Trái Đất', toriMapId: 24, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'spaceport_earth',
     width: 1600, height: 820, defaultSpawn: { x: 520, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 1820, h: 175 }],
     waypoints: [wpRight('wp_3_1', 'Làng Aru', 1600, 1, 220, 175)],
@@ -938,7 +938,7 @@ export const MAPS_CONFIG = [
 
   // [4] Đồi Hoa Cúc (Map rừng 1/4 — Có Thầy Quyết Pha Lê đứng trên mỏm đá cao!)
   {
-    id: 4, key: 'doi_hoa_cuc', name: 'Đồi Hoa Cúc', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'doi_hoa_cuc',
+    id: 4, key: 'doi_hoa_cuc', name: 'Đồi Hoa Cúc', toriMapId: 1, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'doi_hoa_cuc',
     width: 2976, height: 1000, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [
       { x: -200, y: -134, w: 1064, h: 309 },
@@ -964,7 +964,7 @@ export const MAPS_CONFIG = [
 
   // [5] Thung Lũng Tre (Map rừng 2/4)
   {
-    id: 5, key: 'thung_lung_tre', name: 'Thung Lũng Tre', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
+    id: 5, key: 'thung_lung_tre', name: 'Thung Lũng Tre', toriMapId: 2, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
     width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
     waypoints: [
@@ -982,7 +982,7 @@ export const MAPS_CONFIG = [
 
   // [6] Rừng Nấm (Map rừng 3/4)
   {
-    id: 6, key: 'rung_nam', name: 'Rừng Nấm', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
+    id: 6, key: 'rung_nam', name: 'Rừng Nấm', toriMapId: 3, bgID: 1, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
     width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
     waypoints: [
@@ -999,7 +999,7 @@ export const MAPS_CONFIG = [
 
   // [7] Rừng Xương (Map rừng 4/4 nối vào Đảo Kame!)
   {
-    id: 7, key: 'rung_xuong', name: 'Rừng Xương', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'cliff_earth',
+    id: 7, key: 'rung_xuong', name: 'Rừng Xương', toriMapId: 4, bgID: 1, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'cliff_earth',
     width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
     waypoints: [
@@ -1016,7 +1016,7 @@ export const MAPS_CONFIG = [
 
   // [8] Đảo Kame (Trung tâm giao lộ: Rừng Xương ← Đảo Kame → Nam Kame, nhánh Bắc lên Đông Karin & Phó bản Kho Báu!)
   {
-    id: 8, key: 'dao_kame', name: 'Đảo Kame', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'dao_kame',
+    id: 8, key: 'dao_kame', name: 'Đảo Kame', toriMapId: 5, bgID: 2, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'dao_kame',
     width: 2100, height: 840, defaultSpawn: { x: 340, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
@@ -1034,7 +1034,7 @@ export const MAPS_CONFIG = [
 
   // [9] Đông Karin (Nối Đảo Kame ↔ Rừng Karin & Phó bản Doanh Trại Độc Nhãn)
   {
-    id: 9, key: 'dong_karin', name: 'Đông Karin', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'forest_earth',
+    id: 9, key: 'dong_karin', name: 'Đông Karin', toriMapId: 6, bgID: 3, region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'forest_earth',
     width: 1900, height: 840, defaultSpawn: { x: 1680, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2220, h: 175 }],
     waypoints: [
@@ -1053,7 +1053,7 @@ export const MAPS_CONFIG = [
 
   // [10] Rừng Karin (Chân Tháp Karin ở chính giữa x=1000!)
   {
-    id: 10, key: 'rung_karin', name: 'Rừng Karin', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'rung_karin',
+    id: 10, key: 'rung_karin', name: 'Rừng Karin', toriMapId: 47, bgID: 3, region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'rung_karin',
     width: 2100, height: 960, defaultSpawn: { x: 1000, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
@@ -1076,7 +1076,7 @@ export const MAPS_CONFIG = [
 
   // [11] Tháp Karin (Nối Rừng Karin ↓ và Thần Điện ↑!)
   {
-    id: 11, key: 'thap_karin', name: 'Tháp Karin', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'thap_karin',
+    id: 11, key: 'thap_karin', name: 'Tháp Karin', toriMapId: 46, bgID: 12, region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'thap_karin',
     width: 1400, height: 900, defaultSpawn: { x: 700, y: 220 },
     hitboxes: [{ x: 410, y: 170, w: 580, h: 50 }],
     waypoints: [
@@ -1100,7 +1100,7 @@ export const MAPS_CONFIG = [
 
   // [12] Thần Điện (Trục Thần Giới: ← Khí Gas Mr. Popo | Phòng Tập Thời Gian | ↓ Tháp Karin | → Con Đường Rắn Độc | ↑ NPC Whis!)
   {
-    id: 12, teaMobiMapId: 45, key: 'than_dien', name: 'Thần Điện', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'than_dien',
+    id: 12, toriMapId: 45, bgID: 12, teaMobiMapId: 45, key: 'than_dien', name: 'Thần Điện', region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'than_dien',
     width: 1500, height: 880, defaultSpawn: { x: 750, y: 200 },
     hitboxes: [{ x: 220, y: 150, w: 1060, h: 50 }],
     waypoints: [
@@ -1119,7 +1119,7 @@ export const MAPS_CONFIG = [
 
   // [13] Con Đường Rắn Độc & Hành Tinh Kaio
   {
-    id: 13, key: 'con_duong_ran_doc', name: 'Con Đường Rắn Độc & Kaio', region: 'Thần Giới & Karin', planetTheme: 'xayda', renderStyle: 'kaio_road',
+    id: 13, key: 'con_duong_ran_doc', name: 'Con Đường Rắn Độc & Kaio', toriMapId: 48, bgID: 12, region: 'Thần Giới & Karin', planetTheme: 'xayda', renderStyle: 'kaio_road',
     width: 1850, height: 840, defaultSpawn: { x: 120, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2060, h: 175 }],
     waypoints: [
@@ -1137,7 +1137,7 @@ export const MAPS_CONFIG = [
 
   // [14] Hành Tinh Bill & Hành Tinh Thực Vật (NPC Whis đổi đồ Hủy Diệt / Thiên Sứ)
   {
-    id: 14, key: 'hanh_tinh_bill', name: 'Hành Tinh Bill & Thực Vật', region: 'Thần Giới & Karin', planetTheme: 'namek', renderStyle: 'bill_planet',
+    id: 14, key: 'hanh_tinh_bill', name: 'Hành Tinh Bill & Thực Vật', toriMapId: 154, bgID: 16, region: 'Thần Giới & Karin', planetTheme: 'namek', renderStyle: 'bill_planet',
     width: 1950, height: 860, defaultSpawn: { x: 260, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2150, h: 175 }],
     waypoints: [wpDoor('wp_14_12', 'Về Thần Điện', 180, 310, 12, 930, 200)],
@@ -1153,7 +1153,7 @@ export const MAPS_CONFIG = [
 
   // [15] Nam Kame (Nhánh mở rộng phía Nam từ Đảo Kame → Đại Hội Võ Thuật / Babidi & Thành Phố)
   {
-    id: 15, key: 'nam_kame', name: 'Nam Kame & Đảo Bulông', region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'dao_kame',
+    id: 15, key: 'nam_kame', name: 'Nam Kame & Đảo Bulông', toriMapId: 29, bgID: 2, region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'dao_kame',
     width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
     waypoints: [
@@ -1171,7 +1171,7 @@ export const MAPS_CONFIG = [
 
   // [16] Đại Hội Võ Thuật & Phi Thuyền Babidi (NPC Osin & BOSS Mabư)
   {
-    id: 16, key: 'phi_thuyen_babidi', name: 'Đại Hội Võ Thuật & Tàu Babidi', region: 'Trái Đất Mở Rộng', planetTheme: 'xayda', renderStyle: 'babidi_ship',
+    id: 16, key: 'phi_thuyen_babidi', name: 'Đại Hội Võ Thuật & Tàu Babidi', toriMapId: 52, bgID: 8, region: 'Trái Đất Mở Rộng', planetTheme: 'xayda', renderStyle: 'babidi_ship',
     width: 1900, height: 840, defaultSpawn: { x: 180, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2100, h: 175 }],
     waypoints: [
@@ -1189,7 +1189,7 @@ export const MAPS_CONFIG = [
 
   // [17] Cụm Thành Phố & Thị Trấn Ginder (Android 19, Dr. Kôrê, Pic-Poc-King Kong)
   {
-    id: 17, key: 'thi_tran_ginder', name: 'TP. Phía Đông & Thị Trấn Ginder', region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'city_earth',
+    id: 17, key: 'thi_tran_ginder', name: 'TP. Phía Đông & Thị Trấn Ginder', toriMapId: 27, bgID: 1, region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'city_earth',
     width: 2200, height: 840, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2520, h: 175 }],
     waypoints: [
@@ -1208,7 +1208,7 @@ export const MAPS_CONFIG = [
 
   // [18] Võ Đài Xên Bọ Hùng (Xên Con + Xên Hoàn Thiện → Siêu Bọ Hùng!)
   {
-    id: 18, key: 'vo_dai_xen', name: 'Võ Đài Xên Bọ Hùng', region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'cell_arena',
+    id: 18, key: 'vo_dai_xen', name: 'Võ Đài Xên Bọ Hùng', toriMapId: 68, bgID: 8, region: 'Trái Đất Mở Rộng', planetTheme: 'traidat', renderStyle: 'cell_arena',
     width: 1950, height: 840, defaultSpawn: { x: 80, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2240, h: 175 }],
     waypoints: [wpLeft('wp_18_17', 'Thị Trấn Ginder', 17, 2120, 175)],
@@ -1223,7 +1223,7 @@ export const MAPS_CONFIG = [
 
   // [19] Nhà Moori (Quê nhà Tân thủ Namếc!)
   {
-    id: 19, key: 'nha_moori', name: 'Nhà Moori (Namếc)', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'home_namek',
+    id: 19, key: 'nha_moori', name: 'Nhà Moori (Namếc)', toriMapId: 22, bgID: 0, region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'home_namek',
     width: 1420, height: 760, defaultSpawn: { x: 325, y: 175 },
     hitboxes: [{ x: -100, y: 0, w: 1620, h: 175 }],
     waypoints: [
@@ -1240,7 +1240,7 @@ export const MAPS_CONFIG = [
 
   // [20] Làng Mori (Namếc)
   {
-    id: 20, key: 'lang_mori', name: 'Làng Mori', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    id: 20, key: 'lang_mori', name: 'Làng Mori', toriMapId: 7, bgID: 0, region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
     width: 2100, height: 850, defaultSpawn: { x: 675, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
@@ -1261,7 +1261,7 @@ export const MAPS_CONFIG = [
 
   // [21] Trạm Tàu Vũ Trụ Namếc & Vách Núi Moori (Có Tàu Vũ Trụ + NPC Calích)
   {
-    id: 21, key: 'tram_tau_namek', name: 'Trạm Namếc & Vách Núi Moori', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    id: 21, key: 'tram_tau_namek', name: 'Trạm Namếc & Vách Núi Moori', toriMapId: 25, bgID: 0, region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
     width: 1800, height: 850, defaultSpawn: { x: 320, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2000, h: 175 }],
     waypoints: [wpRight('wp_21_20', 'Làng Mori', 1800, 20, 65, 175)],
@@ -1276,7 +1276,7 @@ export const MAPS_CONFIG = [
 
   // [22] Thung Lũng Namếc & Đảo Guru (Trưởng Lão Guru + BOSS Kuku)
   {
-    id: 22, key: 'dao_guru', name: 'Thung Lũng Namếc & Đảo Guru', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    id: 22, key: 'dao_guru', name: 'Thung Lũng Namếc & Đảo Guru', toriMapId: 8, bgID: 5, region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
     width: 2100, height: 850, defaultSpawn: { x: 65, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
@@ -1296,7 +1296,7 @@ export const MAPS_CONFIG = [
 
   // [23] Vực Maima & Vùng Sâu Namếc (5 Tiểu Đội Sát Thủ & Fide Đại Đế 3 Cấp!)
   {
-    id: 23, key: 'vuc_maima', name: 'Vực Maima (Quyết Chiến Fide)', region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
+    id: 23, key: 'vuc_maima', name: 'Vực Maima (Quyết Chiến Fide)', toriMapId: 10, bgID: 5, region: 'Hành Tinh Namếc', planetTheme: 'namek', renderStyle: 'namek_field',
     width: 2300, height: 850, defaultSpawn: { x: 80, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2560, h: 175 }],
     waypoints: [wpLeft('wp_23_22', 'Đảo Guru', 22, 2020, 175)],
@@ -1313,7 +1313,7 @@ export const MAPS_CONFIG = [
 
   // [24] Nhà Paragus (Quê nhà Tân thủ Xayda!)
   {
-    id: 24, key: 'nha_paragus', name: 'Nhà Paragus (Xayda)', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'home_xayda',
+    id: 24, key: 'nha_paragus', name: 'Nhà Paragus (Xayda)', toriMapId: 23, bgID: 8, region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'home_xayda',
     width: 1420, height: 760, defaultSpawn: { x: 325, y: 175 },
     hitboxes: [{ x: -100, y: 0, w: 1620, h: 175 }],
     waypoints: [
@@ -1330,7 +1330,7 @@ export const MAPS_CONFIG = [
 
   // [25] Làng Kakarot (Xayda)
   {
-    id: 25, key: 'lang_kakarot', name: 'Làng Kakarot', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    id: 25, key: 'lang_kakarot', name: 'Làng Kakarot', toriMapId: 14, bgID: 8, region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
     width: 2100, height: 850, defaultSpawn: { x: 675, y: 175 },
     hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
     waypoints: [
@@ -1351,7 +1351,7 @@ export const MAPS_CONFIG = [
 
   // [26] Trạm Tàu Vũ Trụ Xayda & Vách Núi Kakarot (Tàu Vũ Trụ + NPC Calích)
   {
-    id: 26, key: 'tram_tau_xayda', name: 'Trạm Xayda & Vách Núi Kakarot', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    id: 26, key: 'tram_tau_xayda', name: 'Trạm Xayda & Vách Núi Kakarot', toriMapId: 26, bgID: 8, region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
     width: 1800, height: 850, defaultSpawn: { x: 320, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2000, h: 175 }],
     waypoints: [wpRight('wp_26_25', 'Làng Kakarot', 1800, 25, 65, 175)],
@@ -1366,7 +1366,7 @@ export const MAPS_CONFIG = [
 
   // [27] Thành Phố Vegeta & Cụm Núi Khỉ (Vua Vegeta, Mập Đầu Đinh, Rambo, Khỉ Đột & Broly)
   {
-    id: 27, key: 'tp_vegeta', name: 'TP. Vegeta & Cụm Núi Khỉ', region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
+    id: 27, key: 'tp_vegeta', name: 'TP. Vegeta & Cụm Núi Khỉ', toriMapId: 15, bgID: 8, region: 'Hành Tinh Xayda', planetTheme: 'xayda', renderStyle: 'xayda_field',
     width: 2300, height: 850, defaultSpawn: { x: 80, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2560, h: 175 }],
     waypoints: [
@@ -1387,7 +1387,7 @@ export const MAPS_CONFIG = [
 
   // [28] Siêu Thị Liên Hành Tinh (Nối Sân Sau Siêu Thị)
   {
-    id: 28, key: 'sieu_thi', name: 'Siêu Thị Liên Hành Tinh', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'city_earth',
+    id: 28, key: 'sieu_thi', name: 'Siêu Thị Liên Hành Tinh', toriMapId: 19, bgID: 10, region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'city_earth',
     width: 1700, height: 820, defaultSpawn: { x: 320, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 1920, h: 175 }],
     waypoints: [wpRight('wp_28_29', 'Sân Sau Siêu Thị', 1700, 29, 80, 175)],
@@ -1401,7 +1401,7 @@ export const MAPS_CONFIG = [
 
   // [29] Sân Sau Siêu Thị (Android 13, 14, 15)
   {
-    id: 29, key: 'san_sau_sieu_thi', name: 'Sân Sau Siêu Thị', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'city_earth',
+    id: 29, key: 'san_sau_sieu_thi', name: 'Sân Sau Siêu Thị', toriMapId: 17, bgID: 9, region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'city_earth',
     width: 1900, height: 840, defaultSpawn: { x: 80, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
     waypoints: [wpLeft('wp_29_28', 'Siêu Thị', 28, 1600, 175)],
@@ -1415,7 +1415,7 @@ export const MAPS_CONFIG = [
 
   // [30] Thế Giới Tương Lai (Calích Cỗ Máy Thời Gian — Black Goku → Super Black Goku Rosé!)
   {
-    id: 30, key: 'tuong_lai', name: 'Thế Giới Tương Lai', region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'future_ruins',
+    id: 30, key: 'tuong_lai', name: 'Thế Giới Tương Lai', toriMapId: 20, bgID: 11, region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'future_ruins',
     width: 2000, height: 850, defaultSpawn: { x: 220, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2200, h: 175 }],
     waypoints: [],
@@ -1431,7 +1431,7 @@ export const MAPS_CONFIG = [
 
   // [31] Hành Tinh Cold — Cánh Đồng & Rừng Tuyết (Săn đồ Thần Linh & BOSS Cooler)
   {
-    id: 31, key: 'hanh_tinh_cold', name: 'Hành Tinh Cold (Rừng Tuyết)', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'cold_planet',
+    id: 31, key: 'hanh_tinh_cold', name: 'Hành Tinh Cold (Rừng Tuyết)', toriMapId: 109, bgID: 11, region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'cold_planet',
     width: 2050, height: 850, defaultSpawn: { x: 240, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2260, h: 175 }],
     waypoints: [],
@@ -1447,7 +1447,7 @@ export const MAPS_CONFIG = [
 
   // [32] Hành Tinh Ngục Tù & Yardrat (Mở cổng bằng Nhẫn Thời Không — BOSS Cumber!)
   {
-    id: 32, key: 'hanh_tinh_nguc_tu', name: 'Hành Tinh Ngục Tù & Yardrat', region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'prison_planet',
+    id: 32, key: 'hanh_tinh_nguc_tu', name: 'Hành Tinh Ngục Tù & Yardrat', toriMapId: 155, bgID: 17, region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'prison_planet',
     width: 2050, height: 850, defaultSpawn: { x: 240, y: 175 },
     hitboxes: [{ x: -80, y: 0, w: 2260, h: 175 }],
     waypoints: [wpDoor('wp_32_3', 'Khe Nứt Về Trái Đất', 180, 310, 3, 520, 175)],
@@ -1463,7 +1463,7 @@ export const MAPS_CONFIG = [
 
   // [33] Phó Bản: Bản Đồ Kho Báu (Vào từ Quy Lão Kame tại Đảo Kame)
   {
-    id: 33, key: 'ban_do_kho_bau', name: 'Phó Bản: Bản Đồ Kho Báu', region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'dao_kame',
+    id: 33, key: 'ban_do_kho_bau', name: 'Phó Bản: Bản Đồ Kho Báu', toriMapId: 135, bgID: 2, region: 'Vũ Trụ & Phó Bản', planetTheme: 'traidat', renderStyle: 'dao_kame',
     width: 1900, height: 840, defaultSpawn: { x: 100, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
     waypoints: [wpLeft('wp_33_8', 'Rời Kho Báu (Đảo Kame)', 8, 430, 175)],
@@ -1477,7 +1477,7 @@ export const MAPS_CONFIG = [
 
   // [34] Phó Bản: Doanh Trại Độc Nhãn (Vào từ Đông Karin)
   {
-    id: 34, key: 'doanh_trai_doc_nhan', name: 'Phó Bản: Doanh Trại Độc Nhãn', region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'city_earth',
+    id: 34, key: 'doanh_trai_doc_nhan', name: 'Phó Bản: Doanh Trại Độc Nhãn', toriMapId: 53, bgID: 8, region: 'Vũ Trụ & Phó Bản', planetTheme: 'xayda', renderStyle: 'city_earth',
     width: 1900, height: 840, defaultSpawn: { x: 100, y: 175 },
     hitboxes: [{ x: -120, y: 0, w: 2180, h: 175 }],
     waypoints: [wpLeft('wp_34_9', 'Rời Doanh Trại (Đông Karin)', 9, 950, 175)],

@@ -27,6 +27,12 @@ import {
   JOYSTICK_R_NGOAI,
   JOYSTICK_NGUONG
 } from './NroHudRenderer';
+import {
+  BG_ITEM_TEMPLATES,
+  TORI_MAPS,
+  getToriMap,
+  getToriMapByName
+} from './toriMapData';
 
 // Offset chính xác từ CaiTrangOffset.java cho các bộ Cải Trang & BOSS
 const CAITRANG_EXACT_OFFSETS = {
@@ -2008,502 +2014,312 @@ export class GameEngine {
     this.hud.render(ctx);
   }
 
-  // ==================== VẼ PARALLAX NỀN TRỜI 3 HÀNH TINH & ĐA VŨ TRỤ ====================
+  // ==================== VẼ PARALLAX NỀN TRỜI 3 HÀNH TINH & ĐA VŨ TRỤ (CHUẨN 100% TEA MOBI / TORI) ====================
   renderParallaxBackground(ctx, mapCfg) {
-    const theme = mapCfg.planetTheme || 'traidat';
-    const style = mapCfg.renderStyle || '';
-    const camOffX = this.camX - 510;
-    const camOffY = this.camY - 305;
+    const toriMap = (mapCfg.toriMapId !== undefined ? getToriMap(mapCfg.toriMapId) : null)
+      || getToriMap(mapCfg.id)
+      || getToriMapByName(mapCfg.name);
 
-    // 1. Tháp Karin & Thần Điện & Hành Tinh Bill (Trục Thần Giới)
-    if (style === 'thap_karin' || style === 'than_dien') {
-      ctx.fillStyle = this._getSkyGradient(ctx, style);
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
+    const bgId = (toriMap && typeof toriMap.bgID === 'number' && toriMap.bgID >= 0)
+      ? toriMap.bgID
+      : (typeof mapCfg.bgID === 'number' && mapCfg.bgID >= 0 ? mapCfg.bgID : 0);
 
-      const cloudShift1 = (this.animClock * 16) % 287;
-      const cloudShift2 = (this.animClock * 26) % 287;
-      ctx.save();
-      ctx.globalAlpha = 0.85;
-      for (let i = -1; i < 6; i++) {
-        this.hud.drawTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift1, 75 - camOffY * 0.25, 290, 145);
-        this.hud.drawTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift2, -15 - camOffY * 0.35, 290, 165);
+    const theme = mapCfg.planetTheme || (toriMap ? (toriMap.planetID === 1 ? 'namek' : toriMap.planetID === 2 ? 'xayda' : 'traidat') : 'traidat');
+    const camOffX = this.camX - this.vw / 2;
+    const camOffY = this.camY - this.vh / 2;
+
+    // Helper: Vẽ 1 dải lặp vô tận theo chiều ngang với tỉ lệ cuộn parallax chuẩn Dragon Boy
+    const drawParallaxStrip = (texPath, scrollFactorX, baseOffsetY, targetH, scrollFactorY = 0.2) => {
+      const img = assets.tex(texPath);
+      if (!img || img.naturalWidth <= 0) return;
+      const w = img.naturalWidth * 0.5;
+      const h = targetH || (img.naturalHeight * 0.5);
+      const shiftX = (camOffX * scrollFactorX) % w;
+      const drawY = baseOffsetY - camOffY * scrollFactorY;
+      const startX = -w - shiftX;
+      const count = Math.ceil((this.vw + w * 2) / w) + 1;
+      for (let i = 0; i < count; i++) {
+        const x = startX + i * w;
+        const cy = this.vh - drawY - h;
+        ctx.drawImage(img, x, cy, w, h);
       }
-      ctx.restore();
-      return;
+    };
+
+    // Helper: Vẽ vật thể bầu trời (Mặt Trời, Mặt Trăng, Hành tinh xa)
+    const drawSkyObject = (texPath, baseX, baseY, scale = 0.5, scrollFactor = 0.02) => {
+      const img = assets.tex(texPath);
+      if (!img || img.naturalWidth <= 0) return;
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      const x = baseX - camOffX * scrollFactor;
+      const y = baseY - camOffY * scrollFactor;
+      ctx.drawImage(img, x, y, w, h);
+    };
+
+    // 1. BẦU TRỜI & NỀN MÀU THEO BGID / HÀNH TINH
+    let skyTop = '#0284c7', skyMid = '#38bdf8', skyBot = '#bae6fd';
+    if (bgId === 1) { // Rừng nấm Trái Đất
+      skyTop = '#0369a1'; skyMid = '#38bdf8'; skyBot = '#dbeafe';
+    } else if (bgId === 2) { // Biển / Đảo Kame
+      skyTop = '#0284c7'; skyMid = '#38bdf8'; skyBot = '#e0f2fe';
+    } else if (bgId === 3) { // Rừng Karin
+      skyTop = '#0369a1'; skyMid = '#0284c7'; skyBot = '#bae6fd';
+    } else if (bgId === 5 || bgId === 6 || bgId === 7 || theme === 'namek') { // Namếc
+      skyTop = '#0f766e'; skyMid = '#14b8a6'; skyBot = '#99f6e4';
+    } else if (bgId === 8 || bgId === 9 || theme === 'xayda') { // Xayda
+      skyTop = '#7c2d12'; skyMid = '#c2410c'; skyBot = '#fed7aa';
+    } else if (bgId === 10) { // Thành phố Vegeta
+      skyTop = '#1e1b4b'; skyMid = '#3730a3'; skyBot = '#818cf8';
+    } else if (bgId === 11) { // Vách núi đen
+      skyTop = '#18181b'; skyMid = '#27272a'; skyBot = '#52525b';
+    } else if (bgId === 12) { // Thần điện / Tháp Karin
+      skyTop = '#0284c7'; skyMid = '#38bdf8'; skyBot = '#f8fafc';
+    } else if (bgId === 13) { // Phòng tập thời gian
+      skyTop = '#fafaf9'; skyMid = '#f5f5f4'; skyBot = '#e7e5e4';
+    } else if (bgId === 15) { // Võ đài Hạt Mít
+      skyTop = '#1e3a8a'; skyMid = '#2563eb'; skyBot = '#93c5fd';
+    } else if (bgId === 16) { // Hành tinh Bill
+      skyTop = '#1e1b4b'; skyMid = '#4c1d95'; skyBot = '#7c3aed';
+    } else if (bgId === 17) { // Hành tinh ngục tù
+      skyTop = '#450a0a'; skyMid = '#831843'; skyBot = '#1e1b4b';
+    } else if (bgId === 18) { // Rừng nguyên thủy
+      skyTop = '#14532d'; skyMid = '#16a34a'; skyBot = '#86efac';
+    } else if (bgId === 19) { // Địa ngục
+      skyTop = '#3b0764'; skyMid = '#6b21a8'; skyBot = '#831843';
     }
 
-    if (style === 'bill_planet') {
-      ctx.fillStyle = this._getSkyGradient(ctx, style);
-      ctx.fillRect(0, 0, VIRTUAL_W, VIRTUAL_H);
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/matrang.png', 780 - camOffX * 0.04, 450 - camOffY * 0.05, 76, 76);
-      for (let i = -1; i < 5; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/nuicay_namek.png', i * 340 - (camOffX * 0.3) % 340, 160 - camOffY * 0.35, 342, 185);
-      }
-      return;
-    }
-
-    // Đảo Kame (bầu trời nhiệt đới, mây xa trôi chậm, chân trời biển và sóng vỗ gốc NRO TORI b02*.png)
-    if (style === 'dao_kame' || mapCfg.key === 'dao_kame' || mapCfg.key === 'nam_kame' || mapCfg.key === 'ban_do_kho_bau') {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, this.vh);
-      skyGrad.addColorStop(0, '#0284c7');
-      skyGrad.addColorStop(0.35, '#38bdf8');
-      skyGrad.addColorStop(0.72, '#bae6fd');
-      skyGrad.addColorStop(1, '#e0f2fe');
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, this.vw, this.vh);
-
-      // Mây tầng cao trôi chậm (b02-3.png: 336x146)
-      const cloudW = 336;
-      const cloudShift = (camOffX * 0.08 + this.animClock * 4) % cloudW;
-      for (let i = -1; i < Math.ceil(this.vw / cloudW) + 2; i++) {
-        this.hud.drawTex(ctx, 'bg/b02-3.png', i * cloudW - cloudShift, 360 - camOffY * 0.15, cloudW, 146);
-      }
-
-      // Đường chân trời biển xa & rạn đảo (b02-1.png & b02-2.png: 528x154)
-      const horizW = 528;
-      const horizShift = (camOffX * 0.16) % horizW;
-      for (let i = -1; i < Math.ceil(this.vw / horizW) + 2; i++) {
-        const tex = i % 2 === 0 ? 'bg/b02-1.png' : 'bg/b02-2.png';
-        this.hud.drawTex(ctx, tex, i * horizW - horizShift, 205 - camOffY * 0.28, horizW, 154);
-      }
-
-      // Mặt nước biển & sóng vỗ lớp trung cảnh (b02.png / b02-4.png: 510x154)
-      const waveW = 510;
-      const waveShift = (camOffX * 0.32) % waveW;
-      for (let i = -1; i < Math.ceil(this.vw / waveW) + 2; i++) {
-        const tex = i % 2 === 0 ? 'bg/b02-4.png' : 'bg/b02.png';
-        this.hud.drawTex(ctx, tex, i * waveW - waveShift, 145 - camOffY * 0.42, waveW, 154);
-      }
-      return;
-    }
-
-    // 2. Thế Giới Tương Lai (Đổ nát u ám) & Hành Tinh Ngục Tù / Khí Gas
-    if (style === 'future_ruins' || style === 'prison_planet') {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, this.vh);
-      if (style === 'future_ruins') {
-        skyGrad.addColorStop(0, '#1f2937');
-        skyGrad.addColorStop(0.55, '#4c1d24');
-        skyGrad.addColorStop(1, '#78350f');
-      } else {
-        skyGrad.addColorStop(0, '#090d16');
-        skyGrad.addColorStop(0.6, '#3b0764');
-        skyGrad.addColorStop(1, '#450a0a');
-      }
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, this.vw, this.vh);
-      for (let i = -1; i < 4; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/nui_xayda.png', i * 510 - (camOffX * 0.2) % 510, 210 - camOffY * 0.25, 512, 175);
-      }
-      for (let i = -1; i < 5; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/nuithap_xayda.png', i * 340 - (camOffX * 0.42) % 340, 125 - camOffY * 0.45, 342, 185);
-      }
-      return;
-    }
-
-    // 3. Hành Tinh Cold (Băng Tuyết)
-    if (style === 'cold_planet') {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, this.vh);
-      skyGrad.addColorStop(0, '#0c4a6e');
-      skyGrad.addColorStop(0.55, '#38bdf8');
-      skyGrad.addColorStop(1, '#e0f2fe');
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, this.vw, this.vh);
-      for (let i = -1; i < 6; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuixa_traidat.png', i * 255 - (camOffX * 0.12) % 255, 260 - camOffY * 0.18, 256, 170);
-      }
-      this.hud.fillRectGdx(ctx, 0, 0, this.vw, Math.max(0, 220 - camOffY * 0.4), '#bae6fd', null);
-      return;
-    }
-
-    if (theme === 'xayda') {
-      ctx.fillStyle = '#c26219';
-      ctx.fillRect(0, 0, this.vw, this.vh);
-      for (let i = -1; i < 6; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/bautroixayda.jpg', i * 255 - (camOffX * 0.05) % 255, 330 - camOffY * 0.08, 256, 280);
-      }
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/matrang.png', 760 - camOffX * 0.04, 455 - camOffY * 0.05, 68, 68);
-      for (let i = -1; i < 6; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/nuixa_xayda.png', i * 255 - (camOffX * 0.12) % 255, 290 - camOffY * 0.15, 256, 150);
-      }
-      for (let i = -1; i < 4; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/nui_xayda.png', i * 510 - (camOffX * 0.22) % 510, 235 - camOffY * 0.25, 512, 175);
-      }
-      for (let i = -1; i < 5; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/nuicay_xayda.png', i * 340 - (camOffX * 0.35) % 340, 175 - camOffY * 0.35, 342, 185);
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/xayda/nuithap_xayda.png', i * 340 - (camOffX * 0.5) % 340, 130 - camOffY * 0.45, 342, 185);
-      }
-      return;
-    }
-
-    if (theme === 'namek') {
-      ctx.fillStyle = '#05c2a8';
-      ctx.fillRect(0, 0, this.vw, this.vh);
-      for (let i = -1; i < 6; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/sky_namek.png', i * 255 - (camOffX * 0.05) % 255, 330 - camOffY * 0.08, 256, 170);
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/nuixa_namek.png', i * 255 - (camOffX * 0.12) % 255, 290 - camOffY * 0.15, 256, 155);
-      }
-      for (let i = -1; i < 4; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/nui_namek.png', i * 510 - (camOffX * 0.22) % 510, 230 - camOffY * 0.25, 512, 175);
-      }
-      for (let i = -1; i < 5; i++) {
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/nuicay_namek.png', i * 340 - (camOffX * 0.35) % 340, 175 - camOffY * 0.35, 342, 185);
-        this.hud.drawTex(ctx, 'hud/giaodienngoai/namek/nuithap_namek.png', i * 340 - (camOffX * 0.5) % 340, 130 - camOffY * 0.45, 342, 185);
-      }
-      return;
-    }
-
-    ctx.fillStyle = '#19b0f8';
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, this.vh);
+    skyGrad.addColorStop(0, skyTop);
+    skyGrad.addColorStop(0.55, skyMid);
+    skyGrad.addColorStop(1, skyBot);
+    ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, this.vw, this.vh);
 
-    for (let i = -1; i < 6; i++) {
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/sky_traidat.png', i * 255 - (camOffX * 0.05) % 255, 325 - camOffY * 0.1, 256, 155);
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuixa_traidat.png', i * 255 - (camOffX * 0.1) % 255, 295 - camOffY * 0.15, 256, 150);
-    }
-    for (let i = -1; i < 4; i++) {
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nui_traidat.png', i * 510 - (camOffX * 0.18) % 510, 250 - camOffY * 0.22, 512, 170);
-    }
-
-    // Đông Karin: Vẽ bóng Tháp Karin + Đài Tháp Karin ở lớp núi xa phía đông
-    if (mapCfg.key === 'dong_karin') {
-      const karinImg = assets.tex('map/traidat/doi_hoa_cuc/thapkirin.png');
-      if (karinImg) {
-        const kw = 18;
-        const kh = 72;
-        const baseScreenX = 340 - camOffX * 0.08;
-        const baseY = 235 - camOffY * 0.22;
-        for (let s = 0; s < 4; s++) {
-          this.hud.drawTex(ctx, 'map/traidat/doi_hoa_cuc/thapkirin.png', baseScreenX - kw / 2, baseY + s * (kh - 3), kw, kh);
-        }
-        this.hud.drawTex(
-          ctx,
-          'map/traidat/doi_hoa_cuc/dai_thap_karin.png',
-          baseScreenX - 38,
-          baseY + 4 * (kh - 3) - 6,
-          76,
-          82
-        );
-      }
-    }
-
-    this.hud.fillRectGdx(ctx, 0, 0, this.vw, Math.max(0, 260 - camOffY * 0.35), '#167615', null);
-    for (let i = -1; i < 5; i++) {
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuicay_traidat.png', i * 340 - (camOffX * 0.28) % 340, 195 - camOffY * 0.35, 342, 190);
-    }
-
-    this.hud.fillRectGdx(ctx, 0, 0, this.vw, Math.max(0, 200 - camOffY * 0.5), style === 'dao_kame' ? '#0284c7' : '#175e1c', null);
-    for (let i = -1; i < 5; i++) {
-      this.hud.drawTex(ctx, 'hud/giaodienngoai/traidat/nuithap_traidat.png', i * 340 - (camOffX * 0.42) % 340, 135 - camOffY * 0.5, 342, 190);
+    // 2. CÁC LỚP PARALLAX CHUẨN GỐC NRO / TORI (b00, b01, b02, b03, b80, b110, b160, b170, b180, b190)
+    if (bgId === 0) { // Đồi núi Trái Đất (Làng Aru, Đồi hoa cúc, Thung lũng tre, Làng Mori...)
+      drawSkyObject('bg/sun0.png', this.vw * 0.72, 45, 0.5, 0.015);
+      drawParallaxStrip('bg/b00-1.png', 0.04, 180, 160, 0.10); // Mây tầng cao
+      drawParallaxStrip('bg/b00-2.png', 0.10, 120, 160, 0.18); // Dãy núi xanh xa
+      drawParallaxStrip('bg/b00-3.png', 0.20, 80, 160, 0.28);  // Núi xanh trung cảnh
+      drawParallaxStrip('bg/b00-4.png', 0.36, 45, 160, 0.40);  // Đồi cây gần
+      drawParallaxStrip('bg/b00-5.png', 0.52, 20, 160, 0.55);  // Rìa rừng cận cảnh
+    } else if (bgId === 1) { // Rừng Nấm / Trái Đất Rừng (Rừng nấm, Rừng xương, Bamboo)
+      drawSkyObject('bg/sun1.png', this.vw * 0.65, 50, 0.5, 0.015);
+      drawParallaxStrip('bg/b01-1.png', 0.05, 170, 146, 0.10);
+      drawParallaxStrip('bg/b01-2.png', 0.12, 115, 146, 0.18);
+      drawParallaxStrip('bg/b01-3.png', 0.22, 75, 154, 0.28);
+      drawParallaxStrip('bg/b01-4.png', 0.36, 40, 146, 0.40);
+      drawParallaxStrip('bg/b01-5.png', 0.52, 15, 146, 0.55);
+    } else if (bgId === 2) { // Biển & Đảo Kame
+      drawSkyObject('bg/sun2.png', this.vw * 0.78, 40, 0.5, 0.012);
+      drawParallaxStrip('bg/b02-3.png', 0.06, 200, 146, 0.12); // Mây trời trôi nhẹ
+      drawParallaxStrip('bg/b02-1.png', 0.14, 110, 154, 0.22); // Đường chân trời & rạn san hô xa
+      drawParallaxStrip('bg/b02-2.png', 0.22, 85, 154, 0.30);  // Quần đảo xa
+      drawParallaxStrip('bg/b02-4.png', 0.34, 45, 154, 0.42);  // Mặt nước biển dập dềnh
+      drawParallaxStrip('bg/b02-5.png', 0.50, 15, 154, 0.55);  // Sóng biển ven bờ
+    } else if (bgId === 3) { // Rừng Karin & Đông Karin
+      drawSkyObject('bg/sun3.png', this.vw * 0.70, 45, 0.5, 0.015);
+      drawParallaxStrip('bg/b03-1.png', 0.05, 160, 120, 0.10);
+      drawParallaxStrip('bg/b03-2.png', 0.12, 110, 120, 0.18);
+      drawParallaxStrip('bg/b03-3.png', 0.22, 70, 114, 0.28);
+      drawParallaxStrip('bg/b03-4.png', 0.36, 40, 120, 0.40);
+      drawParallaxStrip('bg/b03-5.png', 0.52, 15, 120, 0.55);
+    } else if (bgId === 5) { // Thung lũng Namếc
+      drawSkyObject('bg/sun5.png', this.vw * 0.60, 40, 0.55, 0.015);
+      drawParallaxStrip('bg/b01-2.png', 0.12, 120, 146, 0.18);
+      drawParallaxStrip('bg/b50.png', 0.28, 50, 70, 0.35);
+    } else if (bgId === 6) { // Thung lũng Maima
+      drawSkyObject('bg/sun6.png', this.vw * 0.62, 42, 0.55, 0.015);
+      drawParallaxStrip('bg/b01-2.png', 0.12, 120, 146, 0.18);
+      drawParallaxStrip('bg/b60.png', 0.28, 55, 62, 0.35);
+    } else if (bgId === 7) { // Đảo Guru
+      drawSkyObject('bg/sun7.png', this.vw * 0.68, 38, 0.55, 0.015);
+      drawParallaxStrip('bg/b01-3.png', 0.15, 110, 154, 0.22);
+      drawParallaxStrip('bg/b70.png', 0.30, 50, 78, 0.38);
+    } else if (bgId === 8) { // Xayda: Làng Kakarot / Đồi hoang / Làng Plant
+      drawSkyObject('bg/sun8.png', this.vw * 0.72, 35, 0.55, 0.015);
+      drawParallaxStrip('bg/b80-1.png', 0.08, 140, 206, 0.14); // Bầu trời & núi đỏ xa
+      drawParallaxStrip('bg/b80-2.png', 0.20, 85, 206, 0.25);  // Vách đá nhọn Xayda
+      drawParallaxStrip('bg/b80-4.png', 0.38, 30, 322, 0.42);  // Đồi miệng núi lửa
+      drawParallaxStrip('bg/b80-5.png', 0.55, 10, 96, 0.58);   // Rìa đá cận cảnh
+    } else if (bgId === 9) { // Xayda: Rừng nguyên sinh
+      drawSkyObject('bg/sun9.png', this.vw * 0.70, 38, 0.55, 0.015);
+      drawParallaxStrip('bg/b80-1.png', 0.10, 130, 206, 0.16);
+      drawParallaxStrip('bg/b90.png', 0.30, 45, 176, 0.38);
+    } else if (bgId === 10) { // Thành phố Vegeta
+      drawSkyObject('bg/sun10.png', this.vw * 0.75, 42, 0.5, 0.015);
+      drawParallaxStrip('bg/b10.png', 0.15, 90, 176, 0.22);
+      drawParallaxStrip('bg/b100.png', 0.32, 45, 176, 0.38);
+    } else if (bgId === 11) { // Vách núi đen
+      drawParallaxStrip('bg/b110-1.png', 0.12, 110, 164, 0.18);
+      drawParallaxStrip('bg/b110-2.png', 0.24, 70, 164, 0.30);
+      drawParallaxStrip('bg/b111-1.png', 0.40, 35, 164, 0.45);
+    } else if (bgId === 12) { // Thần Điện & Tháp Karin
+      drawSkyObject('bg/sun12.png', this.vw * 0.70, 40, 0.5, 0.012);
+      drawParallaxStrip('bg/b12.png', 0.10, 130, 114, 0.15);
+      drawParallaxStrip('bg/b120.png', 0.25, 60, 114, 0.30);
+    } else if (bgId === 13) { // Phòng tập thời gian
+      drawParallaxStrip('bg/b13.png', 0.10, 90, 130, 0.15);
+      drawParallaxStrip('bg/b130.png', 0.25, 45, 130, 0.30);
+    } else if (bgId === 15) { // Võ đài Hạt Mít
+      drawParallaxStrip('bg/b150.png', 0.15, 80, 76, 0.22);
+      drawParallaxStrip('bg/b151.png', 0.30, 40, 76, 0.38);
+    } else if (bgId === 16) { // Hành tinh Bill
+      drawSkyObject('bg/sun160.png', this.vw * 0.74, 30, 0.65, 0.012);
+      drawParallaxStrip('bg/b160.png', 0.08, 140, 268, 0.14);
+      drawParallaxStrip('bg/b161.png', 0.20, 85, 268, 0.25);
+      drawParallaxStrip('bg/b162.png', 0.36, 40, 268, 0.40);
+    } else if (bgId === 17) { // Hành tinh ngục tù
+      drawSkyObject('bg/sun170.png', this.vw * 0.68, 35, 0.65, 0.012);
+      drawParallaxStrip('bg/b170.png', 0.08, 135, 268, 0.14);
+      drawParallaxStrip('bg/b171.png', 0.22, 80, 268, 0.26);
+      drawParallaxStrip('bg/b172.png', 0.40, 35, 268, 0.42);
+    } else if (bgId === 18) { // Rừng nguyên thủy
+      drawSkyObject('bg/sun18.png', this.vw * 0.70, 38, 0.6, 0.012);
+      drawParallaxStrip('bg/b180.png', 0.10, 130, 268, 0.16);
+      drawParallaxStrip('bg/b181.png', 0.24, 75, 268, 0.28);
+      drawParallaxStrip('bg/b182.png', 0.42, 30, 268, 0.45);
+    } else if (bgId === 19) { // Địa ngục
+      drawSkyObject('bg/sun190.png', this.vw * 0.72, 40, 0.6, 0.012);
+      drawParallaxStrip('bg/b190.png', 0.08, 120, 126, 0.14);
+      drawParallaxStrip('bg/b191.png', 0.20, 75, 126, 0.25);
+      drawParallaxStrip('bg/b192.png', 0.36, 40, 126, 0.40);
+      drawParallaxStrip('bg/b193.png', 0.50, 15, 126, 0.52);
+    } else {
+      // Mặc định Trái Đất
+      drawSkyObject('bg/sun0.png', this.vw * 0.72, 45, 0.5, 0.015);
+      drawParallaxStrip('bg/b00-1.png', 0.04, 180, 160, 0.10);
+      drawParallaxStrip('bg/b00-2.png', 0.10, 120, 160, 0.18);
+      drawParallaxStrip('bg/b00-3.png', 0.20, 80, 160, 0.28);
+      drawParallaxStrip('bg/b00-4.png', 0.36, 45, 160, 0.40);
+      drawParallaxStrip('bg/b00-5.png', 0.52, 20, 160, 0.55);
     }
   }
 
-  // ==================== VẼ LỚP BẢN ĐỒ CHÍNH (36 BẢN ĐỒ ĐẦY ĐỦ) ====================
+  // ==================== VẼ LỚP BẢN ĐỒ CHÍNH (CHUẨN 100% TEA MOBI / TORI) ====================
   renderMapMainLayer(ctx, mapCfg) {
     const fireFrame = (Math.floor(this.animClock * 10) % 4) + 1;
-    const style = mapCfg.renderStyle || '';
+    const toriMap = (mapCfg.toriMapId !== undefined ? getToriMap(mapCfg.toriMapId) : null)
+      || getToriMap(mapCfg.id)
+      || getToriMapByName(mapCfg.name);
 
-    if (style === 'lang_aru') {
-      const wv = this.worldToView(780, 120);
-      this.hud.fillRectGdx(ctx, wv.vx, 0, 560, Math.max(0, wv.vy), '#0e7490', null);
-      this.drawWorldTex(ctx, 'map/traidat/lang_aru/maparu.png', -96, -38, 2544, 1008);
-      this.drawWorldTex(ctx, 'map/traidat/chung/trangtri/cuinuongduiga.png', 240, 170, 66, 48);
-      this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 255, 186, 36, 42);
-      return;
-    }
-
-    if (style === 'doi_hoa_cuc') {
-      const rv = this.worldToView(180, 118);
-      this.hud.fillRectGdx(ctx, rv.vx, 0, 1580, Math.max(0, rv.vy), '#0e7490', null);
-      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacuc.png', 0, -134, 2976, 960);
-      return;
-    }
-
-    if (style === 'rung_karin') {
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 180, 172, 220, 224);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 540, 172, 225, 228);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1360, 172, 225, 228);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1760, 172, 220, 224);
-
-      const colW = 56;
-      const colH = 204;
-      for (let s = 0; s < 6; s++) {
-        this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/thapkirin.png', 1000 - colW / 2, 168 + s * (colH - 6), colW, colH);
-      }
-      const ped = this.worldToView(936, 173);
-      this.hud.fillRectGdx(ctx, ped.vx, ped.vy, 128, 16, '#d6b370', '#78350f', 2);
-      this.hud.fillRectGdx(ctx, ped.vx + 14, ped.vy + 16, 100, 10, '#e7cba0', '#78350f', 1.5);
-
-      this._drawEarthGroundTiles(ctx, mapCfg.width, true, 880, 1100);
-      return;
-    }
-
-    if (style === 'thap_karin') {
-      // Cột Tháp Karin bên dưới + Gậy Như Ý đỏ nối từ đỉnh vòm thẳng lên Thần Điện!
-      const colW = 58;
-      const colH = 204;
-      for (let s = 0; s < 3; s++) {
-        this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/thapkirin.png', 700 - colW / 2, -210 + s * (colH - 6), colW, colH);
-      }
-      const pole = this.worldToView(694, 550);
-      this.hud.fillRectGdx(ctx, pole.vx, pole.vy, 12, 420, '#dc2626', '#7f1d1d', 2);
-      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/dai_thap_karin.png', 410, 148, 580, 445);
-      return;
-    }
-
-    if (style === 'than_dien') {
-      // THẦN ĐIỆN (Kami's Lookout): Gậy Như Ý đỏ nối từ Tháp Karin lên Đài Thần Điện vẽ tay!
-      const pole = this.worldToView(744, -260);
-      this.hud.fillRectGdx(ctx, pole.vx, pole.vy, 12, 430, '#dc2626', '#7f1d1d', 2);
-
-      // Chân đài Thần Điện trên mây dùng sprite vòm đá vẽ tay
-      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/dai_thap_karin.png', 360, -110, 780, 320);
-
-      // Mặt sàn lát gạch trắng-vàng Thần Điện (x = 220..1280, y = 150..200)
-      const deck = this.worldToView(220, 150);
-      this.hud.fillRectGdx(ctx, deck.vx, deck.vy, 1060, 50, '#f8fafc', '#b45309', 2.5);
-      this.hud.fillRectGdx(ctx, deck.vx, deck.vy + 42, 1060, 8, '#fde68a', '#92400e', 1.5);
-
-      // Điện thờ Thượng Đế & hàng cây thần giới dùng 100% texture vẽ tay
-      this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua2_earth.png', 625, 198, 250, 226);
-      this.drawWorldTex(ctx, 'map/namek/371.png', 270, 198, 110, 175);
-      this.drawWorldTex(ctx, 'map/namek/371.png', 1110, 198, 110, 175);
-      return;
-    }
-
-    if (style === 'dao_kame') {
-      // 1. Biển xanh bao quanh đảo Kame về 2 phía mép bản đồ
-      const seaV = this.worldToView(-200, 0);
-      this.hud.fillRectGdx(ctx, seaV.vx, 0, mapCfg.width + 400, Math.max(0, seaV.vy + 172), '#0284c7', null);
-
-      // 2. Sóng biển vỗ rìa đảo 2 bên trái & phải
-      const wavePhase = (this.animClock * 16) % 510;
-      this.drawWorldTex(ctx, 'bg/b02-5.png', -160 + wavePhase * 0.1, 158, 480, 48);
-      this.drawWorldTex(ctx, 'bg/b02-5.png', 1840 - wavePhase * 0.1, 158, 480, 48);
-
-      // 3. Rạn đá bờ biển tự nhiên từ TORI (bgItem 11, 14, 204)
-      this.drawWorldTex(ctx, 'bgItem/11.png', 170, 170, 98, 74);
-      this.drawWorldTex(ctx, 'bgItem/204.png', 240, 170, 104, 86);
-      this.drawWorldTex(ctx, 'bgItem/14.png', 1800, 172, 112, 28);
-      this.drawWorldTex(ctx, 'bgItem/204.png', 1880, 170, 104, 86);
-      this.drawWorldTex(ctx, 'bgItem/11.png', 1960, 170, 98, 74);
-
-      // 4. Hàng dừa biển rợp bóng mát chuẩn Dragon Boy (bgItem 12, 13, 6)
-      this.drawWorldTex(ctx, 'bgItem/13.png', 290, 172, 136, 172);
-      this.drawWorldTex(ctx, 'bgItem/12.png', 380, 172, 198, 286);
-      this.drawWorldTex(ctx, 'bgItem/6.png', 1190, 172, 204, 239);
-      this.drawWorldTex(ctx, 'bgItem/13.png', 1620, 172, 136, 172);
-      this.drawWorldTex(ctx, 'bgItem/12.png', 1700, 172, 198, 286);
-
-      // 5. Ô dù bãi biển & Ghế nằm nghỉ mát chuẩn NRO (bgItem 184, 197)
-      this.drawWorldTex(ctx, 'bgItem/197.png', 590, 172, 96, 50);
-      this.drawWorldTex(ctx, 'bgItem/184.png', 640, 172, 70, 88);
-      this.drawWorldTex(ctx, 'bgItem/184.png', 1280, 172, 70, 88);
-      this.drawWorldTex(ctx, 'bgItem/197.png', 1340, 172, 96, 50);
-
-      // 6. Tòa nhà KAME HOUSE huyền thoại tại trung tâm đảo (bgItem/143.png: 376x190)
-      this.drawWorldTex(ctx, 'bgItem/143.png', 760, 172, 376, 190);
-
-      // 7. Mặt cát vàng biển Đảo Kame mịn màng không cắt khuyết
-      this._drawSandGroundTiles(ctx, mapCfg.width, 180, 1880);
-      return;
-    }
-
-    if (style === 'home_earth') {
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', -30, 170, 210, 214);
-      this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua2_earth.png', 250, 172, 246, 224);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 960, 172, 230, 234);
-      this._drawEarthGroundTiles(ctx, mapCfg.width, true);
-      this.drawWorldTex(ctx, 'map/traidat/chung/dat/doc_traidat.png', 670, 0, 400, 165);
-      this.drawWorldTex(ctx, 'map/traidat/chung/trangtri/cuinuongduiga.png', 1165, 172, 66, 48);
-      this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 1180, 188, 36, 42);
-      return;
-    }
-
-    if (style === 'home_namek' || style === 'namek_field' || style === 'bill_planet') {
-      if (style === 'home_namek') {
-        this.drawWorldTex(ctx, 'map/namek/375.png', 220, 172, 225, 235);
-        this.drawWorldTex(ctx, 'map/namek/371.png', 880, 172, 145, 225);
-      } else {
-        this.drawWorldTex(ctx, 'map/namek/371.png', 360, 172, 145, 225);
-        this.drawWorldTex(ctx, 'map/namek/372.png', 820, 172, 155, 235);
-        this.drawWorldTex(ctx, 'map/namek/373.png', 1280, 172, 160, 230);
-        this.drawWorldTex(ctx, 'map/namek/375.png', 1720, 172, 190, 210);
-      }
-      const camOffX = this.camX - 510;
-      const maxTiles = Math.ceil(mapCfg.width / 50) + 3;
-      const startI = Math.max(-2, Math.floor((camOffX - 60) / 50));
-      const endI = Math.min(maxTiles, Math.ceil((camOffX + VIRTUAL_W + 60) / 50));
-      for (let i = startI; i < endI; i++) {
-        const tx = i * 50;
-        const mIdx = ((i + 50) % 5) + 1;
-        const dIdx = ((i + 30) % 3) + 1;
-        if (i % 2 === 0) this.drawWorldTex(ctx, 'hud/giaodienngoai/namek/cayco1_namek.png', tx, 172, 50, 48);
-        this.drawWorldTex(ctx, `hud/giaodienngoai/namek/matdat_namek${mIdx}.png`, tx, 125, 51, 51);
-        this.drawWorldTex(ctx, `hud/giaodienngoai/namek/dat_namek${dIdx}.png`, tx, 75, 51, 51);
-        this.drawWorldTex(ctx, `hud/giaodienngoai/namek/longdat_namek${dIdx}.png`, tx, 25, 51, 51);
-        this.drawWorldTex(ctx, `hud/giaodienngoai/namek/longdat_namek${dIdx}.png`, tx, -25, 51, 51);
-      }
-      return;
-    }
-
-    if (style === 'home_xayda' || style === 'xayda_field' || style === 'kaio_road' || style === 'babidi_ship' || style === 'future_ruins' || style === 'prison_planet') {
-      if (style === 'home_xayda') {
-        this.drawWorldTex(ctx, 'map/xayda/chung/nhacua/nhacua1_xayda.png', 220, 170, 245, 224);
-        this.drawWorldTex(ctx, 'map/xayda/chung/caycoi/caycoi1_xayda.png', 940, 172, 210, 210);
-      } else if (style === 'future_ruins') {
-        this.drawWorldTex(ctx, 'map/xayda/chung/nhacua/55.png', 420, 172, 165, 190);
-        this.drawWorldTex(ctx, 'map/xayda/chung/nhacua/nhacua1_xayda.png', 1120, 170, 240, 220);
-        this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 520, 174, 48, 56);
-        this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 1280, 174, 48, 56);
-      } else if (style === 'babidi_ship') {
-        this.drawWorldTex(ctx, 'vatpham/taubay/myTexture2dmaybay4a.png', 620, 174, 130, 120);
-        this.drawWorldTex(ctx, 'map/xayda/chung/nhacua/55.png', 1180, 172, 175, 200);
-      } else {
-        this.drawWorldTex(ctx, 'map/xayda/chung/nhacua/nhacua1_xayda.png', 180, 170, 240, 220);
-        this.drawWorldTex(ctx, 'map/xayda/chung/caycoi/caycoi1_xayda.png', 680, 172, 210, 210);
-        this.drawWorldTex(ctx, 'map/xayda/chung/nhacua/55.png', 1160, 172, 165, 190);
-        this.drawWorldTex(ctx, 'map/xayda/chung/caycoi/caycoi2_xayda.png', 1640, 172, 195, 195);
-      }
-
-      const camOffX = this.camX - 510;
-      const maxTiles = Math.ceil(mapCfg.width / 50) + 3;
-      const startI = Math.max(-2, Math.floor((camOffX - 60) / 50));
-      const endI = Math.min(maxTiles, Math.ceil((camOffX + VIRTUAL_W + 60) / 50));
-      for (let i = startI; i < endI; i++) {
-        const tx = i * 50;
-        const mIdx = ((i + 50) % 5) + 1;
-        const dIdx = ((i + 30) % 3) + 1;
-        if (i % 2 === 0) this.drawWorldTex(ctx, 'map/xayda/chung/cayco/cayco1_xayda.png', tx, 172, 50, 46);
-        this.drawWorldTex(ctx, `map/xayda/chung/dat/matdat_xayda${mIdx}.png`, tx, 125, 51, 51);
-        this.drawWorldTex(ctx, `map/xayda/chung/dat/dat_xayda${dIdx}.png`, tx, 75, 51, 51);
-        this.drawWorldTex(ctx, `map/xayda/chung/dat/longdat_xayda${dIdx}.png`, tx, 25, 51, 51);
-        this.drawWorldTex(ctx, `map/xayda/chung/dat/longdat_xayda${dIdx}.png`, tx, -25, 51, 51);
-      }
-      this.drawWorldTex(ctx, 'map/xayda/chung/dat/doc_xayda.png', 650, 0, 390, 160);
-      return;
-    }
-
-    if (style === 'cell_arena') {
-      // VÕ ĐÀI XÊN BỌ HÙNG: Sàn đá trắng cẩm thạch kèm 4 trụ góc chuẩn nguyên tác Cell Games!
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 220, 172, 210, 214);
-      const ring = this.worldToView(1260, 175);
-      this.hud.fillRectGdx(ctx, ring.vx, ring.vy, 560, 20, '#f8fafc', '#475569', 2.5);
-      this.hud.fillRectGdx(ctx, ring.vx + 16, ring.vy + 20, 26, 135, '#e2e8f0', '#475569', 2);
-      this.hud.fillRectGdx(ctx, ring.vx + 518, ring.vy + 20, 26, 135, '#e2e8f0', '#475569', 2);
-      this.hud.fillRectGdx(ctx, ring.vx + 190, ring.vy + 20, 180, 38, '#1e293b', '#facc15', 2);
-      this.hud.drawText(ctx, 'CELL GAMES', ring.vx + 280, ring.vy + 33, { size: 12, color: '#fde047', align: 'center' });
-      this._drawEarthGroundTiles(ctx, mapCfg.width, false);
-      return;
-    }
-
-    if (style === 'cold_planet') {
-      // HÀNH TINH COLD: Mặt đất phủ băng tuyết trắng xanh lấp lánh
-      this._drawEarthGroundTiles(ctx, mapCfg.width, false);
-      const iceV = this.worldToView(-100, 165);
-      this.hud.fillRectGdx(ctx, iceV.vx, iceV.vy, mapCfg.width + 200, 14, 'rgba(224, 242, 254, 0.88)', '#38bdf8', 1.5);
-      return;
-    }
-
-    // Mặc định: Rừng Trái Đất / Trạm Vũ Trụ / Thành Phố / Siêu Thị (forest_earth, cliff_earth, spaceport_earth, city_earth)
-    if (style === 'city_earth' || style === 'spaceport_earth') {
-      this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua1_earth.png', 360, 172, 235, 215);
-      this.drawWorldTex(ctx, 'map/traidat/chung/nhacua/nhacua2_earth.png', 1060, 172, 235, 215);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1560, 172, 215, 220);
-    } else {
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 280, 172, 225, 228);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 920, 172, 225, 228);
-      this.drawWorldTex(ctx, 'map/traidat/chung/caycoi/caycoi1_traidat.png', 1520, 172, 225, 228);
-    }
-    this._drawEarthGroundTiles(ctx, mapCfg.width, true);
-  }
-
-  _drawEarthGroundTiles(ctx, mapWidth, withGrass = true, skipGrassMinX = -9999, skipGrassMaxX = -9999) {
-    const camOffX = this.camX - this.vw / 2;
-    const maxTiles = Math.ceil(mapWidth / 50) + 3;
-    // O(1) Spatial Frustum Indexing: Chỉ duyệt đúng các cột tile nằm trong khung hình [camOffX .. camOffX + vw]!
-    const startI = Math.max(-2, Math.floor((camOffX - 60) / 50));
-    const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 50));
-
-    // Lớp đất sâu che kín hoàn toàn lòng đất bên dưới wy <= 25 (không lộ nền hay cây xuyên lòng đất)
-    const deepV = this.worldToView(startI * 50, 25);
-    const totalW = (endI - startI) * 50 + 60;
-    this.hud.fillRectGdx(ctx, deepV.vx, 0, totalW, Math.max(0, deepV.vy), '#451a03', null);
-
-    for (let i = startI; i < endI; i++) {
-      const tx = i * 50;
-      const mIdx = ((i + 50) % 5) + 1;
-      const dIdx = ((i + 30) % 3) + 1;
-      if (withGrass && i % 2 === 0 && (tx < skipGrassMinX || tx > skipGrassMaxX)) {
-        this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco3_traidat.png', tx, 172, 50, 50);
-      }
-      this.drawWorldTex(ctx, `map/traidat/chung/dat/matdat_traidat${mIdx}.png`, tx, 125, 51, 51);
-      this.drawWorldTex(ctx, `map/traidat/chung/dat/dat_traidat${dIdx}.png`, tx, 75, 51, 51);
-      this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, 25, 51, 51);
-      this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, -25, 51, 51);
-      this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, -75, 51, 51);
-      this.drawWorldTex(ctx, 'map/traidat/chung/cayco/cayco5_traidat.png', tx, 173, 51, 12);
-    }
-  }
-
-  _drawSandGroundTiles(ctx, mapWidth, minX = 180, maxX = 1880) {
-    const camOffX = this.camX - this.vw / 2;
-    const maxTiles = Math.ceil(mapWidth / 48) + 3;
-    const startI = Math.max(-2, Math.floor((camOffX - 60) / 48));
-    const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 48));
-
-    // Lớp cát sâu dưới nước
-    const sandDeepV = this.worldToView(startI * 48, 125);
-    const totalW = (endI - startI) * 48 + 60;
-    this.hud.fillRectGdx(ctx, sandDeepV.vx, 0, totalW, Math.max(0, sandDeepV.vy), '#ca8a04', null);
-
-    for (let i = startI; i < endI; i++) {
-      const tx = i * 48;
-      if (tx < minX || tx > maxX) continue;
-      const gv = this.worldToView(tx, 172);
-
-      // Mặt cát bờ biển vàng óng ánh
-      this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 16, 49, 16, '#fde047', '#eab308', 1);
-      this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 48, 49, 32, '#eab308', null);
-      this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 96, 49, 48, '#ca8a04', null);
-
-      // Bọt sóng trắng ở 2 rìa bãi biển
-      if (tx <= minX + 72 || tx >= maxX - 72) {
-        const waveFoam = 0.65 + Math.sin(this.animClock * 6 + i) * 0.25;
-        ctx.save();
-        ctx.globalAlpha = waveFoam;
-        this.hud.fillRectGdx(ctx, gv.vx, gv.vy - 6, 49, 7, '#ffffff', '#bae6fd', 1);
-        ctx.restore();
+    // 1. VẼ CẢNH VẬT BACKGROUND ITEM NGUYÊN BẢN (LAYER 1 & 2: NHÀ CỬA, CÂY CỐI, HOA ĐÁ PHÍA SAU)
+    if (toriMap && toriMap.bgItems && toriMap.bgItems.length > 0) {
+      for (let i = 0; i < toriMap.bgItems.length; i++) {
+        const item = toriMap.bgItems[i];
+        const tpl = BG_ITEM_TEMPLATES[item.id];
+        if (!tpl || tpl.layer > 2) continue;
+        const imgId = tpl.idImage;
+        const img = assets.tex(`bgItem/${imgId}.png`);
+        if (!img || img.naturalWidth <= 0) continue;
+        const x_db = item.x * 24 + tpl.dx;
+        const y_db = item.y * 24 + tpl.dy;
+        const w = img.naturalWidth * 0.5;
+        const h = img.naturalHeight * 0.5;
+        const wx = x_db;
+        const wy = toriMap.height - y_db - h;
+        this.drawWorldTex(ctx, `bgItem/${imgId}.png`, wx, wy, w, h);
       }
     }
-  }
 
-  // ==================== VẼ LỚP TIỀN CẢNH CHE PHỦ TRƯỚC NHÂN VẬT ====================
-  renderMapForegroundLayer(ctx, mapCfg) {
-    const camOffX = this.camX - this.vw / 2;
+    // 2. VẼ TILE NỀN ĐẤT & MẶT ĐẤT NGUYÊN BẢN TỪ TILESET (CHÍNH XÁC TỪNG Ô 24PX)
+    let tilesRendered = 0;
+    if (toriMap && toriMap.tiles && toriMap.tiles.length > 0 && toriMap.tileID) {
+      const tmw = toriMap.tmw;
+      const tmh = toriMap.tmh;
+      const tileID = toriMap.tileID;
+      const mapH = toriMap.height;
 
-    if (mapCfg.key === 'lang_aru') {
-      this.drawWorldTex(ctx, 'map/traidat/lang_aru/maparusau.png', -96, -38, 2544, 1008);
-      ctx.save();
-      ctx.globalAlpha = 0.2;
-      for (let i = 0; i < 3; i++) {
-        this.drawWorldTex(ctx, 'hieuung/hieuungmap/light.png', 150 + i * 840, 420, 560, 480);
-      }
-      ctx.restore();
-    } else if (mapCfg.key === 'doi_hoa_cuc') {
-      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacucsau.png', 0, -134, 2976, 960);
-      // Lớp cỏ hoa tiền cảnh parallax nhanh hơn camera chuẩn ManHinhDoiHoaCuc.java dòng 342
-      this.drawWorldTex(ctx, 'map/traidat/doi_hoa_cuc/doihoacuctruoc.png', -camOffX * 0.5 - 100, -184, 3408, 960);
-      // Làn sương dưới đáy vực Đồi Hoa Cúc trong toạ độ WORLD y=-134 chuẩn ManHinhDoiHoaCuc.java dòng 357 (chỉ vẽ khi camera hạ xuống thấy đáy vực!)
-      if (this.camY - this.vh / 2 < 110) {
-        const cloudShift = (this.animClock * 18) % 287;
-        const startK = Math.max(-1, Math.floor((camOffX + cloudShift - 290) / 287));
-        const endK = Math.min(12, Math.ceil((camOffX + cloudShift + this.vw + 290) / 287));
-        for (let i = startK; i < endK; i++) {
-          this.drawWorldTex(ctx, 'hieuung/hieuungmap/khoimay.png', i * 287 - cloudShift, -134, 288, 200);
+      const minTileX = Math.max(0, Math.floor((this.camX - this.vw / 2 - 48) / 24));
+      const maxTileX = Math.min(tmw - 1, Math.ceil((this.camX + this.vw / 2 + 48) / 24));
+      const minTileY = 0;
+      const maxTileY = tmh - 1;
+
+      for (let ty = minTileY; ty <= maxTileY; ty++) {
+        const rowIdx = ty * tmw;
+        const wy = mapH - (ty + 1) * 24;
+        const vy = wy - (this.camY - this.vh / 2);
+        if (vy + 24 < -48 || vy > this.vh + 48) continue;
+
+        for (let tx = minTileX; tx <= maxTileX; tx++) {
+          const tVal = toriMap.tiles[rowIdx + tx];
+          if (tVal <= 0) continue;
+          const wx = tx * 24;
+          this.drawWorldTex(ctx, `tile/${tileID}_${tVal}.png`, wx, wy, 24, 24);
+          tilesRendered++;
         }
       }
-    } else if (mapCfg.key === 'nha_gohan') {
+    }
+
+    // Fallback nền đất mượt mà nếu chưa nạp xong tile hoặc map đặc biệt
+    if (tilesRendered < 5) {
+      const theme = mapCfg.planetTheme || 'traidat';
+      if (theme === 'xayda') {
+        const camOffX = this.camX - this.vw / 2;
+        const maxTiles = Math.ceil(mapCfg.width / 50) + 3;
+        const startI = Math.max(-2, Math.floor((camOffX - 60) / 50));
+        const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 50));
+        for (let i = startI; i < endI; i++) {
+          const tx = i * 50;
+          const mIdx = ((i + 50) % 5) + 1;
+          const dIdx = ((i + 30) % 3) + 1;
+          this.drawWorldTex(ctx, `map/xayda/chung/dat/matdat_xayda${mIdx}.png`, tx, 125, 51, 51);
+          this.drawWorldTex(ctx, `map/xayda/chung/dat/dat_xayda${dIdx}.png`, tx, 75, 51, 51);
+          this.drawWorldTex(ctx, `map/xayda/chung/dat/longdat_xayda${dIdx}.png`, tx, 25, 51, 51);
+        }
+      } else if (theme === 'namek') {
+        const camOffX = this.camX - this.vw / 2;
+        const maxTiles = Math.ceil(mapCfg.width / 48) + 3;
+        const startI = Math.max(-2, Math.floor((camOffX - 60) / 48));
+        const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 48));
+        for (let i = startI; i < endI; i++) {
+          const tx = i * 48;
+          const mIdx = ((i + 48) % 3) + 1;
+          const dIdx = ((i + 30) % 2) + 1;
+          this.drawWorldTex(ctx, `map/namek/matdat_namek${mIdx}.png`, tx, 125, 49, 49);
+          this.drawWorldTex(ctx, `map/namek/dat_namek${dIdx}.png`, tx, 75, 49, 49);
+          this.drawWorldTex(ctx, `map/namek/longdat_namek1.png`, tx, 25, 49, 49);
+        }
+      } else {
+        this._drawEarthGroundTiles(ctx, mapCfg.width, true);
+      }
+    }
+
+    // Lửa nướng đùi gà sinh động tại nhà & làng
+    if (mapCfg.id === 0 || mapCfg.id === 1 || (toriMap && (toriMap.id === 0 || toriMap.id === 21))) {
+      this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 255, 186, 36, 42);
+    }
+  }
+
+  // ==================== VẼ LỚP TIỀN CẢNH CHE PHỦ TRƯỚC NHÂN VẬT (CHUẨN 100% TEA MOBI / TORI) ====================
+  renderMapForegroundLayer(ctx, mapCfg) {
+    const toriMap = (mapCfg.toriMapId !== undefined ? getToriMap(mapCfg.toriMapId) : null)
+      || getToriMap(mapCfg.id)
+      || getToriMapByName(mapCfg.name);
+
+    // VẼ CẢNH VẬT TIỀN CẢNH (LAYER 3 & 4: BỤI CỎ, HOA TRẮNG, CÂY PHÍA TRƯỚC NHÂN VẬT)
+    if (toriMap && toriMap.bgItems && toriMap.bgItems.length > 0) {
+      for (let i = 0; i < toriMap.bgItems.length; i++) {
+        const item = toriMap.bgItems[i];
+        const tpl = BG_ITEM_TEMPLATES[item.id];
+        if (!tpl || tpl.layer < 3) continue;
+        const imgId = tpl.idImage;
+        const img = assets.tex(`bgItem/${imgId}.png`);
+        if (!img || img.naturalWidth <= 0) continue;
+        const x_db = item.x * 24 + tpl.dx;
+        const y_db = item.y * 24 + tpl.dy;
+        const w = img.naturalWidth * 0.5;
+        const h = img.naturalHeight * 0.5;
+        const wx = x_db;
+        const wy = toriMap.height - y_db - h;
+        this.drawWorldTex(ctx, `bgItem/${imgId}.png`, wx, wy, w, h);
+      }
+    }
+
+    // Hiệu ứng ánh sáng nhẹ
+    if (mapCfg.id === 0 || mapCfg.id === 1 || (toriMap && (toriMap.id === 0 || toriMap.id === 21))) {
       ctx.save();
-      ctx.globalAlpha = 0.22;
+      ctx.globalAlpha = 0.15;
       this.drawWorldTex(ctx, 'hieuung/hieuungmap/light.png', 140, 310, 560, 460);
       ctx.restore();
     }
