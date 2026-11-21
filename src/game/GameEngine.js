@@ -2371,6 +2371,7 @@ export class GameEngine {
 
   // ==================== VẼ NPC CHUẨN MODULAR ====================
   renderNpcs(ctx) {
+    const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
     const camOffX = this.camX - 510;
     const bob = Math.floor(this.animClock * 3) % 2 === 0 ? 0 : -1.2;
     const quest = STORY_QUESTS.find((q) => q.id === this.player.questId);
