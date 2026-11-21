@@ -1806,13 +1806,18 @@ export class GameEngine {
     const mapCfg = MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
     const halfW = this.vw / 2;
     const halfH = this.vh / 2;
+    const maxCamX = Math.max(halfW, mapCfg.width - halfW);
+    const maxCamY = Math.max(halfH, mapCfg.height - halfH);
+
     if (this.camDragging) {
-      this.camX = Math.max(halfW, Math.min(mapCfg.width - halfW, this.camX));
-      this.camY = Math.max(halfH, Math.min(mapCfg.height - halfH, this.camY));
+      this.camX = Math.max(halfW, Math.min(maxCamX, this.camX));
+      this.camY = mapCfg.height <= this.vh ? halfH : Math.max(halfH, Math.min(maxCamY, this.camY));
       return;
     }
-    const targetCamX = Math.max(halfW, Math.min(mapCfg.width - halfW, this.player.x));
-    const targetCamY = Math.max(halfH, Math.min(mapCfg.height - halfH, this.player.y + 95));
+    const targetCamX = Math.max(halfW, Math.min(maxCamX, this.player.x));
+    const targetCamY = mapCfg.height <= this.vh
+      ? halfH
+      : Math.max(halfH, Math.min(maxCamY, this.player.y + 95));
     const lerp = Math.min(1, dt * 8.5);
     this.camX += (targetCamX - this.camX) * lerp;
     this.camY += (targetCamY - this.camY) * lerp;
@@ -2032,8 +2037,8 @@ export class GameEngine {
     const drawParallaxStrip = (texPath, scrollFactorX, baseOffsetY, targetH, scrollFactorY = 0.2) => {
       const img = assets.tex(texPath);
       if (!img || img.naturalWidth <= 0) return;
-      const w = img.naturalWidth * 0.5;
-      const h = targetH || (img.naturalHeight * 0.5);
+      const w = img.naturalWidth;
+      const h = targetH || img.naturalHeight;
       const shiftX = (camOffX * scrollFactorX) % w;
       const drawY = baseOffsetY - camOffY * scrollFactorY;
       const startX = -w - shiftX;
@@ -2096,27 +2101,27 @@ export class GameEngine {
     ctx.fillRect(0, 0, this.vw, this.vh);
 
     // 2. CÁC LỚP PARALLAX CHUẨN GỐC NRO / TORI (b00, b01, b02, b03, b80, b110, b160, b170, b180, b190)
-    if (bgId === 0) { // Đồi núi Trái Đất (Làng Aru, Đồi hoa cúc, Thung lũng tre, Làng Mori...)
+    if (bgId === 0) { // Đồi núi Trái Đất (Nhà Gôhan, Làng Aru, Đồi hoa cúc, Thung lũng tre...)
       drawSkyObject('bg/sun0.png', this.vw * 0.72, 45, 0.5, 0.015);
-      drawParallaxStrip('bg/b00-1.png', 0.04, 180, 160, 0.10); // Mây tầng cao
-      drawParallaxStrip('bg/b00-2.png', 0.10, 120, 160, 0.18); // Dãy núi xanh xa
-      drawParallaxStrip('bg/b00-3.png', 0.20, 80, 160, 0.28);  // Núi xanh trung cảnh
-      drawParallaxStrip('bg/b00-4.png', 0.36, 45, 160, 0.40);  // Đồi cây gần
-      drawParallaxStrip('bg/b00-5.png', 0.52, 20, 160, 0.55);  // Rìa rừng cận cảnh
+      drawParallaxStrip('bg/b00-5.png', 0.04, 380, 160, 0.08); // Mây trời bồng bềnh tầng cao
+      drawParallaxStrip('bg/b00-2.png', 0.10, 240, 160, 0.15); // Dãy núi đá xa
+      drawParallaxStrip('bg/b00-3.png', 0.20, 160, 160, 0.25); // Vách đá nhọn trung cảnh
+      drawParallaxStrip('bg/b00-1.png', 0.35, 90, 160, 0.35);  // Đồi cỏ xanh
+      drawParallaxStrip('bg/b00-4.png', 0.50, 20, 160, 0.45);  // Cánh đồng cận cảnh sát mặt đất
     } else if (bgId === 1) { // Rừng Nấm / Trái Đất Rừng (Rừng nấm, Rừng xương, Bamboo)
       drawSkyObject('bg/sun1.png', this.vw * 0.65, 50, 0.5, 0.015);
-      drawParallaxStrip('bg/b01-1.png', 0.05, 170, 146, 0.10);
-      drawParallaxStrip('bg/b01-2.png', 0.12, 115, 146, 0.18);
-      drawParallaxStrip('bg/b01-3.png', 0.22, 75, 154, 0.28);
-      drawParallaxStrip('bg/b01-4.png', 0.36, 40, 146, 0.40);
-      drawParallaxStrip('bg/b01-5.png', 0.52, 15, 146, 0.55);
+      drawParallaxStrip('bg/b01-5.png', 0.04, 380, 146, 0.08); // Mây tầng cao
+      drawParallaxStrip('bg/b01-3.png', 0.10, 240, 154, 0.15); // Đồi xa sáng
+      drawParallaxStrip('bg/b01-2.png', 0.20, 160, 146, 0.25); // Đồi nấm trung cảnh
+      drawParallaxStrip('bg/b01-4.png', 0.35, 90, 146, 0.35);  // Cây nấm xanh
+      drawParallaxStrip('bg/b01-1.png', 0.50, 20, 146, 0.45);  // Thân nấm & đất cận cảnh
     } else if (bgId === 2) { // Biển & Đảo Kame
       drawSkyObject('bg/sun2.png', this.vw * 0.78, 40, 0.5, 0.012);
-      drawParallaxStrip('bg/b02-3.png', 0.06, 200, 146, 0.12); // Mây trời trôi nhẹ
-      drawParallaxStrip('bg/b02-1.png', 0.14, 110, 154, 0.22); // Đường chân trời & rạn san hô xa
-      drawParallaxStrip('bg/b02-2.png', 0.22, 85, 154, 0.30);  // Quần đảo xa
-      drawParallaxStrip('bg/b02-4.png', 0.34, 45, 154, 0.42);  // Mặt nước biển dập dềnh
-      drawParallaxStrip('bg/b02-5.png', 0.50, 15, 154, 0.55);  // Sóng biển ven bờ
+      drawParallaxStrip('bg/b02-5.png', 0.04, 380, 154, 0.08); // Mây trời trôi nhẹ
+      drawParallaxStrip('bg/b02-3.png', 0.10, 240, 146, 0.15); // Đường chân trời xa
+      drawParallaxStrip('bg/b02-2.png', 0.20, 160, 154, 0.25); // Quần đảo xa
+      drawParallaxStrip('bg/b02-1.png', 0.35, 90, 154, 0.35);  // Mặt nước biển dập dềnh
+      drawParallaxStrip('bg/b02-4.png', 0.50, 20, 154, 0.45);  // Bờ cát xanh cận cảnh
     } else if (bgId === 3) { // Rừng Karin & Đông Karin
       drawSkyObject('bg/sun3.png', this.vw * 0.70, 45, 0.5, 0.015);
       drawParallaxStrip('bg/b03-1.png', 0.05, 160, 120, 0.10);
@@ -2138,10 +2143,10 @@ export class GameEngine {
       drawParallaxStrip('bg/b70.png', 0.30, 50, 78, 0.38);
     } else if (bgId === 8) { // Xayda: Làng Kakarot / Đồi hoang / Làng Plant
       drawSkyObject('bg/sun8.png', this.vw * 0.72, 35, 0.55, 0.015);
-      drawParallaxStrip('bg/b80-1.png', 0.08, 140, 206, 0.14); // Bầu trời & núi đỏ xa
-      drawParallaxStrip('bg/b80-2.png', 0.20, 85, 206, 0.25);  // Vách đá nhọn Xayda
-      drawParallaxStrip('bg/b80-4.png', 0.38, 30, 322, 0.42);  // Đồi miệng núi lửa
-      drawParallaxStrip('bg/b80-5.png', 0.55, 10, 96, 0.58);   // Rìa đá cận cảnh
+      drawParallaxStrip('bg/b80-1.png', 0.08, 280, 206, 0.12); // Bầu trời & núi đỏ xa
+      drawParallaxStrip('bg/b80-2.png', 0.20, 170, 206, 0.22); // Vách đá nhọn Xayda
+      drawParallaxStrip('bg/b80-4.png', 0.38, 70, 322, 0.38);  // Đồi miệng núi lửa
+      drawParallaxStrip('bg/b80-5.png', 0.55, 10, 96, 0.50);   // Rìa đá cận cảnh
     } else if (bgId === 9) { // Xayda: Rừng nguyên sinh
       drawSkyObject('bg/sun9.png', this.vw * 0.70, 38, 0.55, 0.015);
       drawParallaxStrip('bg/b80-1.png', 0.10, 130, 206, 0.16);
@@ -2285,9 +2290,9 @@ export class GameEngine {
       }
     }
 
-    // Lửa nướng đùi gà sinh động tại nhà & làng
-    if (mapCfg.id === 0 || mapCfg.id === 1 || (toriMap && (toriMap.id === 0 || toriMap.id === 21))) {
-      this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 255, 186, 36, 42);
+    // Lửa nướng đùi gà sinh động tại bếp lửa Nhà Gôhan
+    if (mapCfg.id === 0 || (toriMap && toriMap.id === 21)) {
+      this.drawWorldTex(ctx, `hieuung/hieuungmap/lua${fireFrame}.png`, 276, 144, 32, 38);
     }
   }
 
@@ -2371,6 +2376,12 @@ export class GameEngine {
     const quest = STORY_QUESTS.find((q) => q.id === this.player.questId);
     const curStep = quest ? quest.steps[this.player.questStep || 0] : null;
 
+    const toriMap = (mapCfg.toriMapId !== undefined ? getToriMap(mapCfg.toriMapId) : null)
+      || getToriMap(mapCfg.id)
+      || getToriMapByName(mapCfg.name);
+    const hasBgTree = toriMap && toriMap.bgItems && toriMap.bgItems.some((it) => BG_ITEM_TEMPLATES[it.id]?.idImage === 100);
+    const hasBgChest = toriMap && toriMap.bgItems && toriMap.bgItems.some((it) => BG_ITEM_TEMPLATES[it.id]?.idImage === 99);
+
     for (let i = 0; i < this.npcs.length; i++) {
       const npc = this.npcs[i];
       if (npc.kind === 'meat' && npc.eaten) continue;
@@ -2380,13 +2391,17 @@ export class GameEngine {
       let headTopY = npc.y + 72;
 
       if (npc.kind === 'senzu_tree') {
-        const lv = Math.min(10, Math.max(1, this.player.senzuCount || 5));
-        const treePath = `nhanvat/npc/dau_traidat/caydau${lv}.png`;
-        const img = assets.tex(treePath);
-        const tw = img ? img.naturalWidth * 0.55 : 78;
-        const th = img ? img.naturalHeight * 0.55 : 108;
-        this.drawWorldTex(ctx, treePath, npc.x - tw / 2, npc.y, tw, th);
-        headTopY = npc.y + th + 6;
+        if (!hasBgTree) {
+          const lv = Math.min(10, Math.max(1, this.player.senzuCount || 5));
+          const treePath = `nhanvat/npc/dau_traidat/caydau${lv}.png`;
+          const img = assets.tex(treePath);
+          const tw = img ? img.naturalWidth * 0.55 : 78;
+          const th = img ? img.naturalHeight * 0.55 : 108;
+          this.drawWorldTex(ctx, treePath, npc.x - tw / 2, npc.y, tw, th);
+          headTopY = npc.y + th + 6;
+        } else {
+          headTopY = npc.y + 112;
+        }
       } else if (npc.kind === 'spaceship') {
         const img = assets.tex(npc.tex);
         const iw = img ? img.naturalWidth * 1.45 : 96;
@@ -2401,7 +2416,17 @@ export class GameEngine {
         const flipNpc = this.player.x > npc.x;
         this.drawWorldTex(ctx, npc.tex, npc.x - iw / 2, npc.y + bob * 0.5, iw, ih, flipNpc);
         headTopY = npc.y + ih + 6;
-      } else if (npc.kind === 'chest' || npc.kind === 'meat') {
+      } else if (npc.kind === 'chest') {
+        if (!hasBgChest) {
+          const img = assets.tex(npc.tex);
+          const iw = img ? img.naturalWidth * 0.55 : 42;
+          const ih = img ? img.naturalHeight * 0.55 : 38;
+          this.drawWorldTex(ctx, npc.tex, npc.x - iw / 2, npc.y, iw, ih);
+          headTopY = npc.y + ih + 8;
+        } else {
+          headTopY = npc.y + 40;
+        }
+      } else if (npc.kind === 'meat') {
         const img = assets.tex(npc.tex);
         const iw = img ? img.naturalWidth * 0.55 : 42;
         const ih = img ? img.naturalHeight * 0.55 : 38;

@@ -2,7 +2,7 @@
 // Người chơi nhập vai Chiến Binh Hậu Bối của 3 chủng tộc (Trái Đất, Namếc, Xayda),
 // hành trình qua 5 Giai Đoạn Cốt Truyện Chính Tuyến & Mạng Lưới 36 Bản Đồ Liên Thông!
 
-import { TORI_ITEM_CATALOG, TORI_MAPS, TORI_MOBS } from './toriData';
+import { TORI_ITEM_CATALOG, TORI_MAPS, TORI_MOBS } from './toriData.js';
 
 export { TORI_MAPS, TORI_MOBS };
 
@@ -861,64 +861,61 @@ function wpDoor(id, label, centerX, signY, targetMapId, targetX, targetY) {
 // MẠNG LƯỚI 36 BẢN ĐỒ CHUẨN SƠ ĐỒ NGỌC RỒNG ONLINE (ID 0 .. 35)
 // =========================================================================
 export const MAPS_CONFIG = [
-  // [0] Nhà Gôhan
+  // [0] Nhà Gôhan (Map khởi đầu chuẩn 100% Dragon Boy — toriMapId: 21)
   {
-    id: 0, key: 'nha_gohan', name: 'Nhà Gôhan', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'home_earth',
-    width: 1420, height: 760, defaultSpawn: { x: 325, y: 175 },
-    hitboxes: [{ x: -100, y: 0, w: 1620, h: 175 }],
+    id: 0, key: 'nha_gohan', name: 'Nhà Gôhan', toriMapId: 21, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'home_earth',
+    width: 768, height: 480, defaultSpawn: { x: 348, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 868, h: 144 }],
     waypoints: [
-      { ...wpDoor('wp_0_1', 'Làng Aru', 875, 300, 1, 675, 175), edgeTriggerX: [1395, 1500] }
+      { ...wpDoor('wp_0_1', 'Làng Aru', 500, 200, 1, 320, 144), edgeTriggerX: [720, 780] }
     ],
     npcs: [
-      { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 105, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
-      { id: 'admin_dungle', name: 'Admin Sơn (Hỗ Trợ)', kind: 'modular', folder: 'admin_dungle', x: 210, y: 175 },
-      { id: 'ong_gohan', name: 'Ông Gôhan', kind: 'modular', folder: 'ong_gohan', x: 445, y: 175 },
-      { id: 'dau_traidat', name: 'Cây Đậu Thần', kind: 'senzu_tree', x: 615, y: 175 },
-      { id: 'dui_ga', name: 'Đùi Gà Nướng', kind: 'meat', x: 1178, y: 205, tex: 'nhanvat/npc/dui_ga/1.png' }
+      { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 84, y: 144, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
+      { id: 'admin_dungle', name: 'Admin Sơn (Hỗ Trợ)', kind: 'modular', folder: 'admin_dungle', x: 180, y: 144 },
+      { id: 'ong_gohan', name: 'Ông Gôhan', kind: 'modular', folder: 'ong_gohan', x: 228, y: 144 },
+      { id: 'dau_traidat', name: 'Cây Đậu Thần', kind: 'senzu_tree', x: 144, y: 144 },
+      { id: 'dui_ga', name: 'Đùi Gà Nướng', kind: 'meat', x: 290, y: 144, tex: 'nhanvat/npc/dui_ga/1.png' }
     ],
     monsters: []
   },
 
-  // [1] Làng Aru
+  // [1] Làng Aru (toriMapId: 0)
   {
-    id: 1, key: 'lang_aru', name: 'Làng Aru', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'lang_aru',
-    width: 2400, height: 1000, defaultSpawn: { x: 675, y: 175 },
-    hitboxes: [{ x: -220, y: -38, w: 2840, h: 213 }],
+    id: 1, key: 'lang_aru', name: 'Làng Aru', toriMapId: 0, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'lang_aru',
+    width: 1248, height: 576, defaultSpawn: { x: 320, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1348, h: 144 }],
     waypoints: [
-      wpLeft('wp_1_2', 'Vách núi Aru', 2, 1815, 175),
-      wpDoor('wp_1_3', 'Trạm Tàu Vũ Trụ', 205, 300, 3, 950, 175),
-      wpDoor('wp_1_0', 'Nhà Gôhan', 675, 300, 0, 875, 175),
-      wpRight('wp_1_4', 'Đồi hoa cúc', 2400, 4, 65, 175)
+      wpLeft('wp_1_2', 'Vách núi Aru', 2, 1380, 144),
+      wpDoor('wp_1_3', 'Trạm Tàu Vũ Trụ', 180, 200, 3, 520, 144),
+      wpDoor('wp_1_0', 'Nhà Gôhan', 320, 200, 0, 480, 144),
+      wpRight('wp_1_4', 'Đồi hoa cúc', 1248, 4, 60, 144)
     ],
     npcs: [
-      { id: 'admin_thanhle', name: 'Chủ Tiệm Bảo', kind: 'modular', folder: 'admin_thanhle', x: 370, y: 175 },
-      { id: 'ba_chip', name: 'Đại Ca Ba Chíp', kind: 'modular', folder: 'admin_huykhoi', x: 525, y: 175 },
-      { id: 'admin_haidang', name: 'Thần Tài Hùng', kind: 'modular', folder: 'admin_haidang', x: 1380, y: 175 }
+      { id: 'admin_thanhle', name: 'Chủ Tiệm Bảo', kind: 'modular', folder: 'admin_thanhle', x: 228, y: 144 },
+      { id: 'ba_chip', name: 'Đại Ca Ba Chíp', kind: 'modular', folder: 'admin_huykhoi', x: 492, y: 144 },
+      { id: 'admin_haidang', name: 'Thần Tài Hùng', kind: 'modular', folder: 'admin_haidang', x: 500, y: 144 }
     ],
     monsters: [
+      { template: 'moc_nhan', x: 750, minX: 750, maxX: 750 },
       { template: 'moc_nhan', x: 850, minX: 850, maxX: 850 },
-      { template: 'moc_nhan', x: 960, minX: 960, maxX: 960 },
-      { template: 'moc_nhan', x: 1070, minX: 1070, maxX: 1070 },
-      { template: 'moc_nhan', x: 1190, minX: 1190, maxX: 1190 },
-      { template: 'khung_long', x: 1580, minX: 1480, maxX: 1700 },
-      { template: 'khung_long', x: 1850, minX: 1720, maxX: 1980 },
-      { template: 'khung_long', x: 2120, minX: 1990, maxX: 2260 }
+      { template: 'moc_nhan', x: 950, minX: 950, maxX: 950 },
+      { template: 'khung_long', x: 1050, minX: 1000, maxX: 1100 },
+      { template: 'khung_long', x: 1150, minX: 1100, maxX: 1200 }
     ]
   },
 
-  // [2] Vách Núi Aru (Nối Làng Aru & NPC Calích đi Tương Lai)
+  // [2] Vách Núi Aru (toriMapId: 42)
   {
-    id: 2, key: 'vach_nui_aru', name: 'Vách Núi Aru', region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'cliff_earth',
-    width: 1900, height: 820, defaultSpawn: { x: 1810, y: 175 },
-    hitboxes: [{ x: -80, y: 0, w: 2120, h: 175 }],
-    waypoints: [wpRight('wp_2_1', 'Làng Aru', 1900, 1, 65, 175)],
+    id: 2, key: 'vach_nui_aru', name: 'Vách Núi Aru', toriMapId: 42, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'cliff_earth',
+    width: 1440, height: 576, defaultSpawn: { x: 1380, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1540, h: 144 }],
+    waypoints: [wpRight('wp_2_1', 'Làng Aru', 1440, 1, 60, 144)],
     npcs: [
-      { id: 'calich', name: 'Calích (Tương Lai)', kind: 'sprite', x: 320, y: 175, tex: 'nhanvat/npc/npc_calich.png', scale: 0.56 }
+      { id: 'calich', name: 'Calích (Tương Lai)', kind: 'sprite', x: 320, y: 144, tex: 'nhanvat/npc/npc_calich.png', scale: 0.56 }
     ],
     monsters: [
-      { template: 'khung_long_bay', x: 1420, minX: 1260, maxX: 1580 },
-      { template: 'khung_long_bay', x: 1020, minX: 860, maxX: 1180 },
-      { template: 'khung_long_bay', x: 680, minX: 540, maxX: 820 }
+      { template: 'khung_long_bay', x: 1200, minX: 1060, maxX: 1380 },
+      { template: 'khung_long_bay', x: 800, minX: 660, maxX: 980 }
     ]
   },
 
@@ -936,21 +933,17 @@ export const MAPS_CONFIG = [
     monsters: []
   },
 
-  // [4] Đồi Hoa Cúc (Map rừng 1/4 — Có Thầy Quyết Pha Lê đứng trên mỏm đá cao!)
+  // [4] Đồi Hoa Cúc (Map rừng 1/4 — toriMapId: 1)
   {
     id: 4, key: 'doi_hoa_cuc', name: 'Đồi Hoa Cúc', toriMapId: 1, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'doi_hoa_cuc',
-    width: 2976, height: 1000, defaultSpawn: { x: 65, y: 175 },
-    hitboxes: [
-      { x: -200, y: -134, w: 1064, h: 309 },
-      { x: 864, y: -134, w: 864, h: 261 },
-      { x: 1728, y: -134, w: 1450, h: 357 }
-    ],
+    width: 1536, height: 576, defaultSpawn: { x: 65, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1636, h: 144 }],
     waypoints: [
-      wpLeft('wp_4_1', 'Làng Aru', 1, 2335, 175),
-      { ...wpRight('wp_4_5', 'Thung lũng tre', 2976, 5, 65, 175), signRect: { x: 2736, y: 340, w: 230, h: 60 } }
+      wpLeft('wp_4_1', 'Làng Aru', 1, 1200, 144),
+      { ...wpRight('wp_4_5', 'Thung lũng tre', 1536, 5, 65, 144), signRect: { x: 1400, y: 144, w: 120, h: 40 } }
     ],
     npcs: [
-      { id: 'thay_hieu', name: 'Thầy Quyết Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 2260, y: 223 }
+      { id: 'thay_hieu', name: 'Thầy Quyết Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 468, y: 144 }
     ],
     monsters: [
       { template: 'khung_long', x: 340, minX: 220, maxX: 480 },
