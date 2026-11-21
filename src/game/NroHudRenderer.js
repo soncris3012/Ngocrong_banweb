@@ -1341,19 +1341,19 @@ export class NroHudRenderer {
     if (!t) return;
     if (t.targetKind === 'monster' && t.dead) return;
 
-    const bw = 216;
-    const bh = 38;
-    const bx = (this.vw - bw) / 2;
-    const by = 564;
-
-    this.fillRectGdx(ctx, bx, by, bw, bh, 'rgba(69, 26, 3, 0.85)', '#f59e0b', 2);
-    this.drawText(ctx, t.name, bx + bw / 2, by + 23, {
-      size: 11.5,
-      color: t.isBoss ? '#fca5a5' : '#fde047',
-      align: 'center'
-    });
-
     if (t.targetKind === 'monster') {
+      const bw = 216;
+      const bh = 38;
+      const bx = (this.vw - bw) / 2;
+      const by = 564;
+
+      this.fillRectGdx(ctx, bx, by, bw, bh, 'rgba(69, 26, 3, 0.85)', '#f59e0b', 2);
+      this.drawText(ctx, t.name, bx + bw / 2, by + 23, {
+        size: 11.5,
+        color: t.isBoss ? '#fca5a5' : '#fde047',
+        align: 'center'
+      });
+
       const ratio = t.maxHp > 0 ? Math.max(0, t.hp / t.maxHp) : 0;
       this.fillRectGdx(ctx, bx + 14, by + 6, bw - 28, 11, '#1f2937', '#000000', 1);
       this.fillRectGdx(ctx, bx + 15, by + 7, (bw - 30) * ratio, 9, '#dc2626', null);
@@ -1363,9 +1363,16 @@ export class NroHudRenderer {
         align: 'center'
       });
     } else {
-      this.drawText(ctx, 'Nhấn [Space] hoặc Click để giao tiếp', bx + bw / 2, by + 8, {
-        size: 9.5,
-        color: '#bbf7d0',
+      // NPC / Tàu vũ trụ: Khung tên mục tiêu gọn gàng chuẩn nguyên bản Dragon Boy
+      const bw = Math.max(128, t.name.length * 10.5 + 28);
+      const bh = 26;
+      const bx = (this.vw - bw) / 2;
+      const by = 574;
+
+      this.fillRectGdx(ctx, bx, by, bw, bh, 'rgba(69, 26, 3, 0.85)', '#f59e0b', 1.8);
+      this.drawText(ctx, t.name, bx + bw / 2, by + 7, {
+        size: 11.5,
+        color: '#fde047',
         align: 'center'
       });
     }

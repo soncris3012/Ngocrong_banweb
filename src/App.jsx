@@ -337,11 +337,6 @@ export function App() {
                 style={{ width: `${loadPercent}%` }}
               />
             </div>
-            {totalCount > 0 && (
-              <p className="text-[11px] text-gray-400 mt-2 font-mono">
-                {loadedCount} / {totalCount} tệp tin
-              </p>
-            )}
           </div>
         )}
 
