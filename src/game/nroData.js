@@ -824,23 +824,23 @@ export const MONSTER_TEMPLATES = {
 };
 
 // Helper tạo nhanh Waypoint rìa trái / rìa phải / cửa giữa chuẩn NRO
-function wpLeft(id, label, targetMapId, targetX = 1820, targetY = 175) {
+function wpLeft(id, label, targetMapId, targetX = 1400, targetY = 144) {
   return {
     id, label, kind: 'left_edge',
-    signRect: { x: 10, y: 300, w: 230, h: 60 },
-    showRangeX: [-120, 310],
-    edgeTriggerX: [-200, 12],
+    signRect: { x: 10, y: 220, w: 120, h: 36 },
+    showRangeX: [-50, 100],
+    edgeTriggerX: [-50, 24],
     groundGlowX: 16,
     targetMapId, targetX, targetY
   };
 }
 
-function wpRight(id, label, mapWidth, targetMapId, targetX = 65, targetY = 175) {
+function wpRight(id, label, mapWidth, targetMapId, targetX = 60, targetY = 144) {
   return {
     id, label, kind: 'right_edge',
-    signRect: { x: mapWidth - 240, y: 300, w: 230, h: 60 },
-    showRangeX: [mapWidth - 380, mapWidth + 160],
-    edgeTriggerX: [mapWidth - 12, mapWidth + 180],
+    signRect: { x: mapWidth - 130, y: 220, w: 120, h: 36 },
+    showRangeX: [mapWidth - 100, mapWidth + 50],
+    edgeTriggerX: [mapWidth - 24, mapWidth + 50],
     groundGlowX: mapWidth - 16,
     targetMapId, targetX, targetY
   };
@@ -849,9 +849,9 @@ function wpRight(id, label, mapWidth, targetMapId, targetX = 65, targetY = 175) 
 function wpDoor(id, label, centerX, signY, targetMapId, targetX, targetY) {
   return {
     id, label, kind: 'door',
-    signRect: { x: centerX - 115, y: signY, w: 230, h: 60 },
-    showRangeX: [centerX - 180, centerX + 180],
-    doorRangeX: [centerX - 110, centerX + 110],
+    signRect: { x: centerX - 60, y: signY, w: 120, h: 36 },
+    showRangeX: [centerX - 60, centerX + 60],
+    doorRangeX: [centerX - 45, centerX + 45],
     groundGlowX: centerX,
     targetMapId, targetX, targetY
   };
@@ -867,7 +867,7 @@ export const MAPS_CONFIG = [
     width: 768, height: 480, defaultSpawn: { x: 348, y: 144 },
     hitboxes: [{ x: -50, y: 0, w: 868, h: 144 }],
     waypoints: [
-      { ...wpDoor('wp_0_1', 'Làng Aru', 500, 200, 1, 320, 144), edgeTriggerX: [720, 780] }
+      { ...wpDoor('wp_0_1', 'Làng Aru', 492, 220, 1, 372, 144), edgeTriggerX: [720, 780] }
     ],
     npcs: [
       { id: 'ruong_do', name: 'Rương Đồ', kind: 'chest', x: 84, y: 144, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
@@ -882,12 +882,12 @@ export const MAPS_CONFIG = [
   // [1] Làng Aru (toriMapId: 0)
   {
     id: 1, key: 'lang_aru', name: 'Làng Aru', toriMapId: 0, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'lang_aru',
-    width: 1248, height: 576, defaultSpawn: { x: 320, y: 144 },
+    width: 1248, height: 576, defaultSpawn: { x: 372, y: 144 },
     hitboxes: [{ x: -50, y: 0, w: 1348, h: 144 }],
     waypoints: [
       wpLeft('wp_1_2', 'Vách núi Aru', 2, 1380, 144),
-      wpDoor('wp_1_3', 'Trạm Tàu Vũ Trụ', 180, 200, 3, 520, 144),
-      wpDoor('wp_1_0', 'Nhà Gôhan', 320, 200, 0, 480, 144),
+      wpDoor('wp_1_3', 'Trạm Tàu Vũ Trụ', 180, 220, 3, 230, 144),
+      wpDoor('wp_1_0', 'Nhà Gôhan', 324, 220, 0, 444, 144),
       wpRight('wp_1_4', 'Đồi hoa cúc', 1248, 4, 60, 144)
     ],
     npcs: [
@@ -919,16 +919,16 @@ export const MAPS_CONFIG = [
     ]
   },
 
-  // [3] Trạm Tàu Vũ Trụ Trái Đất
+  // [3] Trạm Tàu Vũ Trụ Trái Đất (toriMapId: 24)
   {
     id: 3, key: 'tram_tau_traidat', name: 'Trạm Tàu Vũ Trụ Trái Đất', toriMapId: 24, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'spaceport_earth',
-    width: 1600, height: 820, defaultSpawn: { x: 520, y: 175 },
-    hitboxes: [{ x: -80, y: 0, w: 1820, h: 175 }],
-    waypoints: [wpRight('wp_3_1', 'Làng Aru', 1600, 1, 220, 175)],
+    width: 768, height: 480, defaultSpawn: { x: 230, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 868, h: 144 }],
+    waypoints: [wpDoor('wp_3_1', 'Làng Aru', 228, 220, 1, 180, 144)],
     npcs: [
-      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Trái Đất', kind: 'spaceship', x: 420, y: 175, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' },
-      { id: 'ruong_do', name: 'Rương Đồ Trạm', kind: 'chest', x: 680, y: 175, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
-      { id: 'admin_thanhle', name: 'Kỹ Sư Đạt (Tiếp Tế)', kind: 'modular', folder: 'admin_thanhle', x: 860, y: 175 }
+      { id: 'tau_vu_tru', name: 'Tàu Vũ Trụ Trái Đất', kind: 'spaceship', x: 420, y: 144, tex: 'vatpham/taubay/myTexture2dmaybay4b.png' },
+      { id: 'ruong_do', name: 'Rương Đồ Trạm', kind: 'chest', x: 680, y: 144, tex: 'nhanvat/npc/ruong_do/1.png', avt: 'nhanvat/npc/ruong_do/avt_ruong.png' },
+      { id: 'admin_thanhle', name: 'Kỹ Sư Đạt (Tiếp Tế)', kind: 'modular', folder: 'admin_thanhle', x: 560, y: 144 }
     ],
     monsters: []
   },
@@ -936,11 +936,11 @@ export const MAPS_CONFIG = [
   // [4] Đồi Hoa Cúc (Map rừng 1/4 — toriMapId: 1)
   {
     id: 4, key: 'doi_hoa_cuc', name: 'Đồi Hoa Cúc', toriMapId: 1, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'doi_hoa_cuc',
-    width: 1536, height: 576, defaultSpawn: { x: 65, y: 144 },
+    width: 1536, height: 576, defaultSpawn: { x: 60, y: 144 },
     hitboxes: [{ x: -50, y: 0, w: 1636, h: 144 }],
     waypoints: [
       wpLeft('wp_4_1', 'Làng Aru', 1, 1200, 144),
-      { ...wpRight('wp_4_5', 'Thung lũng tre', 1536, 5, 65, 144), signRect: { x: 1400, y: 144, w: 120, h: 40 } }
+      wpRight('wp_4_5', 'Thung lũng tre', 1536, 5, 60, 144)
     ],
     npcs: [
       { id: 'thay_hieu', name: 'Thầy Quyết Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 468, y: 144 }
@@ -949,38 +949,36 @@ export const MAPS_CONFIG = [
       { template: 'khung_long', x: 340, minX: 220, maxX: 480 },
       { template: 'khung_long', x: 650, minX: 520, maxX: 800 },
       { template: 'lon_loi', x: 1060, minX: 910, maxX: 1220 },
-      { template: 'lon_loi', x: 1420, minX: 1250, maxX: 1620 },
-      { template: 'lon_loi', x: 2040, minX: 1860, maxX: 2220 },
-      { template: 'lon_loi', x: 2480, minX: 2300, maxX: 2680 }
+      { template: 'lon_loi', x: 1420, minX: 1250, maxX: 1500 }
     ]
   },
 
-  // [5] Thung Lũng Tre (Map rừng 2/4)
+  // [5] Thung Lũng Tre (Map rừng 2/4 — toriMapId: 2)
   {
     id: 5, key: 'thung_lung_tre', name: 'Thung Lũng Tre', toriMapId: 2, bgID: 0, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
-    width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
-    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    width: 1248, height: 576, defaultSpawn: { x: 60, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1348, h: 144 }],
     waypoints: [
-      wpLeft('wp_5_4', 'Đồi hoa cúc', 4, 2900, 223),
-      wpRight('wp_5_6', 'Rừng nấm', 1950, 6, 65, 175)
+      wpLeft('wp_5_4', 'Đồi hoa cúc', 4, 1476, 144),
+      wpDoor('wp_5_3', 'Trạm tàu vũ trụ', 588, 220, 3, 230, 144),
+      wpRight('wp_5_6', 'Rừng nấm', 1248, 6, 60, 144)
     ],
     npcs: [],
     monsters: [
       { template: 'lon_loi', x: 420, minX: 280, maxX: 580 },
       { template: 'khung_long_me', x: 840, minX: 680, maxX: 1000 },
-      { template: 'khung_long_me', x: 1240, minX: 1080, maxX: 1400 },
-      { template: 'khung_long_me', x: 1600, minX: 1440, maxX: 1760 }
+      { template: 'khung_long_me', x: 1100, minX: 1000, maxX: 1200 }
     ]
   },
 
-  // [6] Rừng Nấm (Map rừng 3/4)
+  // [6] Rừng Nấm (Map rừng 3/4 — toriMapId: 3)
   {
     id: 6, key: 'rung_nam', name: 'Rừng Nấm', toriMapId: 3, bgID: 1, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'forest_earth',
-    width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
-    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    width: 1632, height: 552, defaultSpawn: { x: 60, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1732, h: 144 }],
     waypoints: [
-      wpLeft('wp_6_5', 'Thung lũng tre', 5, 1880, 175),
-      wpRight('wp_6_7', 'Rừng xương', 1950, 7, 65, 175)
+      wpLeft('wp_6_5', 'Thung lũng tre', 5, 1188, 144),
+      wpRight('wp_6_7', 'Rừng xương', 1632, 7, 60, 144)
     ],
     npcs: [],
     monsters: [
@@ -990,58 +988,53 @@ export const MAPS_CONFIG = [
     ]
   },
 
-  // [7] Rừng Xương (Map rừng 4/4 nối vào Đảo Kame!)
+  // [7] Rừng Xương (Map rừng 4/4 nối vào Đảo Kame! — toriMapId: 4)
   {
     id: 7, key: 'rung_xuong', name: 'Rừng Xương', toriMapId: 4, bgID: 1, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'cliff_earth',
-    width: 1950, height: 840, defaultSpawn: { x: 65, y: 175 },
-    hitboxes: [{ x: -160, y: 0, w: 2280, h: 175 }],
+    width: 1632, height: 504, defaultSpawn: { x: 60, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1732, h: 144 }],
     waypoints: [
-      wpLeft('wp_7_6', 'Rừng nấm', 6, 1880, 175),
-      wpRight('wp_7_8', 'Đảo Kame', 1950, 8, 65, 175)
+      wpLeft('wp_7_6', 'Rừng nấm', 6, 1572, 144),
+      wpRight('wp_7_8', 'Đảo Kame', 1632, 8, 60, 144)
     ],
     npcs: [],
     monsters: [
       { template: 'quy_xuong', x: 480, minX: 320, maxX: 640 },
       { template: 'quy_xuong', x: 960, minX: 800, maxX: 1120 },
-      { template: 'quy_xuong', x: 1440, minX: 1280, maxX: 1620 }
+      { template: 'quy_xuong', x: 1440, minX: 1280, maxX: 1560 }
     ]
   },
 
-  // [8] Đảo Kame (Trung tâm giao lộ: Rừng Xương ← Đảo Kame → Nam Kame, nhánh Bắc lên Đông Karin & Phó bản Kho Báu!)
+  // [8] Đảo Kame (toriMapId: 5)
   {
     id: 8, key: 'dao_kame', name: 'Đảo Kame', toriMapId: 5, bgID: 2, region: 'Trái Đất', planetTheme: 'traidat', renderStyle: 'dao_kame',
-    width: 2100, height: 840, defaultSpawn: { x: 340, y: 175 },
-    hitboxes: [{ x: -160, y: 0, w: 2420, h: 175 }],
+    width: 1728, height: 600, defaultSpawn: { x: 340, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1828, h: 144 }],
     waypoints: [
-      wpLeft('wp_8_7', 'Rừng xương', 7, 1880, 175),
-      wpDoor('wp_8_9', 'Đông Karin', 1120, 315, 9, 1720, 175),
-      wpRight('wp_8_15', 'Nam Kame', 2100, 15, 65, 175)
+      wpLeft('wp_8_7', 'Rừng xương', 7, 1572, 144),
+      wpDoor('wp_8_9', 'Đông Karin', 1120, 220, 9, 60, 144),
+      wpRight('wp_8_15', 'Nam Kame', 1728, 15, 60, 144)
     ],
     npcs: [
-      { id: 'quy_lao_kame', name: 'Quy Lão Kame', kind: 'sprite', x: 430, y: 175, tex: 'nhanvat/npc/quy_lao_kame.png', scale: 0.54 },
-      { id: 'thay_hieu', name: 'Thầy Quyết Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 720, y: 175 },
-      { id: 'admin_thanhle', name: 'Chủ Tiệm Bảo (Đảo)', kind: 'modular', folder: 'admin_thanhle', x: 1420, y: 175 }
+      { id: 'quy_lao_kame', name: 'Quy Lão Kame', kind: 'sprite', x: 430, y: 144, tex: 'nhanvat/npc/quy_lao_kame.png', scale: 0.54 },
+      { id: 'thay_hieu', name: 'Thầy Quyết Pha Lê', kind: 'modular', folder: 'thay_hieu', x: 720, y: 144 },
+      { id: 'admin_thanhle', name: 'Chủ Tiệm Bảo (Đảo)', kind: 'modular', folder: 'admin_thanhle', x: 1420, y: 144 }
     ],
     monsters: []
   },
 
-  // [9] Đông Karin (Nối Đảo Kame ↔ Rừng Karin & Phó bản Doanh Trại Độc Nhãn)
+  // [9] Đông Karin (toriMapId: 6)
   {
     id: 9, key: 'dong_karin', name: 'Đông Karin', toriMapId: 6, bgID: 3, region: 'Thần Giới & Karin', planetTheme: 'traidat', renderStyle: 'forest_earth',
-    width: 1900, height: 840, defaultSpawn: { x: 1680, y: 175 },
-    hitboxes: [{ x: -160, y: 0, w: 2220, h: 175 }],
+    width: 1248, height: 480, defaultSpawn: { x: 60, y: 144 },
+    hitboxes: [{ x: -50, y: 0, w: 1348, h: 144 }],
     waypoints: [
-      wpLeft('wp_9_10', 'Rừng Karin', 10, 1980, 175),
-      wpDoor('wp_9_34', 'Doanh Trại Độc Nhãn', 950, 315, 34, 120, 175),
-      wpRight('wp_9_8', 'Đảo Kame', 1900, 8, 1120, 175)
+      wpLeft('wp_9_8', 'Đảo Kame', 8, 1120, 144)
     ],
     npcs: [
-      { id: 'linh_doc_nhan', name: 'Tướng Quân Khánh', kind: 'modular', folder: 'admin_dungle', x: 820, y: 175 }
+      { id: 'linh_doc_nhan', name: 'Tướng Quân Khánh', kind: 'modular', folder: 'admin_dungle', x: 820, y: 144 }
     ],
-    monsters: [
-      { template: 'quy_xuong', x: 460, minX: 300, maxX: 620 },
-      { template: 'quy_xuong', x: 1360, minX: 1200, maxX: 1520 }
-    ]
+    monsters: []
   },
 
   // [10] Rừng Karin (Chân Tháp Karin ở chính giữa x=1000!)
