@@ -78,6 +78,7 @@ export class NroHudRenderer {
     this.selectedBagIdx = -1;
     this.selectedEquipSlot = null;
     this.selectedSkillIdx = 0;
+    this.functionSubView = 'main'; // 'main' | 'capsule'
 
     // Trạng thái Cửa Hàng / Rương Đồ / Pha Lê / Gacha / Bảng Xếp Hạng / Sơ Đồ Thế Giới / Từ Điển DataNRO
     this.activePanel = null; // null | 'SHOP' | 'CHEST' | 'CRYSTAL' | 'GACHA' | 'LEADERBOARD' | 'WORLD_MAP' | 'DATANRO_WIKI'
@@ -1660,18 +1661,19 @@ export class NroHudRenderer {
       );
       this.drawText(ctx, tabs[i], tx + 32.5, ty + 11, {
         size: 9.5,
-        color: active ? '#fef08a' : '#ffffff',
+        color: active ? '#14532d' : '#451a03',
+        bold: true,
         align: 'center'
       });
       this.addHit(`popup_tab_${i}`, tx, ty, 65, 30, () => {
         this.popupTab = i;
         this.selectedBagIdx = -1;
         this.selectedEquipSlot = null;
+        if (i === 4) this.functionSubView = 'main';
       });
     }
 
-    // Nền giấy da trong khung: ttluc.jpg (12, 12, 331, 438)
-    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', 12, 12, 331, 438);
+    // Nền giấy da tự nhiên trong popupnhanvat.jpg (#d9c8b4), hoàn toàn không vẽ ttluc.jpg đè lên!
 
     if (this.popupTab === 0) this.renderTabQuest(ctx);
     else if (this.popupTab === 1) this.renderTabBagAndStats(ctx);
@@ -1680,14 +1682,14 @@ export class NroHudRenderer {
     else if (this.popupTab === 4) this.renderTabFunctions(ctx);
   }
 
-  // --- TAB 0: NHIỆM VỤ CHUẨN HUDPopupRenderer.java (dòng 114-136) ---
+  // --- TAB 0: NHIỆM VỤ CHUẨN TEA MOBI DRAGON BOY (KHÔNG NỀN XANH, CHỮ NÂU ĐẬM/ĐỎ TRÊN GIẤY DA) ---
   renderTabQuest(ctx) {
     const p = this.engine.player;
     const quest = STORY_QUESTS.find((q) => q.id === p.questId);
 
     if (!quest) {
       this.drawText(ctx, 'Hoàn thành cốt truyện!', 177, 420, {
-        size: 14, color: '#fef08a', align: 'center'
+        size: 14, color: '#78350f', bold: true, align: 'center'
       });
       this.drawWrappedText(
         ctx,
@@ -1696,64 +1698,75 @@ export class NroHudRenderer {
         385,
         305,
         20,
-        { size: 11.5, color: '#ffffff', stroke: '#000000', strokeWidth: 2, bold: false }
+        { size: 11.5, color: '#292524', bold: false }
       );
       return;
     }
 
     if (quest.era) {
-      this.drawText(ctx, quest.era, 177, 434, {
-        size: 10, color: '#67e8f9', align: 'center'
+      this.drawText(ctx, quest.era, 177, 436, {
+        size: 10, color: '#78350f', bold: true, align: 'center'
       });
     }
-    this.drawText(ctx, quest.title, 177, 415, {
-      size: 13.5, color: '#fde047', align: 'center'
+    this.drawText(ctx, quest.title, 177, 416, {
+      size: 13.5, color: '#991b1b', bold: true, align: 'center'
     });
 
-    // Các phần nhiệm vụ: đã xong (xanh lá), đang làm (vàng sáng kèm tiến độ), chưa mở ("- ...")
+    // Đường gạch chỉ phân cách dưới tiêu đề nhiệm vụ
+    ctx.strokeStyle = 'rgba(120, 53, 15, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(35, 610 - 406);
+    ctx.lineTo(320, 610 - 406);
+    ctx.stroke();
+
+    // Các phần nhiệm vụ: đã xong (xanh lá đậm), đang làm (đỏ đậm kèm tiến độ), chưa mở ("- ...")
     const curStepIdx = p.questStep || 0;
-    let curY = 384;
+    let curY = 388;
     for (let i = 0; i < quest.steps.length; i++) {
       const st = quest.steps[i];
       const isTalkStep = st.type === 'talk' || st.type === 'talk_elder' || st.type === 'talk_master';
       if (i < curStepIdx) {
-        const doneTxt = st.count > 1 ? `- ${st.text} (${st.count}/${st.count})` : `- ${st.text} (Xong)`;
-        this.drawText(ctx, doneTxt, 20, curY, { size: 10.5, color: '#86efac' });
-        curY -= 22;
+        const doneTxt = st.count > 1 ? `✔ - ${st.text} (${st.count}/${st.count})` : `✔ - ${st.text} (Xong)`;
+        this.drawText(ctx, doneTxt, 22, curY, { size: 10.5, color: '#15803d', bold: true });
+        curY -= 20;
       } else if (i === curStepIdx) {
         const activeTxt = isTalkStep
-          ? `- ${st.text}`
-          : `- ${st.text} (${Math.min(p.questProgress, st.count)}/${st.count})`;
-        this.drawText(ctx, activeTxt, 20, curY, { size: 10.5, color: '#fef08a' });
-        curY -= 22;
+          ? `▶ - ${st.text}`
+          : `▶ - ${st.text} (${Math.min(p.questProgress, st.count)}/${st.count})`;
+        this.drawText(ctx, activeTxt, 22, curY, { size: 10.5, color: '#b91c1c', bold: true });
+        curY -= 20;
       } else {
-        this.drawText(ctx, '- ...', 20, curY, { size: 10.5, color: '#cbd5e1' });
-        curY -= 22;
+        this.drawText(ctx, '- ...', 22, curY, { size: 10.5, color: '#78716c' });
+        curY -= 20;
         break;
       }
     }
 
-    // Đoạn mô tả chi tiết & phần thưởng bên dưới đúng chuẩn HUDPopupRenderer.java dòng 124-136
-    curY -= 10;
+    // Đoạn mô tả chi tiết & cốt truyện (chữ đen/nâu sắc nét trên nền giấy da)
+    curY -= 6;
     const descParts = String(quest.desc || '').split('\n');
     for (let i = 0; i < descParts.length; i++) {
-      curY = this.drawWrappedText(ctx, descParts[i], 22, curY, 308, 19, {
-        size: 11.5, color: '#ffffff', stroke: '#000000', strokeWidth: 2, bold: false
+      curY = this.drawWrappedText(ctx, descParts[i], 22, curY, 308, 18, {
+        size: 11, color: '#292524', bold: false
       });
       curY -= 4;
     }
 
-    // Tóm tắt thưởng rõ ràng ở cuối khung
-    this.fillRectGdx(ctx, 20, 26, 315, 76, 'rgba(15, 23, 42, 0.78)', '#f59e0b', 1.5);
-    this.drawText(ctx, 'Phần thưởng khi báo cáo hoàn thành:', 30, 82, { size: 11, color: '#fde047' });
+    // Khung phần thưởng giấy da viền gỗ cổ điển ở cuối khung
+    this.fillRectGdx(ctx, 18, 18, 319, 78, '#cbb396', '#78350f', 1.5);
+    this.drawText(ctx, 'Phần thưởng khi hoàn thành:', 28, 76, { size: 10.5, color: '#78350f', bold: true });
     const itemReward = quest.reward.item ? ITEM_CATALOG[quest.reward.item]?.name : '';
-    this.drawText(ctx, `+ ${formatNroNum(quest.reward.power)} Sức mạnh & Tiềm năng`, 30, 62, { size: 10.5, color: '#86efac' });
+    this.drawText(ctx, `+ ${formatNroNum(quest.reward.power)} Sức mạnh & Tiềm năng`, 28, 56, {
+      size: 10, color: '#15803d', bold: true
+    });
+    this.drawTex(ctx, 'hud/giaodientrong/vang.png', 28, 33, 16, 14);
     this.drawText(
       ctx,
       `+ ${formatNroNum(quest.reward.gold)} Vàng${itemReward ? `  |  [${itemReward}]` : ''}`,
-      30,
-      42,
-      { size: 10.5, color: '#67e8f9' }
+      48,
+      35,
+      { size: 10, color: '#b45309', bold: true }
     );
   }
 
@@ -1773,10 +1786,10 @@ export class NroHudRenderer {
       const row = statRows[i];
       const ry = 418 - i * 26;
       this.drawTex(ctx, 'hud/giaodientrong/ochiso.png', 20, ry, 232, 23);
-      this.drawText(ctx, row.label, 28, ry + 7, { size: 10.5, color: '#fef08a' });
+      this.drawText(ctx, row.label, 28, ry + 7, { size: 10.5, color: '#451a03', bold: true });
 
       this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', 258, ry, 76, 23);
-      this.drawText(ctx, row.gain, 296, ry + 7, { size: 9.5, color: '#86efac', align: 'center' });
+      this.drawText(ctx, row.gain, 296, ry + 7, { size: 9.5, color: '#15803d', bold: true, align: 'center' });
       this.addHit(`upg_stat_${row.key}`, 258, ry, 76, 23, () => {
         this.engine.upgradeBaseStat(row.key, row.cost);
       });
@@ -1796,7 +1809,7 @@ export class NroHudRenderer {
       { key: 'aura', label: 'Aura' }
     ];
 
-    this.drawText(ctx, 'Trang bị đang mặc:', 22, 326, { size: 10.5, color: '#7c2d12', stroke: null, strokeWidth: 0 });
+    this.drawText(ctx, 'Trang bị đang mặc:', 22, 326, { size: 10.5, color: '#78350f', bold: true });
     for (let i = 0; i < equipSlots.length; i++) {
       const col = i % 5;
       const row = Math.floor(i / 5);
@@ -1819,11 +1832,11 @@ export class NroHudRenderer {
         const def = ITEM_CATALOG[eqItem.id];
         if (def) this.drawTex(ctx, def.icon, ex + 11, ey + 5, 32, 30);
         if (eqItem.stars > 0) {
-          this.drawText(ctx, `${eqItem.stars}★`, ex + 4, ey + 5, { size: 8.5, color: '#67e8f9' });
+          this.drawText(ctx, `${eqItem.stars}★`, ex + 4, ey + 5, { size: 8.5, color: '#0284c7', bold: true });
         }
       } else {
         this.drawText(ctx, slotInfo.label, ex + 27, ey + 15, {
-          size: 8.5, color: '#78350f', stroke: null, strokeWidth: 0, align: 'center'
+          size: 8.5, color: '#854d0e', bold: true, align: 'center'
         });
       }
 
@@ -1838,7 +1851,7 @@ export class NroHudRenderer {
 
     // 3. Lưới Hành Trang 20 ô (5 cột x 4 hàng dùng ohanhtrang.jpg)
     this.drawText(ctx, `Túi hành trang (${p.bag.length}/20):`, 22, 224, {
-      size: 10.5, color: '#7c2d12', stroke: null, strokeWidth: 0
+      size: 10.5, color: '#78350f', bold: true
     });
 
     for (let idx = 0; idx < 20; idx++) {
@@ -1863,10 +1876,10 @@ export class NroHudRenderer {
         if (def) {
           this.drawTex(ctx, def.icon, bx + 11, by + 4, 32, 30);
           if (item.qty && item.qty > 1) {
-            this.drawText(ctx, `x${item.qty}`, bx + 50, by + 5, { size: 8.5, color: '#fde047', align: 'right' });
+            this.drawText(ctx, `x${item.qty}`, bx + 50, by + 5, { size: 8.5, color: '#78350f', bold: true, align: 'right' });
           }
           if (item.stars > 0) {
-            this.drawText(ctx, `${item.stars}★`, bx + 4, by + 5, { size: 8.5, color: '#67e8f9' });
+            this.drawText(ctx, `${item.stars}★`, bx + 4, by + 5, { size: 8.5, color: '#0284c7', bold: true });
           }
         }
       }
@@ -1886,22 +1899,22 @@ export class NroHudRenderer {
       const bagItem = p.bag[this.selectedBagIdx];
       const def = ITEM_CATALOG[bagItem.id];
       if (def) {
-        this.fillRectGdx(ctx, 18, 16, 319, 36, 'rgba(30, 41, 59, 0.95)', '#f59e0b', 1.5);
-        this.drawText(ctx, def.name, 26, 37, { size: 10, color: '#fde047' });
-        this.drawText(ctx, def.desc.slice(0, 42), 26, 22, { size: 8.5, color: '#e2e8f0', bold: false });
+        this.fillRectGdx(ctx, 18, 16, 319, 36, '#cbb396', '#78350f', 1.5);
+        this.drawText(ctx, def.name, 26, 37, { size: 10, color: '#78350f', bold: true });
+        this.drawText(ctx, def.desc.slice(0, 42), 26, 22, { size: 8.5, color: '#292524', bold: false });
 
         const actionLabel = def.slot === 'dragonball'
           ? 'Gọi Rồng'
           : (this.activePanel === 'CHEST' ? 'Cất Rương' : 'Sử Dụng');
 
         this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 252, 20, 80, 28);
-        this.drawText(ctx, actionLabel, 292, 30, { size: 9.5, color: '#fef08a', align: 'center' });
+        this.drawText(ctx, actionLabel, 292, 30, { size: 9.5, color: '#14532d', bold: true, align: 'center' });
         this.addHit('btn_use_bag_item', 252, 20, 80, 28, () => {
           if (this.activePanel === 'CHEST') {
             p.chest.push(bagItem);
             p.bag.splice(this.selectedBagIdx, 1);
             this.selectedBagIdx = -1;
-            this.pushBanner(`Đã cất [${def.name}] vào Rương Đồ!`, '#86efac');
+            this.pushBanner(`Đã cất [${def.name}] vào Rương Đồ!`, '#15803d');
           } else if (def.slot === 'dragonball') {
             this.trySummonShenron();
           } else {
@@ -1914,10 +1927,10 @@ export class NroHudRenderer {
       const eqItem = p.equipped[this.selectedEquipSlot];
       const def = ITEM_CATALOG[eqItem.id];
       if (def) {
-        this.fillRectGdx(ctx, 18, 16, 319, 36, 'rgba(30, 41, 59, 0.95)', '#38bdf8', 1.5);
-        this.drawText(ctx, `${def.name} (+${eqItem.stars || 0} Sao)`, 26, 36, { size: 10, color: '#67e8f9' });
+        this.fillRectGdx(ctx, 18, 16, 319, 36, '#cbb396', '#78350f', 1.5);
+        this.drawText(ctx, `${def.name} (+${eqItem.stars || 0} Sao)`, 26, 36, { size: 10, color: '#78350f', bold: true });
         this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', 252, 20, 80, 28);
-        this.drawText(ctx, 'Tháo Ra', 292, 30, { size: 9.5, color: '#ffffff', align: 'center' });
+        this.drawText(ctx, 'Tháo Ra', 292, 30, { size: 9.5, color: '#451a03', bold: true, align: 'center' });
         this.addHit('btn_unequip_slot', 252, 20, 80, 28, () => {
           this.engine.unequipSlot(this.selectedEquipSlot);
           this.selectedEquipSlot = null;
@@ -1926,53 +1939,49 @@ export class NroHudRenderer {
     }
   }
 
-  // --- TAB 2: KỸ NĂNG HÀNH TINH CHUẨN HUDPopupRenderer.java (MỞ KHÓA THEO SỨC MẠNH & TIỀM NĂNG!) ---
+  // --- TAB 2: KỸ NĂNG HÀNH TINH (MỞ KHÓA THEO SỨC MẠNH & TIỀM NĂNG TRÊN NỀN GIẤY DA) ---
   renderTabSkills(ctx) {
     const p = this.engine.player;
     const planetKey = PLANET_DEFS[p.planet]?.key || 'traidat';
     const skills = PLANET_SKILLS[planetKey] || PLANET_SKILLS.traidat;
 
-    this.drawText(ctx, 'BÍ KÍP VÕ CÔNG HÀNH TINH', 177, 426, {
-      size: 12.5, color: '#fde047', align: 'center'
+    this.drawText(ctx, 'BÍ KÍP VÕ CÔNG HÀNH TINH', 177, 434, {
+      size: 12, color: '#78350f', bold: true, align: 'center'
     });
 
     for (let i = 0; i < skills.length; i++) {
       const sk = skills[i];
       const col = i % 3;
       const row = Math.floor(i / 3);
-      const sx = 24 + col * 104;
-      const sy = 362 - row * 68;
+      const sx = 22 + col * 105;
+      const sy = 370 - row * 66;
       const isSel = this.selectedSkillIdx === i;
       const lvl = p.skillLevels?.[sk.id] || 0;
       const unlocked = lvl >= 1;
 
-      this.fillRectGdx(
+      this.drawTex(
         ctx,
+        isSel ? 'hud/giaodientrong/oskillclick.png' : 'hud/giaodientrong/oskill.png',
         sx,
         sy,
-        96,
-        58,
-        unlocked
-          ? (isSel ? 'rgba(254, 240, 138, 0.95)' : 'rgba(255, 251, 235, 0.88)')
-          : (isSel ? 'rgba(51, 65, 85, 0.92)' : 'rgba(15, 23, 42, 0.78)'),
-        isSel ? '#f59e0b' : (unlocked ? '#92400e' : '#475569'),
-        1.5
+        100,
+        58
       );
 
       ctx.save();
-      if (!unlocked) ctx.globalAlpha = 0.36;
-      this.drawTex(ctx, sk.icon, sx + 6, sy + 14, 34, 34);
+      if (!unlocked) ctx.globalAlpha = 0.4;
+      this.drawTex(ctx, sk.icon, sx + 8, sy + 14, 32, 32);
       ctx.restore();
 
       if (unlocked) {
-        this.drawText(ctx, `Cấp ${lvl}`, sx + 44, sy + 34, { size: 9.5, color: '#b45309', stroke: null, strokeWidth: 0 });
-        this.drawText(ctx, sk.name.slice(0, 11), sx + 6, sy + 4, { size: 8.5, color: '#1e293b', stroke: null, strokeWidth: 0 });
+        this.drawText(ctx, `Cấp ${lvl}`, sx + 48, sy + 34, { size: 9.5, color: '#15803d', bold: true });
+        this.drawText(ctx, sk.name.slice(0, 11), sx + 8, sy + 6, { size: 8.5, color: '#451a03', bold: true });
       } else {
-        this.drawText(ctx, 'Chưa học', sx + 43, sy + 33, { size: 8.5, color: '#cbd5e1', stroke: null, strokeWidth: 0 });
-        this.drawText(ctx, sk.name.slice(0, 11), sx + 6, sy + 4, { size: 8.5, color: '#94a3b8', stroke: null, strokeWidth: 0 });
+        this.drawText(ctx, 'Chưa học', sx + 46, sy + 33, { size: 8.5, color: '#78716c', bold: false });
+        this.drawText(ctx, sk.name.slice(0, 11), sx + 8, sy + 6, { size: 8.5, color: '#78716c', bold: false });
       }
 
-      this.addHit(`sel_skill_${i}`, sx, sy, 96, 58, () => {
+      this.addHit(`sel_skill_${i}`, sx, sy, 100, 58, () => {
         this.selectedSkillIdx = i;
       });
     }
@@ -1981,37 +1990,36 @@ export class NroHudRenderer {
     if (!selSkill) return;
 
     const lvl = p.skillLevels?.[selSkill.id] || 0;
-    this.fillRectGdx(ctx, 22, 22, 311, 186, 'rgba(15, 23, 42, 0.94)', '#f59e0b', 1.5);
+    this.fillRectGdx(ctx, 18, 18, 319, 180, '#cbb396', '#78350f', 1.5);
 
     if (lvl < 1) {
-      // Kỹ năng chưa mở khóa chuẩn HUDPopupRenderer.java dòng 245-248!
       const reqSm = selSkill.reqPower || 0;
       const learnCost = selSkill.learnCost || 1500;
       const enoughSm = p.power >= reqSm;
       const enoughTn = p.potential >= learnCost;
 
-      this.drawText(ctx, `${selSkill.name} (Chưa mở khóa)`, 34, 186, { size: 11.5, color: '#fca5a5' });
-      this.drawWrappedText(ctx, selSkill.desc, 34, 166, 286, 15, { size: 9.8, color: '#e2e8f0', bold: false });
+      this.drawText(ctx, `${selSkill.name} (Chưa mở khóa)`, 28, 178, { size: 11.5, color: '#991b1b', bold: true });
+      this.drawWrappedText(ctx, selSkill.desc, 28, 158, 298, 15, { size: 9.8, color: '#292524', bold: false });
       this.drawText(
         ctx,
         `Yêu cầu Sức mạnh: ${formatNroNum(reqSm)}`,
-        34,
-        118,
-        { size: 10, color: enoughSm ? '#86efac' : '#f87171' }
+        28,
+        116,
+        { size: 10, color: enoughSm ? '#15803d' : '#991b1b', bold: true }
       );
       this.drawText(
         ctx,
         `Tiềm năng cần học: ${formatNroNum(learnCost)} TN`,
-        34,
-        98,
-        { size: 10, color: enoughTn ? '#fde047' : '#fca5a5' }
+        28,
+        96,
+        { size: 10, color: enoughTn ? '#b45309' : '#991b1b', bold: true }
       );
 
-      this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 52, 40, 250, 40);
-      this.drawText(ctx, `LĨNH HỘI BÍ KÍP (${formatNroNum(learnCost)} TN)`, 177, 56, {
-        size: 10.5, color: '#fef08a', align: 'center'
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 52, 38, 250, 40);
+      this.drawText(ctx, `LĨNH HỘI BÍ KÍP (${formatNroNum(learnCost)} TN)`, 177, 54, {
+        size: 10.5, color: '#14532d', bold: true, align: 'center'
       });
-      this.addHit('btn_learn_skill', 52, 40, 250, 40, () => {
+      this.addHit('btn_learn_skill', 52, 38, 250, 40, () => {
         if (p.power < reqSm) {
           this.pushBanner(`Cần đạt ${formatNroNum(reqSm)} Sức mạnh mới có thể học [${selSkill.name}]!`, '#fca5a5');
           return;
@@ -2023,30 +2031,30 @@ export class NroHudRenderer {
         p.potential -= learnCost;
         this.engine.unlockSkill(this.selectedSkillIdx);
         sound.playSuperSaiyan();
-        this.pushBanner(`Đã lĩnh hội thành công [${selSkill.name} Cấp 1] & tự gán vào thanh kỹ năng!`, '#86efac');
+        this.pushBanner(`Đã lĩnh hội thành công [${selSkill.name} Cấp 1] & tự gán vào thanh kỹ năng!`, '#15803d');
       });
       return;
     }
 
-    // Kỹ năng đã mở khóa -> Nâng cấp Cấp 1..maxPoint (Skill 9 tới Cấp 9!) & Gán vào ô phím 1..5
+    // Kỹ năng đã mở khóa
     const maxLv = selSkill.maxPoint || 7;
     const upgCost = lvl * 2000;
-    this.drawText(ctx, `${selSkill.name} (Cấp ${lvl}/${maxLv})`, 34, 188, { size: 11.5, color: '#fde047' });
+    this.drawText(ctx, `${selSkill.name} (Cấp ${lvl}/${maxLv})`, 28, 178, { size: 11.5, color: '#78350f', bold: true });
     if (selSkill.damInfo) {
-      this.drawText(ctx, selSkill.damInfo.slice(0, 44), 34, 170, { size: 9.2, color: '#86efac' });
+      this.drawText(ctx, selSkill.damInfo.slice(0, 44), 28, 160, { size: 9.5, color: '#15803d', bold: true });
     }
-    this.drawWrappedText(ctx, selSkill.desc, 34, 154, 286, 14, { size: 9.2, color: '#e2e8f0', bold: false });
-    this.drawText(ctx, `Hồi chiêu: ${selSkill.cd}s   |   Tiêu hao: ${selSkill.kiCost} KI`, 34, 122, {
-      size: 9.8, color: '#67e8f9'
+    this.drawWrappedText(ctx, selSkill.desc, 28, 144, 298, 14, { size: 9.2, color: '#292524', bold: false });
+    this.drawText(ctx, `Hồi chiêu: ${selSkill.cd}s   |   Tiêu hao: ${selSkill.kiCost} KI`, 28, 114, {
+      size: 9.8, color: '#0369a1', bold: true
     });
 
-    this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 34, 82, 165, 32);
-    this.drawText(ctx, lvl >= maxLv ? `Đã Tối Đa (Lv.${maxLv})` : `Nâng Cấp (${formatNroNum(upgCost)} TN)`, 116.5, 94, {
-      size: 9.5, color: '#fef08a', align: 'center'
+    this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 28, 74, 165, 32);
+    this.drawText(ctx, lvl >= maxLv ? `Đã Tối Đa (Lv.${maxLv})` : `Nâng Cấp (${formatNroNum(upgCost)} TN)`, 110.5, 86, {
+      size: 9.5, color: '#14532d', bold: true, align: 'center'
     });
-    this.addHit('btn_upg_skill', 34, 82, 165, 32, () => {
+    this.addHit('btn_upg_skill', 28, 74, 165, 32, () => {
       if (lvl >= maxLv) {
-        this.pushBanner(`Kỹ năng đã đạt cấp tối đa (Lv.${maxLv})!`, '#fde047');
+        this.pushBanner(`Kỹ năng đã đạt cấp tối đa (Lv.${maxLv})!`, '#78350f');
         return;
       }
       if (p.potential < upgCost) {
@@ -2056,18 +2064,18 @@ export class NroHudRenderer {
       p.potential -= upgCost;
       p.skillLevels[selSkill.id] = lvl + 1;
       sound.playHeal();
-      this.pushBanner(`Đã nâng [${selSkill.name}] lên Cấp ${lvl + 1}/${maxLv}! (+15% Uy lực)`, '#86efac');
+      this.pushBanner(`Đã nâng [${selSkill.name}] lên Cấp ${lvl + 1}/${maxLv}! (+15% Uy lực)`, '#15803d');
     });
 
-    this.drawText(ctx, 'Gán vào ô phím tắt:', 34, 62, { size: 10, color: '#cbd5e1' });
+    this.drawText(ctx, 'Gán vào phím tắt:', 28, 54, { size: 10, color: '#78350f', bold: true });
     for (let slot = 0; slot < 5; slot++) {
-      const bx = 34 + slot * 56;
-      const by = 28;
-      this.drawTex(ctx, 'hud/giaodientrong/oskill.png', bx, by, 44, 28);
-      this.drawText(ctx, `Ô ${slot + 1}`, bx + 22, by + 9, { size: 9.5, color: '#fde047', align: 'center' });
-      this.addHit(`assign_skill_slot_${slot}`, bx, by, 44, 28, () => {
+      const bx = 28 + slot * 58;
+      const by = 22;
+      this.drawTex(ctx, 'hud/giaodientrong/oskill.png', bx, by, 48, 28);
+      this.drawText(ctx, `Phím ${slot + 1}`, bx + 24, by + 9, { size: 9, color: '#451a03', bold: true, align: 'center' });
+      this.addHit(`assign_skill_slot_${slot}`, bx, by, 48, 28, () => {
         p.skillLoadout[slot] = this.selectedSkillIdx;
-        this.pushBanner(`Đã gán [${selSkill.name}] vào phím số [${slot + 1}]!`, '#86efac');
+        this.pushBanner(`Đã gán [${selSkill.name}] vào phím số [${slot + 1}]!`, '#15803d');
       });
     }
   }
@@ -2077,8 +2085,8 @@ export class NroHudRenderer {
     const p = this.engine.player;
     const detu = p.detu;
 
-    this.drawText(ctx, 'ĐỆ TỬ ĐỒNG HÀNH', 177, 424, {
-      size: 13.5, color: '#7c2d12', stroke: null, strokeWidth: 0, align: 'center'
+    this.drawText(ctx, 'ĐỆ TỬ ĐỒNG HÀNH', 177, 434, {
+      size: 13.5, color: '#78350f', bold: true, align: 'center'
     });
 
     if (!detu) {
@@ -2090,21 +2098,21 @@ export class NroHudRenderer {
         290,
         298,
         19,
-        { size: 11.5, color: '#1e293b', stroke: null, strokeWidth: 0, bold: false }
+        { size: 11.5, color: '#292524', bold: false }
       );
       return;
     }
 
     const detuPlanet = PLANET_DEFS[detu.planet || 0] || PLANET_DEFS[0];
-    this.fillRectGdx(ctx, 22, 230, 311, 180, 'rgba(255,251,235,0.9)', '#92400e', 1.5);
-    this.drawTex(ctx, `nhanvat/detu/${detuPlanet.key}/avtlon.png`, 34, 330, 56, 64);
+    this.fillRectGdx(ctx, 18, 230, 319, 180, '#cbb396', '#78350f', 1.5);
+    this.drawTex(ctx, `nhanvat/detu/${detuPlanet.key}/avtlon.png`, 30, 330, 56, 64);
 
-    this.drawText(ctx, `${detu.name} (${detuPlanet.name})`, 104, 382, { size: 12.5, color: '#b45309', stroke: null, strokeWidth: 0 });
-    this.drawText(ctx, `Sức mạnh: ${formatNroNum(detu.power)}`, 104, 360, { size: 11, color: '#1e293b', stroke: null, strokeWidth: 0 });
-    this.drawText(ctx, `HP: ${formatNroNum(detu.hp)} / ${formatNroNum(detu.maxHp)}`, 104, 340, { size: 11, color: '#dc2626', stroke: null, strokeWidth: 0 });
-    this.drawText(ctx, `Sức đánh: ${formatNroNum(detu.attack)}`, 104, 320, { size: 11, color: '#1d4ed8', stroke: null, strokeWidth: 0 });
-    this.drawText(ctx, `Trạng thái: ${p.isFused ? 'ĐANG HỢP THỂ' : detu.modeLabel}`, 34, 250, {
-      size: 11.5, color: '#15803d', stroke: null, strokeWidth: 0
+    this.drawText(ctx, `${detu.name} (${detuPlanet.name})`, 100, 382, { size: 12.5, color: '#78350f', bold: true });
+    this.drawText(ctx, `Sức mạnh: ${formatNroNum(detu.power)}`, 100, 360, { size: 11, color: '#292524' });
+    this.drawText(ctx, `HP: ${formatNroNum(detu.hp)} / ${formatNroNum(detu.maxHp)}`, 100, 340, { size: 11, color: '#b91c1c', bold: true });
+    this.drawText(ctx, `Sức đánh: ${formatNroNum(detu.attack)}`, 100, 320, { size: 11, color: '#0369a1', bold: true });
+    this.drawText(ctx, `Trạng thái: ${p.isFused ? 'ĐANG HỢP THỂ' : detu.modeLabel}`, 30, 250, {
+      size: 11.5, color: '#15803d', bold: true
     });
 
     const modes = [
@@ -2115,7 +2123,7 @@ export class NroHudRenderer {
     ];
     for (let i = 0; i < modes.length; i++) {
       const m = modes[i];
-      const mx = 22 + (i % 2) * 158;
+      const mx = 20 + (i % 2) * 160;
       const my = 170 - Math.floor(i / 2) * 44;
       const active = detu.mode === m.key;
       this.drawTex(
@@ -2123,99 +2131,155 @@ export class NroHudRenderer {
         active ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
         mx,
         my,
-        150,
+        152,
         36
       );
-      this.drawText(ctx, m.label, mx + 75, my + 13, { size: 11, color: '#fef08a', align: 'center' });
-      this.addHit(`detu_mode_${m.key}`, mx, my, 150, 36, () => {
+      this.drawText(ctx, m.label, mx + 76, my + 13, { size: 11, color: active ? '#14532d' : '#451a03', bold: true, align: 'center' });
+      this.addHit(`detu_mode_${m.key}`, mx, my, 152, 36, () => {
         detu.mode = m.key;
         detu.modeLabel = m.label;
-        this.pushBanner(`Đệ tử chuyển sang chế độ: ${m.label}!`, '#86efac');
+        this.pushBanner(`Đệ tử chuyển sang chế độ: ${m.label}!`, '#15803d');
       });
     }
 
     // Nút Hợp Thể nhanh
     this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', 52, 52, 250, 44);
     this.drawText(ctx, p.isFused ? 'TÁCH HỢP THỂ' : 'HỢP THỂ PORATA', 177, 69, {
-      size: 12.5, color: '#fef08a', align: 'center'
+      size: 12.5, color: '#14532d', bold: true, align: 'center'
     });
     this.addHit('btn_toggle_fusion', 52, 52, 250, 44, () => {
       this.engine.toggleFusion(1);
     });
   }
 
-  // --- TAB 4: CHỨC NĂNG (VIÊN CAPSULE 36 MAP THEO VÙNG, SƠ ĐỒ THẾ GIỚI, HỆ THỐNG) ---
+  // --- TAB 4: CHỨC NĂNG HỆ THỐNG & CAPSULE (CHUẨN DRAGON BOY) ---
   renderTabFunctions(ctx) {
     const p = this.engine.player;
 
-    this.drawText(ctx, 'CAPSULE 48 MAP & TỪ ĐIỂN DATANRO', 177, 430, {
-      size: 11.2, color: '#fde047', align: 'center'
+    if (this.functionSubView === 'capsule') {
+      // Chế độ 2: Danh sách điểm bay Capsule 48 Map
+      this.drawText(ctx, 'VIÊN CAPSULE BAY (DỊCH CHUYỂN)', 177, 434, {
+        size: 11.5, color: '#78350f', bold: true, align: 'center'
+      });
+
+      // 5 Vùng đất
+      const regionGroups = [
+        { label: 'T.Đất', filter: (m) => m.region === 'Trái Đất' },
+        { label: 'Karin/Thần', filter: (m) => m.region === 'Thần Giới & Karin' },
+        { label: 'Mở Rộng', filter: (m) => m.region === 'Trái Đất Mở Rộng' },
+        { label: 'NM / XD', filter: (m) => m.region === 'Hành Tinh Namếc' || m.region === 'Hành Tinh Xayda' },
+        { label: 'VũTrụ/PB', filter: (m) => m.region === 'Vũ Trụ & Phó Bản' }
+      ];
+
+      for (let r = 0; r < regionGroups.length; r++) {
+        const rx = 18 + r * 64;
+        const ry = 400;
+        const active = (this.capsuleRegionIdx || 0) === r;
+        this.drawTex(
+          ctx,
+          active ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+          rx,
+          ry,
+          61,
+          26
+        );
+        this.drawText(ctx, regionGroups[r].label, rx + 30.5, ry + 9, {
+          size: 8.5, color: active ? '#14532d' : '#451a03', bold: true, align: 'center'
+        });
+        this.addHit(`cap_reg_${r}`, rx, ry, 61, 26, () => {
+          this.capsuleRegionIdx = r;
+        });
+      }
+
+      const curGroup = regionGroups[this.capsuleRegionIdx || 0] || regionGroups[0];
+      const groupMaps = MAPS_CONFIG.filter(curGroup.filter).slice(0, 10);
+      for (let i = 0; i < groupMaps.length; i++) {
+        const m = groupMaps[i];
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const mx = 20 + col * 160;
+        const my = 360 - row * 37;
+        const isCur = this.engine.currentMapId === m.id;
+        this.drawTex(
+          ctx,
+          isCur ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
+          mx,
+          my,
+          152,
+          32
+        );
+        const displayName = isCur ? `★ ${m.name}` : m.name;
+        this.drawText(ctx, displayName, mx + 76, my + 11, {
+          size: 9.2, color: isCur ? '#14532d' : '#451a03', bold: true, align: 'center'
+        });
+        this.addHit(`teleport_map_${m.id}`, mx, my, 152, 32, () => {
+          if (!isCur) {
+            this.popupOpen = false;
+            this.engine.changeMap(m.id, m.defaultSpawn.x, m.defaultSpawn.y);
+          }
+        });
+      }
+
+      // Nút quay lại Menu chức năng
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', 77, 30, 200, 36);
+      this.drawText(ctx, '◀ Quay lại Menu Chức Năng', 177, 43, {
+        size: 10.5, color: '#451a03', bold: true, align: 'center'
+      });
+      this.addHit('btn_back_to_func_menu', 77, 30, 200, 36, () => {
+        this.functionSubView = 'main';
+      });
+      return;
+    }
+
+    // Chế độ 1: Menu Chức Năng chính (Gốc TeaMobi Dragon Boy)
+    this.drawText(ctx, 'CÀI ĐẶT & CHỨC NĂNG HỆ THỐNG', 177, 434, {
+      size: 12, color: '#78350f', bold: true, align: 'center'
     });
 
-    const regionGroups = [
-      { label: 'T.Đất', filter: (m) => m.region === 'Trái Đất' },
-      { label: 'Karin/Thần', filter: (m) => m.region === 'Thần Giới & Karin' },
-      { label: 'Mở Rộng', filter: (m) => m.region === 'Trái Đất Mở Rộng' },
-      { label: 'NM / XD', filter: (m) => m.region === 'Hành Tinh Namếc' || m.region === 'Hành Tinh Xayda' },
-      { label: 'VũTrụ/PB', filter: (m) => m.region === 'Vũ Trụ & Phó Bản' }
-    ];
+    // Đường kẻ phân cách
+    ctx.strokeStyle = 'rgba(120, 53, 15, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(35, 610 - 424);
+    ctx.lineTo(320, 610 - 424);
+    ctx.stroke();
 
-    for (let r = 0; r < regionGroups.length; r++) {
-      const rx = 18 + r * 64;
-      const ry = 398;
-      const active = (this.capsuleRegionIdx || 0) === r;
-      this.drawTex(
-        ctx,
-        active ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
-        rx,
-        ry,
-        61,
-        24
-      );
-      this.drawText(ctx, regionGroups[r].label, rx + 30.5, ry + 8, {
-        size: 8.5, color: active ? '#fef08a' : '#ffffff', align: 'center'
-      });
-      this.addHit(`cap_reg_${r}`, rx, ry, 61, 24, () => {
-        this.capsuleRegionIdx = r;
-      });
-    }
-
-    const curGroup = regionGroups[this.capsuleRegionIdx || 0] || regionGroups[0];
-    const groupMaps = MAPS_CONFIG.filter(curGroup.filter).slice(0, 10);
-    for (let i = 0; i < groupMaps.length; i++) {
-      const m = groupMaps[i];
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const mx = 22 + col * 158;
-      const my = 362 - row * 35;
-      const isCur = this.engine.currentMapId === m.id;
-      this.drawTex(
-        ctx,
-        isCur ? 'hud/giaodientrong/nutchucnangclick.png' : 'hud/giaodientrong/nutchucnang.png',
-        mx,
-        my,
-        150,
-        30
-      );
-      const shortName = m.name.length > 19 ? `${m.name.slice(0, 18)}…` : m.name;
-      this.drawText(ctx, isCur ? `★ ${shortName}` : shortName, mx + 75, my + 10, {
-        size: 9, color: isCur ? '#fde047' : '#ffffff', align: 'center'
-      });
-      this.addHit(`teleport_map_${m.id}`, mx, my, 150, 30, () => {
-        if (!isCur) {
-          this.popupOpen = false;
-          this.engine.changeMap(m.id, m.defaultSpawn.x, m.defaultSpawn.y);
-        }
-      });
-    }
-
-    // Các nút hệ thống bên dưới (Sơ Đồ Thế Giới 2 Trục + Nút Ảo + Toàn Màn Hình + BXH + Âm Thanh + Đổi TK)
-    const sysBtns = [
+    const mainFuncBtns = [
       {
         label: 'Sơ Đồ Thế Giới',
         onClick: () => {
           this.popupOpen = false;
           this.activePanel = 'WORLD_MAP';
+        }
+      },
+      {
+        label: 'Viên Capsule Bay',
+        onClick: () => {
+          this.functionSubView = 'capsule';
+        }
+      },
+      {
+        label: `Nút Ảo: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}`,
+        onClick: () => {
+          this.showVirtualControls = !this.showVirtualControls;
+          localStorage.setItem('nro_virtual_controls', String(this.showVirtualControls));
+          this.pushBanner(
+            `Nút điều hướng kéo thả: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}!`,
+            '#15803d'
+          );
+        }
+      },
+      {
+        label: `Âm Thanh: ${sound.isMuted ? 'TẮT' : 'BẬT'}`,
+        onClick: () => {
+          sound.toggleMute();
+        }
+      },
+      {
+        label: 'Bảng Xếp Hạng',
+        onClick: () => {
+          this.popupOpen = false;
+          this.openLeaderboard();
         }
       },
       {
@@ -2227,46 +2291,60 @@ export class NroHudRenderer {
         }
       },
       {
-        label: `Nút Ảo: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}`,
-        onClick: () => {
-          this.showVirtualControls = !this.showVirtualControls;
-          localStorage.setItem('nro_virtual_controls', String(this.showVirtualControls));
-          this.pushBanner(
-            `Nút điều hướng kéo thả: ${this.showVirtualControls ? 'BẬT' : 'TẮT'}!`,
-            '#fde047'
-          );
-        }
-      },
-      {
-        label: 'Bảng Xếp Hạng',
-        onClick: () => {
-          this.popupOpen = false;
-          this.openLeaderboard();
-        }
-      },
-      {
-        label: `Âm Thanh: ${sound.isMuted ? 'TẮT' : 'BẬT'}`,
-        onClick: () => {
-          sound.toggleMute();
-        }
-      },
-      {
         label: 'Đổi Tài Khoản',
         onClick: () => {
           saveCharacterData(p);
           if (this.engine.onReturnToMenu) this.engine.onReturnToMenu();
         }
+      },
+      {
+        label: 'Lưu Dữ Liệu',
+        onClick: () => {
+          saveCharacterData(p);
+          this.pushBanner('Đã lưu dữ liệu nhân vật lên Supabase Cloud thành công!', '#15803d');
+        }
       }
     ];
 
-    for (let i = 0; i < sysBtns.length; i++) {
-      const b = sysBtns[i];
-      const bx = 22 + (i % 2) * 158;
-      const by = 148 - Math.floor(i / 2) * 40;
-      this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', bx, by, 150, 33);
-      this.drawText(ctx, b.label, bx + 75, by + 11, { size: 9.5, color: '#fef08a', align: 'center' });
-      this.addHit(`sys_btn_${i}`, bx, by, 150, 33, b.onClick);
+    for (let i = 0; i < mainFuncBtns.length; i++) {
+      const b = mainFuncBtns[i];
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const bx = 20 + col * 160;
+      const by = 370 - row * 44;
+      this.drawTex(ctx, 'hud/giaodientrong/nutchucnang.png', bx, by, 152, 38);
+      this.drawText(ctx, b.label, bx + 76, by + 13, {
+        size: 10.5, color: '#451a03', bold: true, align: 'center'
+      });
+      this.addHit(`func_btn_${i}`, bx, by, 152, 38, b.onClick);
     }
+
+    // Khung hướng dẫn phím & thông tin phiên bản ở dưới
+    this.fillRectGdx(ctx, 18, 20, 319, 168, '#cbb396', '#78350f', 1.5);
+    this.drawText(ctx, 'THÔNG TIN BẢN QUYỀN & PHÍM TẮT', 177, 168, {
+      size: 10, color: '#78350f', bold: true, align: 'center'
+    });
+    this.drawText(ctx, '• Máy chủ: Vũ trụ 1 (Chuẩn TeaMobi TORI)', 28, 148, {
+      size: 9.5, color: '#451a03'
+    });
+    this.drawText(ctx, '• Phiên bản: Dragon Boy v1.9.8 chuẩn DataNRO', 28, 130, {
+      size: 9.5, color: '#451a03'
+    });
+    this.drawText(ctx, '• Phím [A, W, S, D] hoặc [Mũi tên]: Di chuyển', 28, 112, {
+      size: 9.5, color: '#1e3a1f'
+    });
+    this.drawText(ctx, '• Phím [Space] hoặc [J]: Tấn công thường', 28, 94, {
+      size: 9.5, color: '#1e3a1f'
+    });
+    this.drawText(ctx, '• Phím số [1] .. [5]: Xuất chiêu Kỹ năng', 28, 76, {
+      size: 9.5, color: '#1e3a1f'
+    });
+    this.drawText(ctx, '• Click vào NPC / Quái: Tự động khóa mục tiêu', 28, 58, {
+      size: 9.5, color: '#1e3a1f'
+    });
+    this.drawText(ctx, '• Chạm / Click vào người để mở menu Hành trang', 28, 40, {
+      size: 9.5, color: '#1e3a1f'
+    });
   }
 
   // ==================== BẢNG ĐÔI BÊN PHẢI (SHOP THÀNH LÊ / RƯƠNG ĐỒ / PHA LÊ THẦY HIẾU) ====================
@@ -2275,7 +2353,6 @@ export class NroHudRenderer {
     const ox = 355;
 
     this.drawTex(ctx, 'hud/giaodientrong/popupnhanvat.jpg', ox, 0, 355, 610);
-    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', ox + 12, 12, 331, 480);
 
     // Nút đóng bảng phải
     this.drawTex(ctx, 'hud/giaodientrong/nutX.png', ox + 316, 572, 28, 28);
@@ -2285,8 +2362,8 @@ export class NroHudRenderer {
 
     if (this.activePanel === 'SHOP') {
       this.drawTex(ctx, 'nhanvat/npc/admin_thanhle/avt.png', ox + 20, 518, 46, 50);
-      this.drawText(ctx, 'TIỆM BẢO • ĐẠT • KHÁNH', ox + 78, 550, { size: 13, color: '#fde047' });
-      this.drawText(ctx, 'Trang bị Thần Linh, Hủy Diệt & Thiên Sứ DataNRO', ox + 78, 530, { size: 10, color: '#ffffff' });
+      this.drawText(ctx, 'TIỆM BẢO • ĐẠT • KHÁNH', ox + 78, 550, { size: 13, color: '#78350f', bold: true });
+      this.drawText(ctx, 'Trang bị Thần Linh, Hủy Diệt & Thiên Sứ DataNRO', ox + 78, 530, { size: 10, color: '#451a03' });
 
       // 3 Tab cửa hàng
       for (let t = 0; t < SHOP_TABS.length; t++) {
@@ -2300,7 +2377,9 @@ export class NroHudRenderer {
           102,
           28
         );
-        this.drawText(ctx, SHOP_TABS[t].label, tx + 51, 506, { size: 10.5, color: '#fef08a', align: 'center' });
+        this.drawText(ctx, SHOP_TABS[t].label, tx + 51, 506, {
+          size: 10.5, color: active ? '#14532d' : '#451a03', bold: true, align: 'center'
+        });
         this.addHit(`shop_tab_${t}`, tx, 496, 102, 28, () => {
           this.shopTabIdx = t;
           this.selectedShopItemId = null;
@@ -2345,20 +2424,20 @@ export class NroHudRenderer {
 
       if (this.selectedShopItemId && ITEM_CATALOG[this.selectedShopItemId]) {
         const def = ITEM_CATALOG[this.selectedShopItemId];
-        this.fillRectGdx(ctx, ox + 18, 18, 319, 64, 'rgba(30,41,59,0.96)', '#f59e0b', 1.5);
-        this.drawText(ctx, def.name, ox + 28, 63, { size: 11, color: '#fde047' });
-        this.drawText(ctx, def.desc.slice(0, 44), ox + 28, 45, { size: 9, color: '#e2e8f0', bold: false });
+        this.fillRectGdx(ctx, ox + 18, 18, 319, 64, '#cbb396', '#78350f', 1.5);
+        this.drawText(ctx, def.name, ox + 28, 63, { size: 11, color: '#78350f', bold: true });
+        this.drawText(ctx, def.desc.slice(0, 44), ox + 28, 45, { size: 9, color: '#292524', bold: false });
 
         this.drawTex(ctx, 'hud/giaodientrong/nutchucnangclick.png', ox + 240, 26, 88, 36);
-        this.drawText(ctx, 'MUA NGAY', ox + 284, 40, { size: 10.5, color: '#fef08a', align: 'center' });
+        this.drawText(ctx, 'MUA NGAY', ox + 284, 40, { size: 10.5, color: '#14532d', bold: true, align: 'center' });
         this.addHit('btn_buy_shop_item', ox + 240, 26, 88, 36, () => {
           this.buyItem(def);
         });
       }
     } else if (this.activePanel === 'CHEST') {
       this.drawTex(ctx, 'nhanvat/npc/ruong_do/avt_ruong.png', ox + 20, 520, 46, 46);
-      this.drawText(ctx, 'RƯƠNG ĐỒ TẠI NHÀ', ox + 78, 548, { size: 13.5, color: '#fde047' });
-      this.drawText(ctx, 'Click vật phẩm trong Rương để lấy ra túi', ox + 78, 528, { size: 10.5, color: '#ffffff' });
+      this.drawText(ctx, 'RƯƠNG ĐỒ TẠI NHÀ', ox + 78, 548, { size: 13.5, color: '#78350f', bold: true });
+      this.drawText(ctx, 'Click vật phẩm trong Rương để lấy ra túi', ox + 78, 528, { size: 10.5, color: '#451a03' });
 
       for (let idx = 0; idx < 20; idx++) {
         const col = idx % 5;
@@ -2376,14 +2455,14 @@ export class NroHudRenderer {
             }
             p.bag.push(item);
             p.chest.splice(idx, 1);
-            this.pushBanner('Đã lấy vật phẩm từ Rương vào Hành Trang!', '#86efac');
+            this.pushBanner('Đã lấy vật phẩm từ Rương vào Hành Trang!', '#15803d');
           });
         }
       }
     } else if (this.activePanel === 'CRYSTAL') {
       this.drawTex(ctx, 'nhanvat/npc/thay_hieu/avt.png', ox + 20, 518, 46, 50);
-      this.drawText(ctx, 'PHA LÊ HÓA THẦY QUYẾT', ox + 78, 548, { size: 13, color: '#fde047' });
-      this.drawText(ctx, 'Chọn Trang Bị đang mặc bên trái để nâng Sao', ox + 78, 528, { size: 10, color: '#ffffff' });
+      this.drawText(ctx, 'PHA LÊ HÓA THẦY QUYẾT', ox + 78, 548, { size: 13, color: '#78350f', bold: true });
+      this.drawText(ctx, 'Chọn Trang Bị đang mặc bên trái để nâng Sao', ox + 78, 528, { size: 10, color: '#451a03' });
 
       const slotKey = this.crystalEquipSlot || this.selectedEquipSlot || 'ao';
       const targetEq = p.equipped[slotKey];
@@ -2403,9 +2482,9 @@ export class NroHudRenderer {
         const sockets = targetEq.sockets || 0;
         const stars = targetEq.stars || 0;
 
-        this.fillRectGdx(ctx, ox + 24, 290, 307, 175, 'rgba(30,41,59,0.92)', '#f59e0b', 2);
+        this.fillRectGdx(ctx, ox + 24, 290, 307, 175, '#cbb396', '#78350f', 1.5);
         this.drawTex(ctx, def.icon, ox + 154, 405, 48, 48);
-        this.drawText(ctx, def.name, ox + 177, 386, { size: 12, color: '#fde047', align: 'center' });
+        this.drawText(ctx, def.name, ox + 177, 386, { size: 12, color: '#78350f', bold: true, align: 'center' });
 
         // Vẽ 7 ngôi sao (saoxanh.png đã ép, saoden.png lỗ trống)
         for (let s = 0; s < 7; s++) {
@@ -2506,7 +2585,6 @@ export class NroHudRenderer {
     const my = (this.vh - mh) / 2;
 
     this.drawTex(ctx, 'hud/giaodientrong/popupnhanvat.jpg', mx, my, mw, mh);
-    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', mx + 16, my + 16, mw - 32, mh - 76);
     this.drawTex(ctx, 'hud/giaodientrong/nutX.png', mx + mw - 38, my + mh - 38, 28, 28);
     this.addHit('close_gacha', mx + mw - 44, my + mh - 44, 38, 38, () => {
       if (!this.gachaSpinning) this.activePanel = null;
@@ -2539,7 +2617,7 @@ export class NroHudRenderer {
       this.gachaSpinning ? 'ĐANG QUAY...' : 'QUAY NGAY (1 Vé / 10 Ngọc)',
       mx + mw / 2,
       my + 43,
-      { size: 11.5, color: '#fef08a', align: 'center' }
+      { size: 11.5, color: '#14532d', bold: true, align: 'center' }
     );
     this.addHit('btn_spin_gacha', mx + 135, my + 26, 210, 44, () => {
       this.startGachaSpin();
@@ -2555,7 +2633,6 @@ export class NroHudRenderer {
     const my = (this.vh - mh) / 2;
 
     this.drawTex(ctx, 'hud/giaodientrong/popupnhanvat.jpg', mx, my, mw, mh);
-    this.drawTex(ctx, 'hud/giaodientrong/ttluc.jpg', mx + 16, my + 16, mw - 32, mh - 74);
     this.drawTex(ctx, 'hud/giaodientrong/nutX.png', mx + mw - 38, my + mh - 38, 28, 28);
     this.addHit('close_lb', mx + mw - 44, my + mh - 44, 38, 38, () => {
       this.activePanel = null;
