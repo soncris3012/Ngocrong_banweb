@@ -31,7 +31,8 @@ import {
   BG_ITEM_TEMPLATES,
   TORI_MAPS,
   getToriMap,
-  getToriMapByName
+  getToriMapByName,
+  getToriTouchY
 } from './toriMapData';
 
 // Offset chính xác từ CaiTrangOffset.java cho các bộ Cải Trang & BOSS
@@ -733,7 +734,8 @@ export class GameEngine {
     this.currentMapId = targetMapId;
     this.player.mapId = targetMapId;
     this.player.x = spawnX ?? mapCfg.defaultSpawn.x;
-    this.player.y = spawnY ?? mapCfg.defaultSpawn.y;
+    const gTop = this.getGroundTopAt(this.player.x, mapCfg);
+    this.player.y = (typeof spawnY === 'number' && spawnY > 0) ? Math.max(spawnY, gTop) : gTop;
     this.player.vx = 0;
     this.player.vy = 0;
     this.player.isFlying = false;
@@ -818,10 +820,14 @@ export class GameEngine {
       }
     }
 
-    this.npcs = (mapCfg.npcs || []).map((n) => ({
-      ...n,
-      targetKind: 'npc'
-    }));
+    this.npcs = (mapCfg.npcs || []).map((n) => {
+      const gTop = this.getGroundTopAt(n.x, mapCfg);
+      return {
+        ...n,
+        targetKind: 'npc',
+        y: (typeof n.y === 'number' && n.y > 144) ? n.y : gTop
+      };
+    });
 
     this.monsters = (mapCfg.monsters || []).map((m, idx) => {
       const tpl = MONSTER_TEMPLATES[m.template];
@@ -867,18 +873,31 @@ export class GameEngine {
     });
   }
 
-  getGroundTopAt(wx, mapCfgOverride = null) {
+  getGroundTopAt(wx, mapCfgOverride = null, curWy = null) {
     const mapCfg = mapCfgOverride || MAPS_CONFIG[this.currentMapId] || MAPS_CONFIG[0];
-    let found = false;
-    let bestTop = -500;
-    for (let i = 0; i < mapCfg.hitboxes.length; i++) {
-      const hb = mapCfg.hitboxes[i];
-      if (wx >= hb.x && wx <= hb.x + hb.w) {
-        bestTop = Math.max(bestTop, hb.y + hb.h);
-        found = true;
+    const toriMap = (mapCfg.toriMapId !== undefined ? getToriMap(mapCfg.toriMapId) : null)
+      || getToriMap(mapCfg.id)
+      || getToriMapByName(mapCfg.name);
+
+    if (toriMap) {
+      const tileGround = getToriTouchY(toriMap, wx, curWy);
+      if (typeof tileGround === 'number' && tileGround > 0) {
+        return tileGround;
       }
     }
-    return found ? bestTop : -500;
+
+    let found = false;
+    let bestTop = -500;
+    if (mapCfg.hitboxes && mapCfg.hitboxes.length > 0) {
+      for (let i = 0; i < mapCfg.hitboxes.length; i++) {
+        const hb = mapCfg.hitboxes[i];
+        if (wx >= hb.x && wx <= hb.x + hb.w) {
+          bestTop = Math.max(bestTop, hb.y + hb.h);
+          found = true;
+        }
+      }
+    }
+    return found ? bestTop : 144;
   }
 
   // ==================== CHIẾN ĐẤU & KỸ NĂNG ====================
@@ -2752,9 +2771,19 @@ export class GameEngine {
       }
     }
 
-    const chanImg = assets.tex(chanPath);
-    const thanImg = assets.tex(thanPath);
-    const dauImg = assets.tex(dauPath);
+    const fallbackChan = `${quanBase}chandung.png`;
+    const fallbackThan = `${aoBase}thandung.png`;
+    const fallbackDau = planetIdx === 1
+      ? 'nhanvat/xayda/avatar/Cađíc_base/daudung.png'
+      : (planetIdx === 2 ? 'nhanvat/namek/avatar/namek_base/daudung.png' : 'nhanvat/traidat/avatar/Goku_base/daudung.png');
+
+    const actualChanPath = assets.tex(chanPath) ? chanPath : (assets.tex(fallbackChan) ? fallbackChan : 'nhanvat/traidat/do/set_cam/chandung.png');
+    const actualThanPath = assets.tex(thanPath) ? thanPath : (assets.tex(fallbackThan) ? fallbackThan : 'nhanvat/traidat/do/set_cam/thandung.png');
+    const actualDauPath = assets.tex(dauPath) ? dauPath : (assets.tex(fallbackDau) ? fallbackDau : 'nhanvat/traidat/avatar/Goku_base/daudung.png');
+
+    const chanImg = assets.tex(actualChanPath);
+    const thanImg = assets.tex(actualThanPath);
+    const dauImg = assets.tex(actualDauPath);
     if (!chanImg || !thanImg || !dauImg) return 68;
 
     const cw = chanImg.naturalWidth * scale;
@@ -2773,9 +2802,9 @@ export class GameEngine {
     const dauY = wy + ch + bob + th + off.dauY * scaleRatio + 3.5 * scaleRatio;
 
     // Thứ tự vẽ chuẩn NhanVat.java: Chân -> Đầu -> Thân (Cổ áo thân che gọn cổ đầu, không bao giờ lún mặt!)
-    this.drawWorldTex(ctx, chanPath, wx - cw / 2 + off.chanX * scaleRatio * dirSign, chanY, cw, ch, flipX);
-    this.drawWorldTex(ctx, dauPath, wx - dw / 2 + off.dauX * scaleRatio * dirSign, dauY, dw, dh, flipX);
-    this.drawWorldTex(ctx, thanPath, wx - tw / 2 + off.thanX * scaleRatio * dirSign, thanY, tw, th, flipX);
+    this.drawWorldTex(ctx, actualChanPath, wx - cw / 2 + off.chanX * scaleRatio * dirSign, chanY, cw, ch, flipX);
+    this.drawWorldTex(ctx, actualDauPath, wx - dw / 2 + off.dauX * scaleRatio * dirSign, dauY, dw, dh, flipX);
+    this.drawWorldTex(ctx, actualThanPath, wx - tw / 2 + off.thanX * scaleRatio * dirSign, thanY, tw, th, flipX);
 
     return (dauY - wy) + dh + 6;
   }

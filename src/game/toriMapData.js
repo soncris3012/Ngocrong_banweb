@@ -17,3 +17,72 @@ export function getToriMapByName(name) {
   }
   return null;
 }
+
+
+export const TILE_RULES = {"tileIndex": [[[28, 29, 30, 39], [26], [18, 24, 29, 39, 28, 29, 30], [1, 23, 28, 39, 28, 29, 30], [1, 2, 3, 4, 5, 6, 18, 31, 32, 33, 34, 39]], [[35], [26], [22, 24, 20, 14, 35], [21, 23, 15, 9, 35], [9, 10, 11, 12, 13, 14, 26, 30, 31, 32, 33, 35], [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[54], [31], [29, 26, 27, 47, 40, 54], [23, 25, 39, 24, 47, 40, 54], [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 29, 23, 41, 42, 43, 45, 46, 47, 54]], [[19], [17, 19], [17, 19], [1, 2, 3, 4, 5, 6, 17, 19]], [[38], [23], [19, 20, 21, 29, 31, 38], [16, 17, 18, 28, 30, 38], [5, 6, 7, 8, 9, 10, 16, 21, 30, 31, 33, 34, 38]], [[33], [33], [33], [1, 2, 3, 4, 5, 6, 7, 13, 33]], [[33], [10, 13, 8, 15, 17, 33], [9, 12, 7, 14, 16, 33], [1, 2, 3, 4, 5, 6, 7, 8, 15, 14, 33]], [[42], [26], [43], [18], [11, 15, 28, 42, 24, 11], [4, 10, 27, 42, 25, 10], [1, 2, 3, 4, 15, 12, 16, 17, 40, 32, 34, 42]], [[21, 25], [18, 20, 26, 21, 25], [12, 19, 26, 21, 25], [9, 10, 11, 12, 18, 26]], [[28], [2, 5, 16, 28], [1, 4, 15, 28], [4, 5, 10, 11, 12, 13, 18, 28]], [[23], [23], [23], [17, 18, 23]], [[34], [6, 11, 34], [1, 10, 34], [1, 2, 3, 4, 5, 6, 7, 34]], [[2, 4], [2, 3], [1, 2, 3, 4]], [[6], [6], [1, 2, 3, 4, 5, 6]], [[6, 11], [6, 10], [6, 7, 8, 9, 10, 11, 4]], [[1, 2, 3, 7, 8], [1, 2, 3, 6, 8], [4, 5, 6, 7, 8]], [[5, 6, 8], [34], [23, 21, 26, 27, 36], [23, 21, 24, 25, 35], [28, 1, 12, 21, 22, 23, 24, 27, 35, 36]], [[16, 19, 22, 23], [14, 18, 20, 23], [1, 2, 4, 13, 14, 15, 16, 23]], [[19, 27, 28], [5, 12, 27, 19, 28, 26, 24], [1, 6, 27, 19, 28, 25, 24], [1, 2, 3, 4, 5, 17, 18, 21, 22, 25, 26, 27]], [[14, 18, 34, 37, 38], [9, 19, 36, 38, 34, 37, 18, 34, 38], [8, 10, 14, 20, 34, 37, 18, 14, 34], [1, 2, 3, 4, 5, 10, 15, 16, 19, 20, 36, 37]], [[16, 17], [15, 16, 17, 18], [10, 14, 16, 17], [1, 3, 4, 5, 6, 7, 8, 11, 14, 15, 17]], [[14, 15, 16, 17], [11, 12, 13, 17], [1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17]], [[23], [15, 17, 19, 20], [14, 16, 18, 20], [5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 20]], [[12, 13, 14, 23], [7, 2, 11, 14, 23], [6, 1, 10, 13, 23], [15, 16, 17, 18, 2, 14, 1, 13, 23]], [[18, 19, 20, 21, 22], [7, 22, 17, 23], [4, 21, 16, 23], [4, 5, 6, 7, 23]], [[6, 7, 8], [6, 8], [6, 8], [6, 7, 4, 5]], [[13, 14, 16, 17], [11, 12, 14, 17], [1, 11, 16, 17]], [[8, 9, 10, 11], [35], [19, 7, 9, 34], [17, 4, 9, 34], [17, 18, 19, 22, 23, 25, 26, 34]]], "tileType": [[8192, 512, 8, 4, 2], [8192, 1024, 8, 4, 2, 0], [8192, 64, 8, 4, 2], [8192, 8, 4, 2], [8192, 64, 8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8192, 32, 128, 64, 8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8, 4, 2], [8, 4, 2], [8, 4, 2], [8, 4, 2], [8192, 64, 8, 4, 2], [8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8192, 8, 4, 2], [8, 4, 2], [8192, 64, 8, 4, 2]]};
+
+export function initToriMapCollision(toriMap) {
+  if (!toriMap || (toriMap._types && toriMap._groundTops)) return;
+  const num = (toriMap.tileID || toriMap.tileId || 1) - 1;
+  const tmw = toriMap.tmw;
+  const tmh = toriMap.tmh;
+  const tiles = toriMap.tiles || toriMap.maps;
+  if (!tiles || num >= TILE_RULES.tileType.length || num < 0) return;
+
+  const tRules = TILE_RULES.tileType[num];
+  const iRules = TILE_RULES.tileIndex[num];
+  const total = tmw * tmh;
+  const types = new Uint16Array(total);
+
+  for (let i = 0; i < total; i++) {
+    const val = tiles[i];
+    for (let j = 0; j < tRules.length; j++) {
+      if (iRules[j].includes(val)) {
+        types[i] |= tRules[j];
+      }
+    }
+  }
+
+  const mapH = tmh * 24;
+  const T_TOP = 2;
+  const groundTops = new Int16Array(tmw);
+  for (let tx = 0; tx < tmw; tx++) {
+    let top = -500;
+    for (let ty = 0; ty < tmh; ty++) {
+      if ((types[ty * tmw + tx] & T_TOP) === T_TOP) {
+        top = mapH - ty * 24;
+        break;
+      }
+    }
+    groundTops[tx] = top;
+  }
+
+  toriMap._types = types;
+  toriMap._groundTops = groundTops;
+}
+
+export function getToriTouchY(toriMap, wx, curWy = null) {
+  if (!toriMap || !toriMap.tmw || !toriMap.tmh || !(toriMap.tiles || toriMap.maps)) return null;
+  if (!toriMap._groundTops) initToriMapCollision(toriMap);
+  if (!toriMap._groundTops) return null;
+
+  const tmw = toriMap.tmw;
+  const tmh = toriMap.tmh;
+  const mapH = tmh * 24;
+  const tx = Math.max(0, Math.min(tmw - 1, Math.floor(wx / 24)));
+  const highest = toriMap._groundTops[tx];
+
+  if (curWy === null || curWy === undefined || curWy >= highest - 18) {
+    return highest > -500 ? highest : null;
+  }
+
+  const types = toriMap._types;
+  const startTy = Math.max(0, Math.min(tmh - 1, Math.floor((mapH - (curWy + 18)) / 24)));
+  const T_TOP = 2;
+  for (let ty = startTy; ty < tmh; ty++) {
+    if ((types[ty * tmw + tx] & T_TOP) === T_TOP) {
+      return mapH - ty * 24;
+    }
+  }
+  return null;
+}

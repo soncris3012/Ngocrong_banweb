@@ -64,10 +64,10 @@ export const MODULAR_STATE_OFFSETS = {
   DUNG_YEN: { dauX: -0.3, dauY: -15.5, thanX: 0, thanY: 0, chanX: 0, chanY: 0 },
   DI_CHUYEN: [
     { dauX: 3.3, dauY: -9.0, thanX: 1.5, thanY: 5.2, chanX: 0, chanY: 0 },
-    { dauX: 3.3, dauY: -9.5, thanX: 1.5, thanY: 4.8, chanX: 0, chanY: 0 },
-    { dauX: 3.3, dauY: -8.5, thanX: 1.5, thanY: 5.5, chanX: 0, chanY: 0 },
-    { dauX: 3.3, dauY: -9.2, thanX: 1.5, thanY: 5.0, chanX: 0, chanY: 0 },
-    { dauX: 3.3, dauY: -8.8, thanX: 1.5, thanY: 5.3, chanX: 0, chanY: 0 }
+    { dauX: 3.3, dauY: -7.0, thanX: 1.5, thanY: 5.0, chanX: 0, chanY: 0 },
+    { dauX: 3.3, dauY: -8.5, thanX: 1.5, thanY: 5.2, chanX: 0, chanY: 0 },
+    { dauX: 3.3, dauY: -8.5, thanX: 1.5, thanY: 5.2, chanX: 0, chanY: 0 },
+    { dauX: 3.3, dauY: -11.0, thanX: 1.5, thanY: 5.2, chanX: 0, chanY: 0 }
   ],
   NHAY: { dauX: 3.0, dauY: -23.5, thanX: -4.0, thanY: 6.0, chanX: 0, chanY: 0 },
   ROI: { dauX: 0.2, dauY: -31.0, thanX: -5.5, thanY: 6.5, chanX: 0, chanY: 0 },
