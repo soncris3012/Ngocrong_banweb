@@ -113,16 +113,14 @@ export function App() {
     }
   }, [virtualW, virtualH]);
 
-  // Nạp 100% tài nguyên cốt lõi (Menu + HUD + Starter World) bất đồng bộ thực sự (không fake timeout)
+  // Nạp tài nguyên phân tầng:
+  // Giai đoạn 1: Nạp 31 ảnh giao diện Menu chính cực nhanh (< 1 giây) để người chơi thấy Menu ngay lập tức!
+  // Giai đoạn 2: Nạp ngầm tài nguyên trong game (HUD, Tân thủ, World) trong khi người chơi ở Menu
   useEffect(() => {
     let active = true;
 
     async function startPreload() {
-      if (document.fonts && document.fonts.ready) {
-        try { await document.fonts.ready; } catch (_) {}
-      }
-
-      await assets.preloadAllCore((loaded, total, pct) => {
+      await assets.preloadMenu((loaded, total, pct) => {
         if (!active) return;
         setLoadedCount(loaded);
         setTotalCount(total);
@@ -130,10 +128,10 @@ export function App() {
       });
 
       if (!active) return;
-      // Nghỉ 200ms để người chơi nhìn thấy mốc 100% hoàn tất thực sự trước khi vào Game Menu
-      setTimeout(() => {
-        if (active) setAssetsLoaded(true);
-      }, 200);
+      setAssetsLoaded(true);
+
+      // Chạy ngầm nạp Game Core ngay lập tức
+      assets.preloadGameCore();
     }
 
     startPreload();
@@ -244,17 +242,25 @@ export function App() {
     }
   };
 
-  const handleEnterGame = () => {
+  const handleEnterGame = async () => {
     tryLockLandscape();
+    if (!assets.gameCoreReady) {
+      setScreenView('SPLASH');
+      await assets.preloadGameCore();
+    }
     setScreenView('SPLASH');
   };
 
-  const handleSelectCharacter = (newChar) => {
+  const handleSelectCharacter = async (newChar) => {
     tryLockLandscape();
     setPlayerState(newChar);
     setSavedCharacter(newChar);
     localStorage.setItem('nro_last_character', newChar.name);
     saveCharacterData(newChar);
+    if (!assets.gameCoreReady) {
+      setScreenView('SPLASH');
+      await assets.preloadGameCore();
+    }
     setScreenView('SPLASH');
   };
 

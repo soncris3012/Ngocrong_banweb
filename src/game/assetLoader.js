@@ -319,12 +319,24 @@ export class AssetLoader {
     }
 
     return new Promise((resolve) => {
+      let settled = false;
       const img = new Image();
-      img.decoding = 'async';
       this.cache.set(url, img);
       this.status.set(url, 'loading');
 
+      // Safety timeout: không bao giờ để một request mạng bị treo làm kẹt thanh tải
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          this.status.set(url, 'err');
+          resolve(null);
+        }
+      }, 3500);
+
       const onDone = (success) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         this.status.set(url, success ? 'ok' : 'err');
         if (success) {
           this.readyRawCache.set(relPath, img);
@@ -343,7 +355,6 @@ export class AssetLoader {
       };
 
       img.onerror = () => {
-        console.warn(`[AssetLoader] Không thể tải: ${url}`);
         onDone(false);
       };
 
@@ -351,7 +362,7 @@ export class AssetLoader {
     });
   }
 
-  // Tải danh sách mảng tài nguyên với kiểm soát tiến trình % THẬT (hàng đợi song song 12 luồng, không fake timeout)
+  // Tải danh sách mảng tài nguyên với kiểm soát tiến trình % THẬT (hàng đợi song song 24 luồng qua HTTP/2)
   async preloadList(paths, onProgress) {
     if (!Array.isArray(paths) || paths.length === 0) {
       if (onProgress) onProgress(0, 0, 100);
@@ -367,7 +378,7 @@ export class AssetLoader {
       if (onProgress) onProgress(completed, total, pct);
     };
 
-    const concurrency = 12;
+    const concurrency = 24;
     let index = 0;
 
     const worker = async () => {
