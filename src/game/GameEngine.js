@@ -2047,9 +2047,13 @@ export class GameEngine {
       || getToriMap(mapCfg.id)
       || getToriMapByName(mapCfg.name);
 
-    const bgId = (toriMap && typeof toriMap.bgID === 'number' && toriMap.bgID >= 0)
-      ? toriMap.bgID
-      : (typeof mapCfg.bgID === 'number' && mapCfg.bgID >= 0 ? mapCfg.bgID : 0);
+    // The game map config can intentionally reuse a source map's geometry with
+    // a different environment (for example map 18 uses the Xayda arena sky).
+    // Respect an explicit per-game-map bgID first; use source data only when
+    // the game map does not define one.
+    const bgId = (typeof mapCfg.bgID === 'number' && mapCfg.bgID >= 0)
+      ? mapCfg.bgID
+      : (toriMap && typeof toriMap.bgID === 'number' && toriMap.bgID >= 0 ? toriMap.bgID : 0);
 
     const theme = mapCfg.planetTheme || (toriMap ? (toriMap.planetID === 1 ? 'namek' : toriMap.planetID === 2 ? 'xayda' : 'traidat') : 'traidat');
     const camOffX = this.camX - this.vw / 2;
