@@ -399,15 +399,31 @@ export class AssetLoader {
   }
 
   // Preload giai đoạn 1: Menu chính (100% thật trước khi mở Menu)
-  async preloadMenu(onProgress) {
-    await this.preloadList(MENU_PRELOAD_PATHS, onProgress);
-    this.menuReady = true;
+  preloadMenu(onProgress) {
+    if (this.menuReady) {
+      if (onProgress) onProgress(MENU_PRELOAD_PATHS.length, MENU_PRELOAD_PATHS.length, 100);
+      return Promise.resolve();
+    }
+    if (this._menuPromise) return this._menuPromise;
+    this._menuPromise = this.preloadList(MENU_PRELOAD_PATHS, onProgress).then(() => {
+      this.menuReady = true;
+      this._menuPromise = null;
+    });
+    return this._menuPromise;
   }
 
   // Preload giai đoạn 2: In-Game Core
-  async preloadGameCore(onProgress) {
-    await this.preloadList(GAME_CORE_PRELOAD_PATHS, onProgress);
-    this.gameCoreReady = true;
+  preloadGameCore(onProgress) {
+    if (this.gameCoreReady) {
+      if (onProgress) onProgress(GAME_CORE_PRELOAD_PATHS.length, GAME_CORE_PRELOAD_PATHS.length, 100);
+      return Promise.resolve();
+    }
+    if (this._gameCorePromise) return this._gameCorePromise;
+    this._gameCorePromise = this.preloadList(GAME_CORE_PRELOAD_PATHS, onProgress).then(() => {
+      this.gameCoreReady = true;
+      this._gameCorePromise = null;
+    });
+    return this._gameCorePromise;
   }
 
   // Tải toàn bộ Core trước khi vào game (Menu + HUD + Starter World)
@@ -454,9 +470,13 @@ export class AssetLoader {
       this.loadSingle(relPath);
       return null;
     }
-    if (img && img.complete && img.naturalWidth > 0) {
+    if (img.complete && img.naturalWidth > 0) {
       this.readyRawCache.set(relPath, img);
       return img;
+    }
+    if (this.status.get(url) === 'err') {
+      this.readyRawCache.set(relPath, null);
+      return null;
     }
     return null;
   }

@@ -242,26 +242,24 @@ export function App() {
     }
   };
 
-  const handleEnterGame = async () => {
+  const handleEnterGame = () => {
     tryLockLandscape();
-    if (!assets.gameCoreReady) {
-      setScreenView('SPLASH');
-      await assets.preloadGameCore();
-    }
     setScreenView('SPLASH');
+    if (!assets.gameCoreReady) {
+      assets.preloadGameCore();
+    }
   };
 
-  const handleSelectCharacter = async (newChar) => {
+  const handleSelectCharacter = (newChar) => {
     tryLockLandscape();
     setPlayerState(newChar);
     setSavedCharacter(newChar);
     localStorage.setItem('nro_last_character', newChar.name);
     saveCharacterData(newChar);
-    if (!assets.gameCoreReady) {
-      setScreenView('SPLASH');
-      await assets.preloadGameCore();
-    }
     setScreenView('SPLASH');
+    if (!assets.gameCoreReady) {
+      assets.preloadGameCore();
+    }
   };
 
   const handleLoginSuccess = (user) => {

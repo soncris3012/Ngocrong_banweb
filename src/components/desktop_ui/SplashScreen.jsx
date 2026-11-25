@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { assets } from '../../game/assetLoader';
 
 export const SplashScreen = ({ onFinish, message = 'Đang tải bản đồ...' }) => {
   const [rotation, setRotation] = useState(0);
@@ -8,13 +9,37 @@ export const SplashScreen = ({ onFinish, message = 'Đang tải bản đồ...' 
       setRotation((prev) => (prev + 18) % 360);
     }, 25);
 
-    const timer = setTimeout(() => {
+    let finished = false;
+    let pollInterval = null;
+
+    const complete = () => {
+      if (finished) return;
+      finished = true;
+      if (pollInterval) clearInterval(pollInterval);
       if (onFinish) onFinish();
-    }, 600);
+    };
+
+    // Tối thiểu 500ms cho hiệu ứng ngọc rồng xoay mượt mà chuẩn Dragon Boy
+    const minTimer = setTimeout(() => {
+      if (assets.isGameCoreReady()) {
+        complete();
+      } else {
+        pollInterval = setInterval(() => {
+          if (assets.isGameCoreReady() || finished) {
+            complete();
+          }
+        }, 50);
+
+        // Safety timeout tối đa 2s
+        setTimeout(complete, 2000);
+      }
+    }, 500);
 
     return () => {
+      finished = true;
       clearInterval(rotInterval);
-      clearTimeout(timer);
+      clearTimeout(minTimer);
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, [onFinish]);
 

@@ -39,6 +39,7 @@ class SoundManager {
     this.punchCycle = 0;
     this.lastStepAt = 0;
     this.lastFlyAt = 0;
+    this.lastJumpAt = 0;
   }
 
   init() {
@@ -178,6 +179,9 @@ class SoundManager {
   }
 
   playJump() {
+    const now = performance.now();
+    if (now - this.lastJumpAt < 250) return;
+    this.lastJumpAt = now;
     this._playWav('fly', 0.34, 1.22);
   }
 

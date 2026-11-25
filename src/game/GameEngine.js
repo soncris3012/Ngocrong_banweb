@@ -892,12 +892,15 @@ export class GameEngine {
       for (let i = 0; i < mapCfg.hitboxes.length; i++) {
         const hb = mapCfg.hitboxes[i];
         if (wx >= hb.x && wx <= hb.x + hb.w) {
-          bestTop = Math.max(bestTop, hb.y + hb.h);
-          found = true;
+          const top = hb.y + hb.h;
+          if (curWy === null || curWy === undefined || top <= curWy + 24) {
+            bestTop = Math.max(bestTop, top);
+            found = true;
+          }
         }
       }
     }
-    return found ? bestTop : 144;
+    return (found && bestTop > -200) ? bestTop : (mapCfg.defaultSpawn?.y || 144);
   }
 
   // ==================== CHIẾN ĐẤU & KỸ NĂNG ====================
@@ -1503,7 +1506,7 @@ export class GameEngine {
 
     // Sub-step va chạm vách đá ngang & mặt đất bậc thang chuẩn HitboxDat.java!
     const nextX = p.x + p.vx * dt;
-    const groundAtNextX = this.getGroundTopAt(nextX, mapCfg);
+    const groundAtNextX = this.getGroundTopAt(nextX, mapCfg, p.y);
     if (groundAtNextX > p.y + 20) {
       // Đụng vách đá cao hơn chân (vd bậc vách đá x=1728 ở Đồi Hoa Cúc): chặn đi xuyên đá; nếu đang click-to-move thì tự nhảy vượt bậc!
       if (p.moveTargetX !== null && p.onGround) {
@@ -1520,7 +1523,7 @@ export class GameEngine {
     const prevY = p.y;
     p.y += p.vy * dt;
 
-    const curGroundY = this.getGroundTopAt(p.x, mapCfg);
+    const curGroundY = this.getGroundTopAt(p.x, mapCfg, p.y);
     if (curGroundY > -200 && p.vy <= 0 && prevY >= curGroundY - 32 && p.y <= curGroundY) {
       p.y = curGroundY;
       p.vy = 0;
@@ -1597,7 +1600,7 @@ export class GameEngine {
     if (p.equipped.pet) {
       const targetPetX = p.x - p.dir * 42;
       this.petFollower.x += (targetPetX - this.petFollower.x) * Math.min(1, dt * 6);
-      this.petFollower.y = this.getGroundTopAt(this.petFollower.x, mapCfg);
+      this.petFollower.y = this.getGroundTopAt(this.petFollower.x, mapCfg, this.petFollower.y);
       this.petFollower.dir = p.dir;
     }
 
@@ -1639,7 +1642,7 @@ export class GameEngine {
           d.x += Math.sign(followX - d.x) * 190 * dt;
         }
       }
-      d.y = this.getGroundTopAt(d.x, mapCfg);
+      d.y = this.getGroundTopAt(d.x, mapCfg, d.y);
     }
 
     // Cập nhật Quái vật & Boss
@@ -1726,7 +1729,7 @@ export class GameEngine {
         }
       }
 
-      const mobGround = this.getGroundTopAt(m.x, mapCfg);
+      const mobGround = this.getGroundTopAt(m.x, mapCfg, m.y);
       m.y = mobGround + (m.flyOffset ? m.flyOffset + Math.sin(this.animClock * 4 + i) * 6 : 0);
     }
 
@@ -2247,8 +2250,9 @@ export class GameEngine {
     }
 
     // 2. VẼ TILE NỀN ĐẤT & MẶT ĐẤT NGUYÊN BẢN TỪ TILESET (CHÍNH XÁC TỪNG Ô 24PX)
-    let tilesRendered = 0;
+    let hasOfficialTiles = false;
     if (toriMap && toriMap.tiles && toriMap.tiles.length > 0 && toriMap.tileID) {
+      hasOfficialTiles = true;
       const tmw = toriMap.tmw;
       const tmh = toriMap.tmh;
       const tileID = toriMap.tileID;
@@ -2270,32 +2274,28 @@ export class GameEngine {
           if (tVal <= 0) continue;
           const wx = tx * 24;
           this.drawWorldTex(ctx, `tile/${tileID}_${tVal}.png`, wx, wy, 24, 24);
-          tilesRendered++;
         }
       }
     }
 
-    // Fallback nền đất mượt mà nếu chưa nạp xong tile hoặc map đặc biệt
-    if (tilesRendered < 5) {
+    // Fallback nền đất mượt mà NẾU bản đồ không có tileset chính thức từ TORI
+    if (!hasOfficialTiles) {
       const theme = mapCfg.planetTheme || 'traidat';
+      const camOffX = this.camX - this.vw / 2;
+      const maxTiles = Math.ceil(mapCfg.width / 48) + 3;
+      const startI = Math.max(-2, Math.floor((camOffX - 60) / 48));
+      const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 48));
+
       if (theme === 'xayda') {
-        const camOffX = this.camX - this.vw / 2;
-        const maxTiles = Math.ceil(mapCfg.width / 50) + 3;
-        const startI = Math.max(-2, Math.floor((camOffX - 60) / 50));
-        const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 50));
         for (let i = startI; i < endI; i++) {
-          const tx = i * 50;
+          const tx = i * 48;
           const mIdx = ((i + 50) % 5) + 1;
           const dIdx = ((i + 30) % 3) + 1;
-          this.drawWorldTex(ctx, `map/xayda/chung/dat/matdat_xayda${mIdx}.png`, tx, 125, 51, 51);
-          this.drawWorldTex(ctx, `map/xayda/chung/dat/dat_xayda${dIdx}.png`, tx, 75, 51, 51);
-          this.drawWorldTex(ctx, `map/xayda/chung/dat/longdat_xayda${dIdx}.png`, tx, 25, 51, 51);
+          this.drawWorldTex(ctx, `map/xayda/chung/dat/matdat_xayda${mIdx}.png`, tx, 125, 49, 49);
+          this.drawWorldTex(ctx, `map/xayda/chung/dat/dat_xayda${dIdx}.png`, tx, 75, 49, 49);
+          this.drawWorldTex(ctx, `map/xayda/chung/dat/longdat_xayda${dIdx}.png`, tx, 25, 49, 49);
         }
       } else if (theme === 'namek') {
-        const camOffX = this.camX - this.vw / 2;
-        const maxTiles = Math.ceil(mapCfg.width / 48) + 3;
-        const startI = Math.max(-2, Math.floor((camOffX - 60) / 48));
-        const endI = Math.min(maxTiles, Math.ceil((camOffX + this.vw + 60) / 48));
         for (let i = startI; i < endI; i++) {
           const tx = i * 48;
           const mIdx = ((i + 48) % 3) + 1;
@@ -2305,7 +2305,14 @@ export class GameEngine {
           this.drawWorldTex(ctx, `map/namek/longdat_namek1.png`, tx, 25, 49, 49);
         }
       } else {
-        this._drawEarthGroundTiles(ctx, mapCfg.width, true);
+        for (let i = startI; i < endI; i++) {
+          const tx = i * 48;
+          const mIdx = ((i + 48) % 3) + 1;
+          const dIdx = ((i + 30) % 2) + 1;
+          this.drawWorldTex(ctx, `map/traidat/chung/dat/matdat_traidat${mIdx}.png`, tx, 125, 49, 49);
+          this.drawWorldTex(ctx, `map/traidat/chung/dat/dat_traidat${dIdx}.png`, tx, 75, 49, 49);
+          this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, 25, 49, 49);
+        }
       }
     }
 
@@ -2687,6 +2694,10 @@ export class GameEngine {
     // Trong NhanVat.java: sangPhai ? draw bình thường hoặc flip! Hãy kiểm tra: Goku trong goku_live_crop.png nhìn sang PHẢI khi không flip!
     const flipX = dir < 0;
 
+    const pFolder = planetIdx === 1 ? 'xayda' : 'traidat'; // Namek dùng chung thân/chân võ phục động của traidat
+    const aoBase = `nhanvat/${pFolder}/do/${aoSet}/`;
+    const quanBase = `nhanvat/${pFolder}/do/${quanSet}/`;
+
     let dauPath = '';
     let thanPath = '';
     let chanPath = '';
@@ -2716,7 +2727,6 @@ export class GameEngine {
         off = ctMap[state];
       }
     } else {
-      const pFolder = planetIdx === 1 ? 'xayda' : 'traidat'; // Namek dùng chung thân/chân võ phục động của traidat
       if (planetIdx === 0) {
         const avts = ['Goku_base', 'Krillin_base', 'Yamcha_base'];
         const av = avts[charIdx % 3] || 'Goku_base';
@@ -2728,9 +2738,6 @@ export class GameEngine {
       } else {
         dauPath = `nhanvat/namek/avatar/namek_base/${state === 'DI_CHUYEN' ? 'dauchay.png' : 'daudung.png'}`;
       }
-
-      const aoBase = `nhanvat/${pFolder}/do/${aoSet}/`;
-      const quanBase = `nhanvat/${pFolder}/do/${quanSet}/`;
 
       if (attackTimer > 0) {
         const atkFrames = aoSet === 'set_huy_diet'
@@ -2771,19 +2778,24 @@ export class GameEngine {
       }
     }
 
-    const fallbackChan = `${quanBase}chandung.png`;
-    const fallbackThan = `${aoBase}thandung.png`;
-    const fallbackDau = planetIdx === 1
+    const defaultChan = 'nhanvat/traidat/do/set_cam/chandung.png';
+    const defaultThan = 'nhanvat/traidat/do/set_cam/thandung.png';
+    const defaultDau = planetIdx === 1
       ? 'nhanvat/xayda/avatar/Cađíc_base/daudung.png'
       : (planetIdx === 2 ? 'nhanvat/namek/avatar/namek_base/daudung.png' : 'nhanvat/traidat/avatar/Goku_base/daudung.png');
 
-    const actualChanPath = assets.tex(chanPath) ? chanPath : (assets.tex(fallbackChan) ? fallbackChan : 'nhanvat/traidat/do/set_cam/chandung.png');
-    const actualThanPath = assets.tex(thanPath) ? thanPath : (assets.tex(fallbackThan) ? fallbackThan : 'nhanvat/traidat/do/set_cam/thandung.png');
-    const actualDauPath = assets.tex(dauPath) ? dauPath : (assets.tex(fallbackDau) ? fallbackDau : 'nhanvat/traidat/avatar/Goku_base/daudung.png');
+    const fallbackChan = `${quanBase}chandung.png`;
+    const fallbackThan = `${aoBase}thandung.png`;
+    const fallbackDau = defaultDau;
 
-    const chanImg = assets.tex(actualChanPath);
-    const thanImg = assets.tex(actualThanPath);
-    const dauImg = assets.tex(actualDauPath);
+    // Đảm bảo LUÔN LUÔN có hình ảnh vẽ ra, không bao giờ để nhân vật bị mất hình (flicker) khi di chuyển!
+    const actualChanPath = assets.tex(chanPath) ? chanPath : (assets.tex(fallbackChan) ? fallbackChan : defaultChan);
+    const actualThanPath = assets.tex(thanPath) ? thanPath : (assets.tex(fallbackThan) ? fallbackThan : defaultThan);
+    const actualDauPath = assets.tex(dauPath) ? dauPath : (assets.tex(fallbackDau) ? fallbackDau : defaultDau);
+
+    const chanImg = assets.tex(actualChanPath) || assets.tex(fallbackChan) || assets.tex(defaultChan);
+    const thanImg = assets.tex(actualThanPath) || assets.tex(fallbackThan) || assets.tex(defaultThan);
+    const dauImg = assets.tex(actualDauPath) || assets.tex(fallbackDau) || assets.tex(defaultDau);
     if (!chanImg || !thanImg || !dauImg) return 68;
 
     const cw = chanImg.naturalWidth * scale;

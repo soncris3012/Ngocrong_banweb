@@ -48,7 +48,10 @@ export function initToriMapCollision(toriMap) {
   const groundTops = new Int16Array(tmw);
   for (let tx = 0; tx < tmw; tx++) {
     let top = -500;
-    for (let ty = 0; ty < tmh; ty++) {
+    // Bắt đầu quét từ ty = 1 để bỏ qua hàng trần trời (ty = 0) và viền tường bao quanh
+    for (let ty = 1; ty < tmh; ty++) {
+      const tileVal = tiles[ty * tmw + tx];
+      if (tileVal === 39 && (tx === 0 || tx === tmw - 1 || ty === 0)) continue;
       if ((types[ty * tmw + tx] & T_TOP) === T_TOP) {
         top = mapH - ty * 24;
         break;
@@ -70,19 +73,25 @@ export function getToriTouchY(toriMap, wx, curWy = null) {
   const tmh = toriMap.tmh;
   const mapH = tmh * 24;
   const tx = Math.max(0, Math.min(tmw - 1, Math.floor(wx / 24)));
-  const highest = toriMap._groundTops[tx];
-
-  if (curWy === null || curWy === undefined || curWy >= highest - 18) {
-    return highest > -500 ? highest : null;
-  }
+  if (tx === 0 || tx === tmw - 1) return null;
 
   const types = toriMap._types;
-  const startTy = Math.max(0, Math.min(tmh - 1, Math.floor((mapH - (curWy + 18)) / 24)));
+  const tiles = toriMap.tiles || toriMap.maps;
   const T_TOP = 2;
-  for (let ty = startTy; ty < tmh; ty++) {
-    if ((types[ty * tmw + tx] & T_TOP) === T_TOP) {
-      return mapH - ty * 24;
+
+  // Nếu có toạ độ curWy hiện tại: tìm mặt đất đầu tiên ở dưới chân nhân vật (chuẩn touchY TeaMobi MapTemplate.java dòng 141-149)
+  if (typeof curWy === 'number' && curWy > -200) {
+    const startTy = Math.max(1, Math.min(tmh - 1, Math.floor((mapH - (curWy + 18)) / 24)));
+    for (let ty = startTy; ty < tmh; ty++) {
+      const tileVal = tiles[ty * tmw + tx];
+      if (tileVal === 39) continue;
+      if ((types[ty * tmw + tx] & T_TOP) === T_TOP) {
+        return mapH - ty * 24;
+      }
     }
+    return null;
   }
-  return null;
+
+  const highest = toriMap._groundTops[tx];
+  return highest > -200 ? highest : null;
 }
