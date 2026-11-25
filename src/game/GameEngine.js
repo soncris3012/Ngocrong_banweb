@@ -2047,13 +2047,9 @@ export class GameEngine {
       || getToriMap(mapCfg.id)
       || getToriMapByName(mapCfg.name);
 
-    // The game map config can intentionally reuse a source map's geometry with
-    // a different environment (for example map 18 uses the Xayda arena sky).
-    // Respect an explicit per-game-map bgID first; use source data only when
-    // the game map does not define one.
-    const bgId = (typeof mapCfg.bgID === 'number' && mapCfg.bgID >= 0)
-      ? mapCfg.bgID
-      : (toriMap && typeof toriMap.bgID === 'number' && toriMap.bgID >= 0 ? toriMap.bgID : 0);
+    const bgId = (toriMap && typeof toriMap.bgID === 'number' && toriMap.bgID >= 0)
+      ? toriMap.bgID
+      : (typeof mapCfg.bgID === 'number' && mapCfg.bgID >= 0 ? mapCfg.bgID : 0);
 
     const theme = mapCfg.planetTheme || (toriMap ? (toriMap.planetID === 1 ? 'namek' : toriMap.planetID === 2 ? 'xayda' : 'traidat') : 'traidat');
     const camOffX = this.camX - this.vw / 2;
@@ -2253,37 +2249,7 @@ export class GameEngine {
       }
     }
 
-    // 2. VẼ TILE NỀN ĐẤT & MẶT ĐẤT NGUYÊN BẢN TỪ TILESET (CHÍNH XÁC TỪNG Ô 24PX)
-    let hasOfficialTiles = false;
-    if (toriMap && toriMap.tiles && toriMap.tiles.length > 0 && toriMap.tileID) {
-      hasOfficialTiles = true;
-      const tmw = toriMap.tmw;
-      const tmh = toriMap.tmh;
-      const tileID = toriMap.tileID;
-      const mapH = toriMap.height;
-
-      const minTileX = Math.max(0, Math.floor((this.camX - this.vw / 2 - 48) / 24));
-      const maxTileX = Math.min(tmw - 1, Math.ceil((this.camX + this.vw / 2 + 48) / 24));
-      const minTileY = 0;
-      const maxTileY = tmh - 1;
-
-      for (let ty = minTileY; ty <= maxTileY; ty++) {
-        const rowIdx = ty * tmw;
-        const wy = mapH - (ty + 1) * 24;
-        const vy = wy - (this.camY - this.vh / 2);
-        if (vy + 24 < -48 || vy > this.vh + 48) continue;
-
-        for (let tx = minTileX; tx <= maxTileX; tx++) {
-          const tVal = toriMap.tiles[rowIdx + tx];
-          if (tVal <= 0) continue;
-          const wx = tx * 24;
-          this.drawWorldTex(ctx, `tile/${tileID}_${tVal}.png`, wx, wy, 24, 24);
-        }
-      }
-    }
-
-    // Fallback nền đất mượt mà NẾU bản đồ không có tileset chính thức từ TORI
-    if (!hasOfficialTiles) {
+    // Nền đất cơ sở nằm dưới tileset; các tile đặc sẽ phủ lên nền này.
       const theme = mapCfg.planetTheme || 'traidat';
       const camOffX = this.camX - this.vw / 2;
       const maxTiles = Math.ceil(mapCfg.width / 48) + 3;
@@ -2316,6 +2282,32 @@ export class GameEngine {
           this.drawWorldTex(ctx, `map/traidat/chung/dat/matdat_traidat${mIdx}.png`, tx, 125, 49, 49);
           this.drawWorldTex(ctx, `map/traidat/chung/dat/dat_traidat${dIdx}.png`, tx, 75, 49, 49);
           this.drawWorldTex(ctx, `map/traidat/chung/dat/longdat_traidat${dIdx}.png`, tx, 25, 49, 49);
+        }
+      }
+
+    // 2. VẼ TILE NỀN ĐẤT & MẶT ĐẤT NGUYÊN BẢN TỪ TILESET (CHÍNH XÁC TỪNG Ô 24PX)
+    if (toriMap && toriMap.tiles && toriMap.tiles.length > 0 && toriMap.tileID) {
+      const tmw = toriMap.tmw;
+      const tmh = toriMap.tmh;
+      const tileID = toriMap.tileID;
+      const mapH = toriMap.height;
+
+      const minTileX = Math.max(0, Math.floor((this.camX - this.vw / 2 - 48) / 24));
+      const maxTileX = Math.min(tmw - 1, Math.ceil((this.camX + this.vw / 2 + 48) / 24));
+      const minTileY = 0;
+      const maxTileY = tmh - 1;
+
+      for (let ty = minTileY; ty <= maxTileY; ty++) {
+        const rowIdx = ty * tmw;
+        const wy = mapH - (ty + 1) * 24;
+        const vy = wy - (this.camY - this.vh / 2);
+        if (vy + 24 < -48 || vy > this.vh + 48) continue;
+
+        for (let tx = minTileX; tx <= maxTileX; tx++) {
+          const tVal = toriMap.tiles[rowIdx + tx];
+          if (tVal <= 0) continue;
+          const wx = tx * 24;
+          this.drawWorldTex(ctx, `tile/${tileID}_${tVal}.png`, wx, wy, 24, 24);
         }
       }
     }
